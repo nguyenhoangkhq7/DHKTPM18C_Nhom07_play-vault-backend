@@ -21,9 +21,6 @@ public class Customer {
    @Column(name = "full_name")
    private String fullName;
 
-   @Column(name = "phone_number", length = 20)
-   private String phoneNumber;
-
    @Column(name = "date_of_birth")
    private LocalDate dateOfBirth;
 

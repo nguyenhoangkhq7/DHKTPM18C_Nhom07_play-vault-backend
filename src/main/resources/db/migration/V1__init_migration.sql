@@ -16,7 +16,6 @@ CREATE TABLE accounts (
 CREATE TABLE customers (
                            id BIGINT PRIMARY KEY,
                            full_name VARCHAR(255),
-                           phone_number VARCHAR(20),
                            date_of_birth DATE,
                            balance DECIMAL(10, 2) DEFAULT 0.0,
                            account_username VARCHAR(255) NOT NULL UNIQUE,
@@ -41,7 +40,6 @@ CREATE TABLE publishers (
                             studio_name VARCHAR(255) NOT NULL,
                             description LONGTEXT,
                             website VARCHAR(255),
-                            payment VARCHAR(255),
                             payment_info_id BIGINT UNIQUE,
 
                             CONSTRAINT fk_publisher_account

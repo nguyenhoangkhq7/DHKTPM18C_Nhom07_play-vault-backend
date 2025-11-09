@@ -26,9 +26,6 @@ public class Publisher {
    @Column(name = "website")
    private String website;
 
-   @Column(name = "payment")
-   private String payment;
-
    @OneToOne(fetch = FetchType.LAZY)
    @JoinColumn(name = "payment_info_id")
    private PaymentInfo paymentInfo;
