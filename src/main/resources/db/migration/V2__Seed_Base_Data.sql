@@ -7,7 +7,8 @@ USE playvaultdb;
 
 -- 1. TÀI KHOẢN ADMIN
 INSERT INTO accounts (username, password, created_at, status, role, email, phone) VALUES
-    ('admin', '123', '2024-01-01', 'ACTIVE', 'ADMIN', 'admin@playvault.com', '0901000001');
+    ('admin', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O
+', '2024-01-01', 'ACTIVE', 'ADMIN', 'admin@playvault.com', '0901000001');
 
 -- 2. CATEGORIES
 INSERT INTO categories (id, name, description) VALUES
