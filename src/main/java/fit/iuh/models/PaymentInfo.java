@@ -1,9 +1,7 @@
 package fit.iuh.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import fit.iuh.models.enums.PaymentMethod;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
@@ -17,8 +15,9 @@ public class PaymentInfo {
    @Column(name = "id", nullable = false)
    private Long id;
 
+   @Enumerated(EnumType.STRING)
    @Column(name = "payment_method", nullable = false, length = 50)
-   private String paymentMethod;
+   private PaymentMethod paymentMethod;
 
    @Column(name = "account_name")
    private String accountName;
