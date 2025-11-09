@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: play-vault-backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
+    username: root
+    password: 22718451
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
