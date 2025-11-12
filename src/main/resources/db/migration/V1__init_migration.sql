@@ -14,7 +14,7 @@ CREATE TABLE accounts (
 );
 
 CREATE TABLE customers (
-                           id BIGINT PRIMARY KEY,
+                           id BIGINT PRIMARY KEY AUTO_INCREMENT,
                            full_name VARCHAR(255),
                            date_of_birth DATE,
                            balance DECIMAL(10, 2) DEFAULT 0.0,
@@ -25,7 +25,7 @@ CREATE TABLE customers (
 );
 
 CREATE TABLE payment_infos(
-                              id BIGINT PRIMARY KEY,
+                              id BIGINT PRIMARY KEY AUTO_INCREMENT,
                               payment_method VARCHAR(50) NOT NULL,
                               account_name VARCHAR(255),
                               account_number VARCHAR(100),
@@ -35,7 +35,7 @@ CREATE TABLE payment_infos(
 );
 
 CREATE TABLE publishers (
-                            id BIGINT PRIMARY KEY,
+                            id BIGINT PRIMARY KEY AUTO_INCREMENT,
                             account_username VARCHAR(255) NOT NULL UNIQUE,
                             studio_name VARCHAR(255) NOT NULL,
                             description LONGTEXT,
@@ -49,14 +49,14 @@ CREATE TABLE publishers (
 );
 
 CREATE TABLE categories (
-                            id BIGINT PRIMARY KEY,
+                            id BIGINT PRIMARY KEY AUTO_INCREMENT,
                             name VARCHAR(255) NOT NULL,
                             description LONGTEXT
 );
 
 
 CREATE TABLE system_requirements (
-                                     id BIGINT PRIMARY KEY,
+                                     id BIGINT PRIMARY KEY AUTO_INCREMENT,
                                      os VARCHAR(50),
                                      cpu VARCHAR(255),
                                      gpu VARCHAR(255),
@@ -67,12 +67,12 @@ CREATE TABLE system_requirements (
 );
 
 CREATE TABLE platforms (
-                           id BIGINT PRIMARY KEY,
+                           id BIGINT PRIMARY KEY AUTO_INCREMENT,
                            name VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE game_basic_infos (
-                                  id BIGINT PRIMARY KEY,
+                                  id BIGINT PRIMARY KEY AUTO_INCREMENT,
                                   name VARCHAR(255) NOT NULL,
                                   short_description LONGTEXT,
                                   description LONGTEXT,
@@ -131,7 +131,7 @@ CREATE TABLE games (
 );
 
 CREATE TABLE reviews (
-                         id BIGINT PRIMARY KEY,
+                         id BIGINT PRIMARY KEY AUTO_INCREMENT,
                          rating INT,
                          comment LONGTEXT,
                          created_at DATE,
@@ -146,7 +146,7 @@ CREATE TABLE reviews (
 );
 
 CREATE TABLE promotions (
-                            id BIGINT PRIMARY KEY,
+                            id BIGINT PRIMARY KEY AUTO_INCREMENT,
                             name VARCHAR(255) NOT NULL,
                             description LONGTEXT,
                             start_date DATE,
@@ -162,12 +162,12 @@ CREATE TABLE promotions (
 );
 
 CREATE TABLE carts (
-                       id BIGINT PRIMARY KEY,
+                       id BIGINT PRIMARY KEY AUTO_INCREMENT,
                        total_price DECIMAL(10, 2) DEFAULT 0.0
 );
 
 CREATE TABLE cart_items (
-                            id BIGINT PRIMARY KEY,
+                            id BIGINT PRIMARY KEY AUTO_INCREMENT,
                             price DECIMAL(10, 2),
                             discount DECIMAL(10, 2),
 
@@ -196,7 +196,7 @@ CREATE TABLE user_libraries (
 );
 
 CREATE TABLE orders (
-                        id BIGINT PRIMARY KEY,
+                        id BIGINT PRIMARY KEY AUTO_INCREMENT,
                         created_at DATE,
                         total DECIMAL(10, 2),
                         status VARCHAR(50) NOT NULL,
@@ -210,7 +210,7 @@ CREATE TABLE orders (
 );
 
 CREATE TABLE order_items (
-                             id BIGINT PRIMARY KEY,
+                             id BIGINT PRIMARY KEY AUTO_INCREMENT,
                              price DECIMAL(10, 2),
                              total DECIMAL(10, 2),
 
@@ -228,7 +228,7 @@ CREATE TABLE order_items (
 );
 
 CREATE TABLE invoices (
-                          id BIGINT PRIMARY KEY,
+                          id BIGINT PRIMARY KEY AUTO_INCREMENT,
                           issue_date DATE,
                           total_amount DECIMAL(10, 2),
                           status VARCHAR(50) NOT NULL,
@@ -244,7 +244,7 @@ CREATE TABLE invoices (
 );
 
 CREATE TABLE payments (
-                          id BIGINT PRIMARY KEY,
+                          id BIGINT PRIMARY KEY AUTO_INCREMENT,
                           amount DECIMAL(10, 2),
                           payment_date DATE,
                           payment_method VARCHAR(50),
@@ -263,7 +263,7 @@ ALTER TABLE orders
         FOREIGN KEY (payment_id) REFERENCES payments(id);
 
 CREATE TABLE reports (
-                         id BIGINT PRIMARY KEY,
+                         id BIGINT PRIMARY KEY AUTO_INCREMENT,
                          title VARCHAR(255),
                          description LONGTEXT,
                          handler_note LONGTEXT,
@@ -285,7 +285,7 @@ CREATE TABLE reports (
 );
 
 CREATE TABLE block_records (
-                               id BIGINT PRIMARY KEY,
+                               id BIGINT PRIMARY KEY AUTO_INCREMENT,
                                is_block BOOLEAN,
                                created_at DATE,
                                reason LONGTEXT,

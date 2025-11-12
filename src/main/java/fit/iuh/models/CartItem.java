@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 public class CartItem {
    @Id
    @Column(name = "id", nullable = false)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
    @Column(name = "price", precision = 10, scale = 2)

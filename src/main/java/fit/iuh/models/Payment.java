@@ -16,6 +16,7 @@ import java.time.LocalDate;
 public class Payment {
    @Id
    @Column(name = "id", nullable = false)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
    @Column(name = "amount", precision = 10, scale = 2)

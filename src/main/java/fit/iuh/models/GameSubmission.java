@@ -14,6 +14,7 @@ import java.time.LocalDate;
 public class GameSubmission {
    @Id
    @Column(name = "game_basic_info_id", nullable = false)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
    @MapsId
