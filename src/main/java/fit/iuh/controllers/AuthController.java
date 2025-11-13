@@ -81,7 +81,6 @@ public class AuthController {
 
       Cart cart = new Cart();
       cart.setTotalPrice(BigDecimal.ZERO);
-      // cartRepository chưa được inject, bạn cần thêm `private final CartRepository cartRepository;` vào AuthController
       cartRepository.save(cart);
 
       // tạo customer
