@@ -37,7 +37,13 @@ public class Customer {
    @JoinColumn(name = "cart_id")
    private Cart cart;
 
-   @ManyToMany(fetch = FetchType.LAZY)
+    @Column(name = "address", length = 255)
+    private String address;
+
+    @Column(name = "avatar_url", length = 255)
+    private String avatarUrl;
+
+    @ManyToMany(fetch = FetchType.LAZY)
    @JoinTable(
            name = "user_libraries",
            joinColumns = @JoinColumn(name = "customer_id"),

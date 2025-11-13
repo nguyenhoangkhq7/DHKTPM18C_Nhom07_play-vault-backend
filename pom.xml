@@ -122,7 +122,7 @@
                 <configuration>
                     <url>jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true</url>
                     <user>root</user>
-                    <password>22718451</password>
+                    <password>123456</password>
                     <cleanDisabled>false</cleanDisabled>
                 </configuration>
             </plugin>
