@@ -1,12 +1,10 @@
 package fit.iuh.controllers;
 
 import fit.iuh.dtos.*;
-import fit.iuh.models.Account;
-import fit.iuh.models.Customer;
-import fit.iuh.models.PaymentInfo;
-import fit.iuh.models.Publisher;
+import fit.iuh.models.*;
 import fit.iuh.models.enums.AccountStatus;
 import fit.iuh.repositories.AccountRepository;
+import fit.iuh.repositories.CartRepository;
 import fit.iuh.repositories.CustomerRepository;
 import fit.iuh.repositories.PublisherRepository;
 import fit.iuh.services.JwtService;
@@ -20,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @RestController
@@ -32,6 +31,7 @@ public class AuthController {
    private final PasswordEncoder passwordEncoder;
    private final CustomerRepository customerRepository;
    private final PublisherRepository publisherRepository;
+   private final CartRepository cartRepository;
 
    @PostMapping("/validate")
    public boolean validate(@RequestHeader("Authorization") String authHeader) {
@@ -79,12 +79,18 @@ public class AuthController {
 
       accountRepository.save(account);
 
+      Cart cart = new Cart();
+      cart.setTotalPrice(BigDecimal.ZERO);
+      // cartRepository chưa được inject, bạn cần thêm `private final CartRepository cartRepository;` vào AuthController
+      cartRepository.save(cart);
+
       // tạo customer
       Customer customer = new Customer();
       customer.setFullName(request.getFullName());
       customer.setDateOfBirth(request.getDateOfBirth());
       customer.setAccount(account);
 
+      customer.setCart(cart);
       customerRepository.save(customer);
 
       return ResponseEntity.status(HttpStatus.CREATED).body("Customer đăng ký thành công");
