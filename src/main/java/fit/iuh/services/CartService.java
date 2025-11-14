@@ -1,10 +1,10 @@
 package fit.iuh.services;
 
-import fit.iuh.dtos.CartItemResponse;
-import fit.iuh.dtos.CartResponse;
-import fit.iuh.mappers.CartMapper; // Import Mapper
+import fit.iuh.dtos.*;
+import fit.iuh.mappers.CartMapper;
 import fit.iuh.models.*;
 import fit.iuh.repositories.*;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,110 +14,134 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CartService {
 
+    // === Repositories ===
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final CustomerRepository customerRepository;
     private final GameRepository gameRepository;
+    private final CustomerRepository customerRepository;
+
+    // === Mapper ===
     private final CartMapper cartMapper;
 
-    /**
-     * Lấy thông tin giỏ hàng.
-     */
-    @Transactional
-    public CartResponse getCartByUsername(String username) {
-        // 1. Tìm Customer & Cart
+    // ========================================================================
+    // 1. LẤY GIỎ HÀNG CHI TIẾT (DÙNG CHO API TRẢ VỀ RESPONSE ĐẦY ĐỦ)
+    // ========================================================================
+    public CartResponse getCartResponse(String username) {
         Customer customer = customerRepository.findByAccount_Username(username)
-                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng: " + username));
 
         Cart cart = customer.getCart();
-
-        // 2. Auto-create Cart nếu chưa có
         if (cart == null) {
-            cart = new Cart();
-            cart.setTotalPrice(BigDecimal.ZERO);
-            cartRepository.save(cart);
-
-            customer.setCart(cart);
-            customerRepository.save(customer);
+            cart = createNewCartForCustomer(customer);
         }
 
-        // 3. Lấy danh sách CartItem từ DB
-        List<CartItem> myItems = cartItemRepository.findByCartId(cart.getId());
+        List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getId());
+        List<CartItemResponse> itemResponses = cartMapper.toCartItemResponseList(cartItems);
 
-        // 4. Dùng MapStruct chuyển đổi sang List DTO
-        List<CartItemResponse> itemDTOs = cartMapper.toCartItemResponseList(myItems);
-
-        // 5. Tính tổng tiền dựa trên List DTO vừa map xong
-        BigDecimal calculatedTotal = itemDTOs.stream()
+        BigDecimal totalPrice = itemResponses.stream()
                 .map(CartItemResponse::getFinalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 6. Cập nhật tổng tiền vào DB nếu lệch
-        if (cart.getTotalPrice() == null || !cart.getTotalPrice().equals(calculatedTotal)) {
-            cart.setTotalPrice(calculatedTotal);
+        // Cập nhật tổng tiền nếu cần
+        if (!totalPrice.equals(cart.getTotalPrice())) {
+            cart.setTotalPrice(totalPrice);
             cartRepository.save(cart);
         }
 
-        // 7. Trả về kết quả cuối cùng qua Mapper
-        return cartMapper.toCartResponse(cart, itemDTOs, calculatedTotal);
+        return cartMapper.toCartResponse(cart, itemResponses, totalPrice);
     }
 
-    /**
-     * Xóa sản phẩm khỏi giỏ hàng
-     */
-    @Transactional
-    public void removeCartItem(String username, Long cartItemId) {
-        Customer customer = customerRepository.findByAccount_Username(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    // ========================================================================
+    // 2. LẤY GIỎ HÀNG ĐƠN GIẢN (DÙNG CHO DTO NHẸ, KHÔNG CẦN TÍNH TOÁN)
+    // ========================================================================
+    public CartDto getCartDto(String username) {
+        Cart cart = findOrCreateCartByUsername(username);
+        CartDto cartDto = cartMapper.toDto(cart);
 
-        if (customer.getCart() == null) return;
+        BigDecimal totalPrice = cartDto.getItems().stream()
+                .map(CartItemDto::getFinalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart Item not found"));
-
-        if (!item.getCart().getId().equals(customer.getCart().getId())) {
-            throw new RuntimeException("Unauthorized: You cannot remove items from another user's cart");
-        }
-
-        cartItemRepository.delete(item);
+        cartDto.setTotalPrice(totalPrice);
+        return cartDto;
     }
 
-    /**
-     * Thêm sản phẩm vào giỏ hàng
-     */
+    // ========================================================================
+    // 3. THÊM GAME VÀO GIỎ HÀNG
+    // ========================================================================
     @Transactional
-    public void addToCart(String username, Long gameId) {
-        Customer customer = customerRepository.findByAccount_Username(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Cart cart = customer.getCart();
-
-        if (cart == null) {
-            cart = new Cart();
-            cart.setTotalPrice(BigDecimal.ZERO);
-            cartRepository.save(cart);
-            customer.setCart(cart);
-            customerRepository.save(customer);
-        }
+    public CartResponse addGameToCart(String username, Long gameId) {
+        Cart cart = findOrCreateCartByUsername(username);
 
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new RuntimeException("Game not found with ID: " + gameId));
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy Game ID: " + gameId));
 
-        // Tạo CartItem mới
-        CartItem newItem = new CartItem();
-        newItem.setCart(cart);
-        newItem.setGame(game);
-
-        if (game.getGameBasicInfos() != null) {
-            newItem.setPrice(game.getGameBasicInfos().getPrice());
-        } else {
-            newItem.setPrice(BigDecimal.ZERO);
+        // Kiểm tra trùng
+        boolean exists = cartItemRepository.findByCartIdAndGameId(cart.getId(), gameId).isPresent();
+        if (exists) {
+            throw new RuntimeException("Game này đã có trong giỏ hàng.");
         }
 
-        newItem.setDiscount(BigDecimal.ZERO);
+        CartItem item = new CartItem();
+        item.setCart(cart);
+        item.setGame(game);
+        item.setPrice(game.getGameBasicInfos() != null ? game.getGameBasicInfos().getPrice() : BigDecimal.ZERO);
+        item.setDiscount(BigDecimal.ZERO);
 
-        cartItemRepository.save(newItem);
+        cartItemRepository.save(item);
+
+        return getCartResponse(username); // Trả về response đầy đủ
+    }
+
+    // ========================================================================
+    // 4. XÓA ITEM KHỎI GIỎ HÀNG
+    // ========================================================================
+    @Transactional
+    public CartResponse removeGameFromCart(String username, Long gameId) {
+        Cart cart = findOrCreateCartByUsername(username);
+
+        CartItem item = cartItemRepository.findByCartIdAndGameId(cart.getId(), gameId)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy món hàng trong giỏ"));
+
+        cartItemRepository.delete(item);
+
+        return getCartResponse(username);
+    }
+
+    // ========================================================================
+    // 5. XÓA TOÀN BỘ GIỎ HÀNG
+    // ========================================================================
+    @Transactional
+    public CartResponse clearCart(String username) {
+        Cart cart = findOrCreateCartByUsername(username);
+        cart.getCartItems().clear(); // orphanRemoval = true → tự xóa trong DB
+        cartRepository.save(cart);
+        return getCartResponse(username);
+    }
+
+    // ========================================================================
+    // HELPER: Tìm hoặc tạo giỏ hàng
+    // ========================================================================
+    private Cart findOrCreateCartByUsername(String username) {
+        Customer customer = customerRepository.findByAccount_Username(username)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy Customer: " + username));
+
+        if (customer.getCart() != null) {
+            return customer.getCart();
+        }
+
+        return createNewCartForCustomer(customer);
+    }
+
+    private Cart createNewCartForCustomer(Customer customer) {
+        Cart newCart = new Cart();
+        newCart.setTotalPrice(BigDecimal.ZERO);
+        Cart savedCart = cartRepository.save(newCart);
+        customer.setCart(savedCart);
+        customerRepository.save(customer);
+        return savedCart;
     }
 }
