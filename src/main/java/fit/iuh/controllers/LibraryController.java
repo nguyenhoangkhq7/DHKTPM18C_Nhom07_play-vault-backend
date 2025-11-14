@@ -2,7 +2,7 @@ package fit.iuh.controllers;
 
 import fit.iuh.dtos.GameCardDto;
 import fit.iuh.dtos.GameFilterDto;
-import fit.iuh.mappers.GameMapper;
+import fit.iuh.mappers.GameMapper; // ✅ Import đã có
 import fit.iuh.models.Game;
 import fit.iuh.services.LibraryService;
 import jakarta.validation.Valid;
@@ -15,14 +15,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/library")
+@RequestMapping("/api/library") // Giữ nguyên theo file của bạn
 public class LibraryController {
 
     @Autowired
     private LibraryService libraryService;
 
+    // --- BƯỚC 1.1: BỎ COMMENT DÒNG NÀY ---
     @Autowired
-    private GameMapper gameMapper; // ✅ inject MapStruct mapper
+    private GameMapper gameMapper; // ✅ Kích hoạt MapStruct
 
     @GetMapping("/my-games")
     public ResponseEntity<List<GameCardDto>> getMyPurchasedGames(
@@ -35,19 +36,16 @@ public class LibraryController {
 
         String username = authentication.getName();
 
-        List<Game> games = libraryService.getPurchasedGames(
-                username,
-                filterDto.getCategoryId(),
-                filterDto.getMinPrice(),
-                filterDto.getMaxPrice(),
-                filterDto.getStatus()
-        );
+        List<Game> games = libraryService.getPurchasedGames(username, filterDto);
 
-        // ✅ Dùng MapStruct thay cho convertToDto
+        // --- BƯỚC 1.2: DÙNG gameMapper THAY VÌ convertToDto ---
         List<GameCardDto> gameDtos = games.stream()
-                .map(gameMapper::toDto)
+                .map(gameMapper::toDto) // ✅ Thay thế ở đây
                 .collect(Collectors.toList());
+        // --- KẾT THÚC THAY ĐỔI ---
 
         return ResponseEntity.ok(gameDtos);
     }
+
+
 }
