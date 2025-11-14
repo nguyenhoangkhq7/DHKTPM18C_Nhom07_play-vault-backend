@@ -4,6 +4,7 @@ import fit.iuh.dtos.GameDTO;
 import fit.iuh.models.Game;
 import fit.iuh.services.GameService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,17 +16,25 @@ import java.util.List;
 @RequestMapping("/api/games")
 @RequiredArgsConstructor
 public class GameController {
+
     private final GameService gameService;
 
     @GetMapping
-    public List<GameDTO> getGames(@RequestParam(required = false) String categoryName) {
-        return gameService.findGamesByCategoryName(categoryName);
+    public ResponseEntity<List<GameDTO>> getGames(
+            @RequestParam(required = false) String categoryName) {
+
+        List<GameDTO> games = gameService.findGamesByCategoryName(categoryName);
+
+        return ResponseEntity.ok(games);
     }
 
     @GetMapping("/top")
-    public List<GameDTO> getTopRatedGames(@RequestParam(defaultValue = "5") int limit) {
-        return gameService.findTopRatedGames(limit);
+    public ResponseEntity<List<GameDTO>> getTopRatedGames(
+            @RequestParam(defaultValue = "5") int limit) {
+
+        List<GameDTO> games = gameService.findTopRatedGames(limit);
+
+        return ResponseEntity.ok(games);
     }
-
-
 }
+

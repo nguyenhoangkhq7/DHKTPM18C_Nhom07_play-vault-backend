@@ -11,6 +11,7 @@ import java.util.List;
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long> {
     // Lọc game theo categoryName
+
     List<Game> findByGameBasicInfos_Category_Name(String categoryName);
 
     //Lấy top n game được đánh giá cao nhất
