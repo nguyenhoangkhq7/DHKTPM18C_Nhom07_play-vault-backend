@@ -22,8 +22,8 @@ public class OrderItem {
    private BigDecimal price;
 
    // Số lượng sản phẩm trong đơn
-   @Column(name = "quantity", nullable = false)
-   private int quantity;
+//   @Column(name = "quantity", nullable = false)
+//   private int quantity;
 
    // Tổng tiền của dòng này (sau khi áp dụng khuyến mãi nếu có)
    @Column(name = "total", precision = 10, scale = 2)
@@ -49,7 +49,7 @@ public class OrderItem {
     * Tính thành tiền cho sản phẩm này (đã bao gồm khuyến mãi nếu có)
     */
    public BigDecimal getSubtotal() {
-      BigDecimal baseTotal = price.multiply(BigDecimal.valueOf(quantity));
+      BigDecimal baseTotal = price.multiply(BigDecimal.ONE);
 
       // Nếu có promotion (giảm giá), giả sử có phương thức getDiscountRate() (VD: 0.1 = 10%)
       if (promotion != null && promotion.getDiscountRate() != null) {
