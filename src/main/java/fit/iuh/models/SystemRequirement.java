@@ -12,6 +12,7 @@ import lombok.Setter;
 public class SystemRequirement {
    @Id
    @Column(name = "id", nullable = false)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
    @Enumerated(EnumType.STRING)
