@@ -1,78 +1,131 @@
 package fit.iuh.services;
 
-import fit.iuh.models.Cart;
-import fit.iuh.models.CartItem;
-import fit.iuh.models.GameBasicInfo;
-import fit.iuh.repositories.CartItemRepository;
-import fit.iuh.repositories.CartRepository;
-import fit.iuh.repositories.GameBasicInfoRepository;
-
+import fit.iuh.dtos.*;
+import fit.iuh.mappers.CartMapper; // MapStruct Mapper
+import fit.iuh.models.*;
+import fit.iuh.repositories.*;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Service
+@Transactional
 public class CartService {
 
-    private final CartRepository cartRepo;
-    private final CartItemRepository cartItemRepo;
-    private final GameBasicInfoRepository gameBasicRepo;
+    // Repositories
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final GameRepository gameRepository;
+    private final CustomerRepository customerRepository;
 
+    // MapStruct Mapper
+    private final CartMapper cartMapper;
 
-    public CartService(CartRepository cartRepo, CartItemRepository cartItemRepo, GameBasicInfoRepository gameRepo) {
-        this.cartRepo = cartRepo;
-        this.cartItemRepo = cartItemRepo;
-        this.gameBasicRepo = gameRepo;
+    public CartService(CartRepository cartRepository,
+                       CartItemRepository cartItemRepository,
+                       GameRepository gameRepository,
+                       CustomerRepository customerRepository,
+                       CartMapper cartMapper) {
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.gameRepository = gameRepository;
+        this.customerRepository = customerRepository;
+        this.cartMapper = cartMapper;
     }
 
-    //Lấy tất cả thông tin cơ bản của các game trong giỏ hàng của khách hàng theo customerId
-    public List<GameBasicInfo> getGameBasicInfoByCustomerId(Long customerId) {
-        return gameBasicRepo.findAllGameCartByCustomerId(customerId);
-    }
+    /**
+     * Lấy giỏ hàng (ĐÃ CẬP NHẬT LOGIC TÍNH TỔNG)
+     * Hoạt động chính xác với CartItemDto (không có quantity)
+     */
+    public CartDto getCartByUsername(String username) {
+        Cart cart = findOrCreateCartByUsername(username);
+        CartDto cartDto = cartMapper.toDto(cart);
 
-    //Lấy tất cả các mục trong giỏ hàng của khách hàng theo customerId
-    public List<CartItem> getCartItemByCustomerId(Long customerId) {
-        return cartItemRepo.findAllGameItemByCustomerId(customerId);
-    }
-
-
-
-    //Thêm mục vào giỏ hàng
-    public boolean addItem(CartItem cartItem) {
-        try {
-            cartItemRepo.save(cartItem);
-            return true;
-        } catch (Exception e) {
-            return false;
+        // --- Logic Service: Tính tổng tiền (totalPrice) ---
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        for (CartItemDto itemDto : cartDto.getItems()) {
+            // Cộng thẳng giá cuối của từng item (vì không có số lượng)
+            totalPrice = totalPrice.add(itemDto.getFinalPrice());
         }
+        cartDto.setTotalPrice(totalPrice);
+
+        return cartDto;
     }
 
-    //Xóa mục khỏi giỏ hàng
-    public boolean removeItem(CartItem cartItem) {
-        try {
-            cartItemRepo.delete(cartItem);
-            return true;
-        } catch (Exception e) {
-            return false;
+    /**
+     * Thêm món hàng (ĐÃ CẬP NHẬT LOGIC)
+     * Hoạt động chính xác với CartItemDto (không có quantity)
+     */
+    public CartDto addItemToCart(String username, CartItemRequestDto request) {
+        Cart cart = findOrCreateCartByUsername(username);
+        Game game = gameRepository.findById(request.getGameId())
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy Game"));
+
+        // 1. Kiểm tra xem game đã có trong giỏ chưa
+        boolean itemExists = cartItemRepository.findByCartIdAndGameId(cart.getId(), game.getId()).isPresent();
+
+        if (itemExists) {
+            throw new RuntimeException("Game này đã có trong giỏ hàng của bạn.");
         }
+
+        // 2. Nếu chưa có, tạo item mới
+        CartItem item = new CartItem();
+        item.setCart(cart);
+        item.setGame(game);
+
+        cartItemRepository.save(item);
+
+        return getCartByUsername(username); // Trả về giỏ hàng đã cập nhật
     }
 
+    /**
+     * Xóa món hàng khỏi giỏ
+     */
+    public CartDto removeItemFromCart(String username, Long gameId) {
+        Cart cart = findOrCreateCartByUsername(username);
+        CartItem item = cartItemRepository.findByCartIdAndGameId(cart.getId(), gameId)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy món hàng trong giỏ"));
 
-    //Xóa tất cả mục khỏi giỏ hàng
-    public boolean clearAllItemInCart(long cartId, Long customerId) {
-        try {
-            cartItemRepo.deleteAll(getCartItemByCustomerId(customerId));
-            Cart cart = cartRepo.findById(cartId).orElse(null);
-            assert cart != null;
-            cart.setTotalPrice(BigDecimal.ZERO);
-            cartRepo.save(cart);
-            return true;
-        } catch (Exception e) {
-            return false;
+        cartItemRepository.delete(item);
+
+        return getCartByUsername(username);
+    }
+
+    //--- Helper Method (Giữ nguyên) ---
+    private Cart findOrCreateCartByUsername(String username) {
+        Customer customer = customerRepository.findByAccountUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy Customer cho account: " + username));
+
+        if (customer.getCart() != null) {
+            return customer.getCart();
         }
+
+        Cart newCart = new Cart();
+        Cart savedCart = cartRepository.save(newCart);
+
+        customer.setCart(savedCart);
+        customerRepository.save(customer);
+
+        return savedCart;
     }
 
+    public CartDto clearCart(String username) {
+        // 1. Tìm giỏ hàng của user
+        Cart cart = findOrCreateCartByUsername(username);
 
+        // 2. Xóa tất cả item trong list
+        // Nhờ "orphanRemoval = true" trên Entity Cart,
+        // JPA sẽ tự động xóa các CartItem này khỏi CSDL.
+        cart.getCartItems().clear();
+
+        // 3. (Không bắt buộc, nhưng rõ ràng) Lưu giỏ hàng đã bị xóa item
+        cartRepository.save(cart);
+
+        // 4. Trả về DTO giỏ hàng (lúc này đã trống)
+        return getCartByUsername(username);
+    }
 
 }
