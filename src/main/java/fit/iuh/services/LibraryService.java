@@ -2,16 +2,16 @@ package fit.iuh.services;
 
 import fit.iuh.models.Customer;
 import fit.iuh.models.Game;
-import fit.iuh.models.GameSubmission; // Import mới
-import fit.iuh.models.enums.SubmissionStatus; // Import mới
+import fit.iuh.models.GameSubmission;
+import fit.iuh.models.enums.SubmissionStatus;
 import fit.iuh.repositories.CustomerRepository;
-import fit.iuh.repositories.GameSubmissionRepository; // Import mới
+import fit.iuh.repositories.GameSubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,30 +22,43 @@ public class LibraryService {
     private CustomerRepository customerRepository;
 
     @Autowired
-    private GameSubmissionRepository gameSubmissionRepository; // <-- TIÊM REPO MỚI
+    private GameSubmissionRepository gameSubmissionRepository;
 
     public List<Game> getPurchasedGames(
             String username,
             Long categoryId,
             BigDecimal minPrice,
             BigDecimal maxPrice,
-            String status // <-- THÊM THAM SỐ MỚI
+            String status
     ) {
 
-        // 1. Lấy Customer và TOÀN BỘ thư viện của họ (giữ nguyên)
+        // 1. Lấy customer + thư viện game
         Customer customer = customerRepository
                 .findByAccount_UsernameWithLibrary(username)
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "Không tìm thấy customer với username: " + username
                 ));
 
-        // 2. Lấy danh sách tất cả game đã mua (giữ nguyên)
         List<Game> allOwnedGames = customer.getLibrary();
 
-        // 3. Lọc danh sách bằng Java Stream
+        if (allOwnedGames.isEmpty()) return List.of();
+
+        // 2. Lấy toàn bộ submissions (TRÁNH gọi DB trong vòng lặp)
+        Map<Long, GameSubmission> submissionsMap =
+                gameSubmissionRepository.findAllById(
+                                allOwnedGames.stream()
+                                        .map(g -> g.getGameBasicInfos().getId())
+                                        .collect(Collectors.toList())
+                        )
+                        .stream()
+                        .collect(Collectors.toMap(
+                                s -> s.getGameBasicInfos().getId(),
+                                s -> s
+                        ));
+
         Stream<Game> gameStream = allOwnedGames.stream();
 
-        // Lọc theo Category (giữ nguyên)
+        // === 3. Lọc Category ===
         if (categoryId != null) {
             gameStream = gameStream.filter(game ->
                     game.getGameBasicInfos() != null &&
@@ -54,7 +67,7 @@ public class LibraryService {
             );
         }
 
-        // Lọc theo Giá Tối Thiểu (giữ nguyên)
+        // === 4. Lọc theo khoảng giá ===
         if (minPrice != null) {
             gameStream = gameStream.filter(game ->
                     game.getGameBasicInfos() != null &&
@@ -62,7 +75,6 @@ public class LibraryService {
             );
         }
 
-        // Lọc theo Giá Tối Đa (giữ nguyên)
         if (maxPrice != null) {
             gameStream = gameStream.filter(game ->
                     game.getGameBasicInfos() != null &&
@@ -70,35 +82,27 @@ public class LibraryService {
             );
         }
 
-        // --- 4. LỌC THEO TRẠNG THÁI (MỚI) ---
-        if (status != null && !status.isEmpty()) {
+        // === 5. Lọc theo trạng thái Submission ===
+        if (status != null && !status.isBlank() && !status.equalsIgnoreCase("ALL")) {
+
             SubmissionStatus filterStatus;
             try {
-                // Chuyển string (VD: "APPROVED") thành Enum
                 filterStatus = SubmissionStatus.valueOf(status.toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Nếu frontend gửi "abc", trả về danh sách rỗng
-                return List.of();
+                return List.of(); // status không hợp lệ → trả về empty
             }
 
-            final SubmissionStatus finalStatus = filterStatus; // Cần cho lambda
+            SubmissionStatus finalStatus = filterStatus;
 
             gameStream = gameStream.filter(game -> {
-                if (game.getGameBasicInfos() == null) return false;
+                Long id = game.getGameBasicInfos().getId();
+                GameSubmission submission = submissionsMap.get(id);
 
-                // !!! CẢNH BÁO: N+1 QUERY !!!
-                // Gọi DB cho MỖI game để tìm trạng thái
-                GameSubmission submission = gameSubmissionRepository
-                        .findById(game.getGameBasicInfos().getId())
-                        .orElse(null);
-
-                if (submission == null) return false;
-                return submission.getStatus() == finalStatus;
+                return submission != null &&
+                        submission.getStatus() == finalStatus;
             });
         }
-        // --- HẾT PHẦN LỌC TRẠNG THÁI ---
 
-        // 5. Trả về danh sách đã lọc (giữ nguyên)
         return gameStream.collect(Collectors.toList());
     }
 }
