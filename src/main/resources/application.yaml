@@ -17,4 +17,4 @@ spring:
         format_sql: true
 
   jwt:
-    secret: ${JWT_SECRET}
+    secret: "X2s9kLmN0pQrT5uY8aBcDeFgHiJkL1zZ"

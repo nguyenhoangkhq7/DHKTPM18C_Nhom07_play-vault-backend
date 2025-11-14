@@ -11,14 +11,21 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "order_items")
 public class OrderItem {
+
    @Id
    @Column(name = "id", nullable = false)
    @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
-   @Column(name = "price", precision = 10, scale = 2)
+   // Giá gốc của sản phẩm
+   @Column(name = "price", precision = 10, scale = 2, nullable = false)
    private BigDecimal price;
 
+   // Số lượng sản phẩm trong đơn
+//   @Column(name = "quantity", nullable = false)
+//   private int quantity;
+
+   // Tổng tiền của dòng này (sau khi áp dụng khuyến mãi nếu có)
    @Column(name = "total", precision = 10, scale = 2)
    private BigDecimal total;
 
@@ -34,4 +41,23 @@ public class OrderItem {
    @JoinColumn(name = "promotion_id")
    private Promotion promotion;
 
+   // --------------------------
+   // Business logic
+   // --------------------------
+
+   /**
+    * Tính thành tiền cho sản phẩm này (đã bao gồm khuyến mãi nếu có)
+    */
+   public BigDecimal getSubtotal() {
+      BigDecimal baseTotal = price.multiply(BigDecimal.ONE);
+
+      // Nếu có promotion (giảm giá), giả sử có phương thức getDiscountRate() (VD: 0.1 = 10%)
+      if (promotion != null && promotion.getDiscountRate() != null) {
+         BigDecimal discount = baseTotal.multiply(promotion.getDiscountRate());
+         baseTotal = baseTotal.subtract(discount);
+      }
+
+      this.total = baseTotal;
+      return baseTotal;
+   }
 }
