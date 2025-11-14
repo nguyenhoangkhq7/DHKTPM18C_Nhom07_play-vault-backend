@@ -30,4 +30,5 @@ public class CartItem {
    @JoinColumn(name = "game_id", nullable = false)
    private Game game;
 
+
 }
