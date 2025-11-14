@@ -95,5 +95,4 @@ public class Account {
    public boolean isPublisher() {
       return this.role == Role.PUBLISHER;
    }
-
 }

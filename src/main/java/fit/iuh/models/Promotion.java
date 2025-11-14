@@ -13,8 +13,10 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "promotions")
 public class Promotion {
+
    @Id
    @Column(name = "id", nullable = false)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
    @Column(name = "name", nullable = false)
@@ -43,4 +45,44 @@ public class Promotion {
    @JoinColumn(name = "publisher_id", nullable = false)
    private Publisher publisher;
 
+   // --------------------------
+   // Business logic
+   // --------------------------
+
+   /**
+    * Trả về tỷ lệ giảm giá (0.1 = 10%), nếu không có thì trả về 0.
+    */
+   public BigDecimal getDiscountRate() {
+      if (discountPercent != null) {
+         return discountPercent.divide(BigDecimal.valueOf(100));
+      }
+      return BigDecimal.ZERO;
+   }
+
+   /**
+    * Tính số tiền được giảm cho một sản phẩm cụ thể.
+    * @param basePrice giá gốc của sản phẩm
+    * @return số tiền giảm
+    */
+   public BigDecimal calculateDiscount(BigDecimal basePrice) {
+      if (basePrice == null) return BigDecimal.ZERO;
+
+      BigDecimal discount = BigDecimal.ZERO;
+
+      // Ưu tiên giảm theo phần trăm
+      if (discountPercent != null && discountPercent.compareTo(BigDecimal.ZERO) > 0) {
+         discount = basePrice.multiply(getDiscountRate());
+      }
+      // Nếu có giảm theo số tiền cố định, cộng thêm
+      if (discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+         discount = discount.add(discountAmount);
+      }
+
+      // Không cho giảm quá giá gốc
+      if (discount.compareTo(basePrice) > 0) {
+         discount = basePrice;
+      }
+
+      return discount;
+   }
 }

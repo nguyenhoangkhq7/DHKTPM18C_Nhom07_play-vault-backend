@@ -13,6 +13,7 @@ import org.hibernate.annotations.ColumnDefault;
 public class PaymentInfo {
    @Id
    @Column(name = "id", nullable = false)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
    @Enumerated(EnumType.STRING)

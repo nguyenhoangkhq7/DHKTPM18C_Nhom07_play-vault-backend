@@ -13,6 +13,7 @@ import java.time.LocalDate;
 public class BlockRecord {
    @Id
    @Column(name = "id", nullable = false)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
    @Column(name = "is_block")

@@ -14,6 +14,7 @@ import java.util.List;
 public class Game {
    @Id
    @Column(name = "game_basic_info_id", nullable = false)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
 
    @MapsId
@@ -31,4 +32,6 @@ public class Game {
            orphanRemoval = true
    )
    private List<Review> reviews;
+
+
 }
