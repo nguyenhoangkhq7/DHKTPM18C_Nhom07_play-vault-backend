@@ -1,6 +1,6 @@
 package fit.iuh.mappers;
 
-import fit.iuh.dtos.OrderItemDTO;
+import fit.iuh.dtos.OrderItemDto;
 import fit.iuh.models.OrderItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -14,11 +14,11 @@ public interface OrderItemMapper {
     @Mapping(source = "game.gameBasicInfos.thumbnail", target = "gameThumbnail")  
     @Mapping(source = "promotion.id", target = "promotionId")
     @Mapping(target = "total", ignore = true)  
-    OrderItemDTO toDTO(OrderItem item);
+    OrderItemDto toDTO(OrderItem item);
 
     @Mapping(source = "orderId", target = "order.id")
     @Mapping(source = "gameId", target = "game.id")
     @Mapping(source = "promotionId", target = "promotion.id")
     @Mapping(target = "total", ignore = true)
-    OrderItem toEntity(OrderItemDTO dto);
+    OrderItem toEntity(OrderItemDto dto);
 }
