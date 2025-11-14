@@ -86,25 +86,4 @@ public class Order {
       }
       this.status = OrderStatus.CANCELLED;
    }
-
-   /**
-    * Sinh hóa đơn (ví dụ minh họa)
-    */
-   public String generateInvoice() {
-      return String.format("""
-                ----- INVOICE -----
-                Order ID   : %d
-                Customer   : %s
-                Created At : %s
-                Status     : %s
-                Total      : %s
-                -------------------
-                """,
-              id,
-              customer != null ? customer.getFullName() : "Unknown",
-              createdAt,
-              status,
-              total != null ? total : "0.00"
-      );
-   }
 }

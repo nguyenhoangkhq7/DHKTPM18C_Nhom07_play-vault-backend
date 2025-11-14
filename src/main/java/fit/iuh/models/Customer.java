@@ -2,6 +2,7 @@ package fit.iuh.models;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -44,4 +45,13 @@ public class Customer {
            inverseJoinColumns = @JoinColumn(name = "game_id")
    )
    private List<Game> library;
+
+   @ManyToMany(fetch = FetchType.LAZY)
+   @JoinTable(
+           name = "wishlists",
+           joinColumns = @JoinColumn(name = "customer_id"),
+           inverseJoinColumns = @JoinColumn(name = "game_id")
+   )
+   private List<Game> wishlist;
+
 }
