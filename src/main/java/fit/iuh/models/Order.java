@@ -14,20 +14,21 @@ import java.util.List;
 @Entity
 @Table(name = "orders")
 public class Order {
+
    @Id
-   @Column(name = "id", nullable = false)
    @GeneratedValue(strategy = GenerationType.IDENTITY)
+   @Column(name = "id", nullable = false)
    private Long id;
 
-   @Column(name = "created_at")
+   @Column(name = "created_at", nullable = false)
    private LocalDate createdAt;
-
-   @Column(name = "total", precision = 10, scale = 2)
-   private BigDecimal total;
 
    @Enumerated(EnumType.STRING)
    @Column(name = "status", nullable = false, length = 50)
    private OrderStatus status;
+
+   @Column(name = "total", precision = 10, scale = 2)
+   private BigDecimal total;
 
    @ManyToOne(fetch = FetchType.LAZY, optional = false)
    @JoinColumn(name = "customer_id", nullable = false)
@@ -37,7 +38,52 @@ public class Order {
    @JoinColumn(name = "payment_id")
    private Payment payment;
 
-   @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
    private List<OrderItem> orderItems;
 
+   // ------------------------------------
+   // Constructors
+   // ------------------------------------
+   public Order() {
+      this.createdAt = LocalDate.now();
+      this.status = OrderStatus.PENDING; // trạng thái mặc định
+      this.total = BigDecimal.ZERO;
+   }
+
+   // ------------------------------------
+   // Business Methods
+   // ------------------------------------
+
+   /**
+    * Tính tổng tiền đơn hàng từ danh sách OrderItem
+    */
+   public BigDecimal totalPrice() {
+      if (orderItems == null || orderItems.isEmpty()) {
+         return BigDecimal.ZERO;
+      }
+      this.total = orderItems.stream()
+              .map(OrderItem::getSubtotal)
+              .reduce(BigDecimal.ZERO, BigDecimal::add);
+      return this.total;
+   }
+
+   /**
+    * Hoàn tất đơn hàng
+    */
+   public void completeOrder() {
+      if (this.status == OrderStatus.CANCELLED) {
+         throw new IllegalStateException("Không thể hoàn tất đơn hàng đã bị hủy.");
+      }
+      this.status = OrderStatus.COMPLETED;
+   }
+
+   /**
+    * Hủy đơn hàng
+    */
+   public void cancelOrder() {
+      if (this.status == OrderStatus.COMPLETED) {
+         throw new IllegalStateException("Không thể hủy đơn hàng đã hoàn tất.");
+      }
+      this.status = OrderStatus.CANCELLED;
+   }
 }
