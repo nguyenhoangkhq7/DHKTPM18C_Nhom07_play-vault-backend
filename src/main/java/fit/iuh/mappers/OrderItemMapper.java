@@ -9,13 +9,16 @@ import org.mapstruct.Mapping;
 public interface OrderItemMapper {
 
     @Mapping(source = "order.id", target = "orderId")
-    @Mapping(source = "game.id", target = "gameId")
+    @Mapping(source = "game.gameBasicInfos.id", target = "gameId")     
+    @Mapping(source = "game.gameBasicInfos.name", target = "gameTitle") 
+    @Mapping(source = "game.gameBasicInfos.thumbnail", target = "gameThumbnail")  
     @Mapping(source = "promotion.id", target = "promotionId")
+    @Mapping(target = "total", ignore = true)  
     OrderItemDTO toDTO(OrderItem item);
 
     @Mapping(source = "orderId", target = "order.id")
     @Mapping(source = "gameId", target = "game.id")
     @Mapping(source = "promotionId", target = "promotion.id")
-    @Mapping(target = "total", ignore = true) // subtotal sẽ tự tính
+    @Mapping(target = "total", ignore = true)
     OrderItem toEntity(OrderItemDTO dto);
 }
