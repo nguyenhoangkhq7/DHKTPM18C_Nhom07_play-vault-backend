@@ -13,23 +13,16 @@ import java.util.List;
 )
 public interface OrderMapper {
 
-    // ========================================================================
-    // 1. DÀNH CHO API CHI TIẾT ĐƠN HÀNG (Admin / CRUD) → OrderDTO
-    // ========================================================================
     @Mapping(source = "customer.id", target = "customerId")
     @Mapping(source = "payment.id", target = "paymentId")
     @Mapping(target = "total", ignore = true) // Tính lại ở Service
-    OrderDTO toDTO(Order order);
+    OrderDto toDTO(Order order);
 
     @Mapping(source = "customerId", target = "customer.id")
     @Mapping(source = "paymentId", target = "payment.id")
     @Mapping(target = "total", ignore = true)
-    Order toEntity(OrderDTO dto);
+    Order toEntity(OrderDto dto);
 
-
-    // ========================================================================
-    // 2. DÀNH CHO LỊCH SỬ MUA HÀNG (User) → OrderHistoryResponse + PurchasedGameResponse
-    // ========================================================================
     List<OrderHistoryResponse> toOrderHistoryResponseList(List<Order> orders);
 
     @Mapping(target = "orderCode", source = "id", qualifiedByName = "formatOrderCode")
@@ -46,19 +39,11 @@ public interface OrderMapper {
     @Mapping(target = "categoryName", source = "game.gameBasicInfos.category.name")
     PurchasedGameResponse toPurchasedGameResponse(OrderItem orderItem);
 
-
-    // ========================================================================
-    // 3. DÀNH CHO GIỎ HÀNG → ORDER (quangvinh) → OrderDto (giống OrderDTO nhưng nhẹ hơn)
-    // ========================================================================
     @Mapping(source = "items", target = "items")
     OrderDto toOrderDto(Order order);
 
     List<OrderDto> toOrderDtoList(List<Order> orders);
 
-
-    // ========================================================================
-    // HELPER: Format mã đơn hàng (ORD-001)
-    // ========================================================================
     @Named("formatOrderCode")
     default String formatOrderCode(Long id) {
         if (id == null) return null;
