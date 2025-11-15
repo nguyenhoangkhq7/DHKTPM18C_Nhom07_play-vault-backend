@@ -1,11 +1,15 @@
 package fit.iuh.controllers;
 
 import fit.iuh.dtos.GameDTO;
+import fit.iuh.dtos.GameSearchResponseDTO;
 import fit.iuh.models.Game;
 import fit.iuh.models.GameBasicInfo;
 import fit.iuh.services.GameBasicInfoService;
 import fit.iuh.services.GameService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,5 +43,22 @@ public class GameController {
     @GetMapping("/favorites/{customerId}")
     public List<GameBasicInfo> getFavoriteGames(@PathVariable Long customerId) {
         return gameBasicInfoService.findAllByGameFavoriteWithCustomerId(customerId);
+    }
+
+    @GetMapping("/search")
+    // THAY ĐỔI KIỂU TRẢ VỀ Ở ĐÂY
+    public ResponseEntity<Page<GameSearchResponseDTO>> searchGames(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+
+        // Không cần thay đổi gì ở đây
+        Page<GameSearchResponseDTO> games = gameService.searchAndFilterGames(
+                keyword, categoryId, minPrice, maxPrice, pageable);
+
+        return ResponseEntity.ok(games);
     }
 }
