@@ -2,61 +2,79 @@ package fit.iuh.controllers;
 
 import fit.iuh.dtos.CartResponse;
 import fit.iuh.services.CartService;
-import fit.iuh.services.JwtService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/cart")
 public class CartController {
 
-    @Autowired
-    private CartService cartService;
+    private final CartService cartService;
 
-    @Autowired
-    private JwtService jwtService;
-
-    // Helper method để lấy username từ Header
-    private String getUsernameFromHeader(String authHeader) {
-        // Cắt bỏ chữ "Bearer " để lấy token thô
-        String token = authHeader.replace("Bearer ", "");
-        // Gọi hàm chính xác trong JwtService của bạn
-        return jwtService.getUsernameFromToken(token);
+    public CartController(CartService cartService) {
+        this.cartService = cartService;
     }
 
-    // GET: Xem giỏ hàng
-    // URL: http://localhost:8080/api/cart
+    /**
+     * Lấy giỏ hàng hiện tại của user
+     */
     @GetMapping
-    public ResponseEntity<CartResponse> viewCart(@RequestHeader("Authorization") String authHeader) {
-        String username = getUsernameFromHeader(authHeader);
-        CartResponse cart = cartService.getCartByUsername(username);
-        return ResponseEntity.ok(cart);
-    }
-
-    // DELETE: Xóa sản phẩm khỏi giỏ
-    // URL: http://localhost:8080/api/cart/item/{id}
-    @DeleteMapping("/item/{cartItemId}")
-    public ResponseEntity<CartResponse> removeItem(
-            @PathVariable Long cartItemId,
-            @RequestHeader("Authorization") String authHeader) {
-
-        String username = getUsernameFromHeader(authHeader);
-        cartService.removeCartItem(username, cartItemId);
-
-        // Trả về giỏ hàng mới nhất để UI cập nhật
+    public ResponseEntity<CartResponse> getMyCart(Principal principal) {
+        String username = principal.getName();
         return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
 
-    // POST: Thêm sản phẩm vào giỏ (Dùng để test)
-    // URL: http://localhost:8080/api/cart/add?gameId=1
-    @PostMapping("/add")
-    public ResponseEntity<String> addToCart(
-            @RequestParam Long gameId,
-            @RequestHeader("Authorization") String authHeader) {
-
-        String username = getUsernameFromHeader(authHeader);
+    /**
+     * Thêm sản phẩm vào giỏ hàng theo gameId
+     */
+    @PostMapping("/items/{gameId}")
+    public ResponseEntity<CartResponse> addItemToCart(
+            @PathVariable Long gameId,
+            Principal principal
+    ) {
+        String username = principal.getName();
         cartService.addToCart(username, gameId);
-        return ResponseEntity.ok("Added successfully");
+        return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
+
+    /**
+     * Xóa 1 item khỏi giỏ hàng bằng cartItemId
+     */
+    @DeleteMapping("/items/{cartItemId}")
+    public ResponseEntity<CartResponse> removeItemFromCart(
+            @PathVariable Long cartItemId,
+            Principal principal
+    ) {
+        String username = principal.getName();
+        cartService.removeCartItem(username, cartItemId);
+        return ResponseEntity.ok(cartService.getCartByUsername(username));
+    }
+
+    /**
+     * Clear toàn bộ giỏ hàng
+     */
+    @DeleteMapping("/clear")
+    public ResponseEntity<CartResponse> clearCart(Principal principal) {
+        String username = principal.getName();
+        cartService.clearCart(username); // bạn sẽ cần implement trong CartService
+        return ResponseEntity.ok(cartService.getCartByUsername(username));
+    }
+
+    /**
+     * API cập nhật số lượng item trong giỏ
+     * (thường giỏ hàng cần API này)
+     */
+    @PutMapping("/items/{cartItemId}/{quantity}")
+    public ResponseEntity<CartResponse> updateItemQuantity(
+            @PathVariable Long cartItemId,
+            @PathVariable int quantity,
+            Principal principal
+    ) {
+        String username = principal.getName();
+        cartService.updateQuantity(username, cartItemId, quantity); // cần implement
+        return ResponseEntity.ok(cartService.getCartByUsername(username));
+    }
+
 }
