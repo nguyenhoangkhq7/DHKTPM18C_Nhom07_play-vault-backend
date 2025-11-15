@@ -1,5 +1,7 @@
 package fit.iuh.services.impl;
 
+import fit.iuh.dtos.CategoryDto;
+import fit.iuh.mappers.CategoryMapper;
 import fit.iuh.models.Category;
 import fit.iuh.repositories.CategoryRepository;
 import lombok.AllArgsConstructor;
@@ -12,9 +14,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements fit.iuh.services.CategoryService {
     private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
     @Override
-    public List<Category> findAll() {
-        return categoryRepository.findAll();
+    public List<CategoryDto> findAll() {
+        return categoryMapper.toDTOs(categoryRepository.findAll());
     }
 }

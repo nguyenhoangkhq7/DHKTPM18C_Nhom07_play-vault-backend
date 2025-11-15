@@ -3,6 +3,7 @@ package fit.iuh.mappers;
 import fit.iuh.dtos.CartItemDto;
 import fit.iuh.dtos.GameBasicInfoDto;
 import fit.iuh.dtos.GameCardDto;
+import fit.iuh.dtos.GameDTO;
 import fit.iuh.models.CartItem;
 import fit.iuh.models.Game;
 import org.mapstruct.*;
@@ -38,4 +39,9 @@ public interface GameMapper {
     CartItemDto toCartItemDto(CartItem cartItem);
 
     List<CartItemDto> toCartItemDtoList(List<CartItem> cartItems);
+
+
+    @Mapping(source = "gameBasicInfos", target = "gameBasicInfos")
+    @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
+    GameDTO toDTO(Game game);
 }
