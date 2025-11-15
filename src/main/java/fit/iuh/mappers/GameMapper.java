@@ -1,20 +1,18 @@
 package fit.iuh.mappers;
 
 import fit.iuh.dtos.GameBasicInfoDto;
+import fit.iuh.dtos.GameCardDto;
+import fit.iuh.dtos.GameDTO;
+import fit.iuh.models.CartItem;
 import fit.iuh.models.Game;
 import org.mapstruct.*;
 
 
 import java.util.List;
 
-@Mapper(
-        componentModel = "spring"
-)
+@Mapper(componentModel = "spring")
 public interface GameMapper {
-    /**
-     * Chuyển Game (Model) -> GameBasicInfoDto (DTO)
-     * Tất cả dữ liệu đều nằm trong "game.gameBasicInfos"
-     */
+
     @Named("toBasicInfoDto")
     @Mapping(source = "gameBasicInfos.name", target = "name")
     @Mapping(source = "gameBasicInfos.shortDescription", target = "shortDescription")
@@ -28,7 +26,21 @@ public interface GameMapper {
     @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisherName")
     GameBasicInfoDto toBasicInfoDto(Game game); // Input là Game
 
-    // Map list Game (Tự động dùng phương thức toBasicInfoDto ở trên)
     List<GameBasicInfoDto> toDtoList(List<Game> games);
 
+    @Mapping(source = "gameBasicInfos.name", target = "name")
+    @Mapping(source = "gameBasicInfos.thumbnail", target = "thumbnail")
+    @Mapping(source = "gameBasicInfos.price", target = "price")
+    GameCardDto toCardDto(Game game);
+
+    @Mapping(target = "game", source = "game", qualifiedByName = "toBasicInfoDto")
+    @Mapping(target = "finalPrice", expression = "java(cartItem.getPrice().subtract(cartItem.getDiscount() != null ? cartItem.getDiscount() : java.math.BigDecimal.ZERO))")
+    CartItemDto toCartItemDto(CartItem cartItem);
+
+    List<CartItemDto> toCartItemDtoList(List<CartItem> cartItems);
+
+
+    @Mapping(source = "gameBasicInfos", target = "gameBasicInfos")
+    @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
+    GameDTO toDTO(Game game);
 }

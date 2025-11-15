@@ -10,9 +10,12 @@ import org.mapstruct.Mapping;
 public interface OrderItemMapper {
 
     @Mapping(source = "order.id", target = "orderId")
-    @Mapping(source = "game.id", target = "gameId")
+    @Mapping(source = "game.gameBasicInfos.id", target = "gameId")     
+    @Mapping(source = "game.gameBasicInfos.name", target = "gameTitle") 
+    @Mapping(source = "game.gameBasicInfos.thumbnail", target = "gameThumbnail")  
     @Mapping(source = "promotion.id", target = "promotionId")
-    OrderItemDTO toDTO(OrderItem item);
+    @Mapping(target = "total", ignore = true)  
+    OrderItemDto toDTO(OrderItem item);
 
     @Mapping(source = "orderId", target = "order.id")
     @Mapping(source = "gameId", target = "game.id")
