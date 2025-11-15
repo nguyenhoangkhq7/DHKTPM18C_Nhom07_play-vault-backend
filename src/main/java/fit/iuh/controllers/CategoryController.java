@@ -1,9 +1,11 @@
 package fit.iuh.controllers;
 
+import fit.iuh.dtos.CategoryDto;
 import fit.iuh.models.Category;
 import fit.iuh.services.CategoryService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +20,8 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public List<Category> getAllCategories() {
-        return categoryService.findAll();
+    public ResponseEntity<List<CategoryDto>> getAllCategories(){
+        List<CategoryDto> categories= categoryService.findAll();
+        return ResponseEntity.ok(categories);
     }
 }
