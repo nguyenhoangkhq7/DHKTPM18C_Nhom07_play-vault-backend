@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal; // Import để lấy thông tin user đã đăng nhập
 
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/cart")
 public class CartController {
@@ -18,38 +20,63 @@ public class CartController {
     }
 
     /**
-     * API Lấy giỏ hàng CỦA TÔI (tự động lấy username đã đăng nhập)
+     * Lấy giỏ hàng hiện tại của user
      */
     @GetMapping
-    public ResponseEntity<CartDto> getMyCart(Principal principal) {
+    public ResponseEntity<CartResponse> getMyCart(Principal principal) {
         String username = principal.getName();
         return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
 
     /**
-     * API Thêm món hàng vào giỏ (tự động lấy username)
+     * Thêm sản phẩm vào giỏ hàng theo gameId
      */
-    @PostMapping("/items")
-    public ResponseEntity<CartDto> addItemToCart(@RequestBody CartItemRequestDto request, Principal principal) {
+    @PostMapping("/items/{gameId}")
+    public ResponseEntity<CartResponse> addItemToCart(
+            @PathVariable Long gameId,
+            Principal principal
+    ) {
         String username = principal.getName();
-        CartDto updatedCart = cartService.addItemToCart(username, request);
-        return ResponseEntity.ok(updatedCart);
+        cartService.addToCart(username, gameId);
+        return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
 
     /**
-     * API Xóa món hàng khỏi giỏ (tự động lấy username)
+     * Xóa 1 item khỏi giỏ hàng bằng cartItemId
      */
-    @DeleteMapping("/items/{gameId}")
-    public ResponseEntity<CartDto> removeItemFromCart(@PathVariable Long gameId, Principal principal) {
+    @DeleteMapping("/items/{cartItemId}")
+    public ResponseEntity<CartResponse> removeItemFromCart(
+            @PathVariable Long cartItemId,
+            Principal principal
+    ) {
         String username = principal.getName();
-        CartDto updatedCart = cartService.removeItemFromCart(username, gameId);
-        return ResponseEntity.ok(updatedCart);
+        cartService.removeCartItem(username, cartItemId);
+        return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
 
-    @DeleteMapping("/items")
-    public ResponseEntity<CartDto> clearMyCart(Principal principal) {
+    /**
+     * Clear toàn bộ giỏ hàng
+     */
+    @DeleteMapping("/clear")
+    public ResponseEntity<CartResponse> clearCart(Principal principal) {
         String username = principal.getName();
-        CartDto updatedCart = cartService.clearCart(username);
-        return ResponseEntity.ok(updatedCart);
+        cartService.clearCart(username); // bạn sẽ cần implement trong CartService
+        return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
+
+    /**
+     * API cập nhật số lượng item trong giỏ
+     * (thường giỏ hàng cần API này)
+     */
+    @PutMapping("/items/{cartItemId}/{quantity}")
+    public ResponseEntity<CartResponse> updateItemQuantity(
+            @PathVariable Long cartItemId,
+            @PathVariable int quantity,
+            Principal principal
+    ) {
+        String username = principal.getName();
+        cartService.updateQuantity(username, cartItemId, quantity); // cần implement
+        return ResponseEntity.ok(cartService.getCartByUsername(username));
+    }
+
 }

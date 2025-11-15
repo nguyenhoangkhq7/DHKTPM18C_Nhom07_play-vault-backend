@@ -10,8 +10,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-@Data
-public class OrderDto {
+@Getter
+@Setter
+public class OrderDTO {
+
     private Long id;
     private String orderCode; // nếu bạn có trường này, hoặc dùng id
 
@@ -25,5 +27,17 @@ public class OrderDto {
 
     @NotNull(message = "Trạng thái đơn hàng không được để trống")
     private OrderStatus status;
-    private List<OrderItemDto> items;
+
+    @NotNull(message = "Tổng tiền không được để trống")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Tổng tiền phải >= 0")
+    private BigDecimal total;
+
+    @NotNull(message = "ID khách hàng không được để trống")
+    private Long customerId;
+
+    private Long paymentId;
+
+    @Valid
+    @NotEmpty(message = "Danh sách order items không được để trống")
+    private List<OrderItemDTO> orderItems;
 }

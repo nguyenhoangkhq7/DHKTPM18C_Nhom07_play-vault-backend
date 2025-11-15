@@ -2,7 +2,7 @@ package fit.iuh.services.impl;
 
 import fit.iuh.dtos.GameDTO;
 import fit.iuh.dtos.GameSearchResponseDTO;
-import fit.iuh.dtos.mapper.GameMapper;
+import fit.iuh.mappers.GameMapper;
 import fit.iuh.models.Game;
 import fit.iuh.repositories.GameRepository;
 import fit.iuh.services.GameService;
