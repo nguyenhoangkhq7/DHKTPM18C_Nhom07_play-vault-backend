@@ -43,9 +43,8 @@ public class UserProfileServiceImpl implements UserProfileService {
         Page<Order> page = orderRepository.findByCustomer_Id(customerId, pageable);
 
         List<OrderDto> dtoList = page.getContent().stream()
-                .map(orderMapper::toDto)
+                .map(orderMapper::toDTO)
                 .collect(Collectors.toList());
-
         return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 }
