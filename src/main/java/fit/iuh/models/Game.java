@@ -32,4 +32,6 @@ public class Game {
            orphanRemoval = true
    )
    private List<Review> reviews;
+
+
 }

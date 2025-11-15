@@ -1,10 +1,13 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: play-vault-backend
   datasource:
-    url: jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
     username: root
-    password: sapassword
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:

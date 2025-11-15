@@ -1,9 +1,11 @@
 package fit.iuh.controllers;
 
-import fit.iuh.dtos.CartResponse;
+import fit.iuh.dtos.CartDto;
+import fit.iuh.dtos.CartItemRequestDto;
 import fit.iuh.services.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.security.Principal; // Import để lấy thông tin user đã đăng nhập
 
 import java.security.Principal;
 

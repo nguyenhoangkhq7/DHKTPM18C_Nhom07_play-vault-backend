@@ -6,9 +6,14 @@ USE playvaultdb;
 -- ========================================
 
 -- 1. TÀI KHOẢN ADMIN
+-- BƯỚC 1: CHẠY CÂU LỆNH NÀY TRƯỚC
 INSERT INTO accounts (username, password, created_at, status, role, email, phone) VALUES
-    ('admin', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O
-', '2024-01-01', 'ACTIVE', 'ADMIN', 'admin@playvault.com', '0901000001');
+                                                                                      ('admin', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-01', 'ACTIVE', 'ADMIN', 'admin@playvault.com', '0901000001'),
+                                                                                      ('pub_epic', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-02', 'ACTIVE', 'PUBLISHER', 'contact@epic.com', '0901000002'),
+                                                                                      ('pub_rockstar', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-03', 'ACTIVE', 'PUBLISHER', 'contact@rockstar.com', '0901000003'),
+                                                                                      ('pub_cdpr', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-04', 'ACTIVE', 'PUBLISHER', 'contact@cdpr.com', '0901000004'),
+                                                                                      ('pub_valve', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-05', 'ACTIVE', 'PUBLISHER', 'contact@valve.com', '0901000005'),
+                                                                                      ('pub_capcom', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-06', 'ACTIVE', 'PUBLISHER', 'contact@capcom.com', '0901000006');
 
 -- 2. CATEGORIES
 INSERT INTO categories (id, name, description) VALUES
