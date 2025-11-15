@@ -6,7 +6,8 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter

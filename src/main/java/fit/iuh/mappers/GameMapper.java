@@ -1,8 +1,9 @@
 package fit.iuh.mappers;
 
+import fit.iuh.dtos.CartItemDto;
 import fit.iuh.dtos.GameBasicInfoDto;
 import fit.iuh.dtos.GameCardDto;
-import fit.iuh.dtos.GameDTO;
+import fit.iuh.dtos.GameDto;
 import fit.iuh.models.CartItem;
 import fit.iuh.models.Game;
 import org.mapstruct.*;
@@ -42,5 +43,5 @@ public interface GameMapper {
 
     @Mapping(source = "gameBasicInfos", target = "gameBasicInfos")
     @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
-    GameDTO toDTO(Game game);
+    GameDto toDTO(Game game);
 }

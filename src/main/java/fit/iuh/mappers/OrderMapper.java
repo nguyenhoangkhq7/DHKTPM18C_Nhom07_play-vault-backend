@@ -23,17 +23,6 @@ public interface OrderMapper {
 
     List<OrderHistoryResponse> toOrderHistoryResponseList(List<Order> orders);
 
-    @Mapping(target = "orderCode", source = "id", qualifiedByName = "formatOrderCode")
-    @Mapping(target = "date", source = "createdAt")
-    @Mapping(target = "totalPrice", source = "total")
-    @Mapping(target = "games", source = "orderItems")
-    OrderHistoryResponse toOrderHistoryResponse(Order order);
-
-    @Mapping(source = "items", target = "items")
-    OrderDto toOrderDto(Order order);
-
-    List<OrderDto> toOrderDtoList(List<Order> orders);
-
     @Named("formatOrderCode")
     default String formatOrderCode(Long id) {
         if (id == null) return null;

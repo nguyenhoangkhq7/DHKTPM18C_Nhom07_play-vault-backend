@@ -1,7 +1,7 @@
 package fit.iuh.services.impl;
 
-import fit.iuh.dtos.GameDTO;
-import fit.iuh.dtos.GameSearchResponseDTO;
+import fit.iuh.dtos.GameDto;
+import fit.iuh.dtos.GameSearchResponseDto;
 import fit.iuh.mappers.GameMapper;
 import fit.iuh.models.Game;
 import fit.iuh.repositories.GameRepository;
@@ -28,7 +28,7 @@ public class GameServiceImpl implements GameService {
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
     @Transactional(readOnly = true)
-    public Page<GameSearchResponseDTO> searchAndFilterGames(
+    public Page<GameSearchResponseDto> searchAndFilterGames(
             String keyword,
             Long categoryId,
             Double minPrice,
@@ -41,7 +41,7 @@ public class GameServiceImpl implements GameService {
         Specification<Game> spec = GameSpecification.filterBy(keyword, categoryId, minPriceBd, maxPriceBd);
         Page<Game> gamePage = gameRepository.findAll(spec, pageable);
 
-        return gamePage.map(GameSearchResponseDTO::fromEntity);
+        return gamePage.map(GameSearchResponseDto::fromEntity);
         // Hoặc dùng MapStruct: return gamePage.map(gameMapper::toSearchResponseDTO);
     }
 
@@ -50,7 +50,7 @@ public class GameServiceImpl implements GameService {
     // ========================================================================
     @Override
     @Transactional(readOnly = true)
-    public List<GameDTO> findAll() {
+    public List<GameDto> findAll() {
         return gameRepository.findAll()
                 .stream()
                 .map(gameMapper::toDTO)
@@ -59,7 +59,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     @Transactional(readOnly = true)
-    public GameDTO findById(Long id) {
+    public GameDto findById(Long id) {
         return gameRepository.findById(id)
                 .map(gameMapper::toDTO)
                 .orElse(null);
@@ -67,7 +67,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<GameDTO> findGamesByCategoryName(String categoryName) {
+    public List<GameDto> findGamesByCategoryName(String categoryName) {
         List<Game> games = (categoryName == null || categoryName.isBlank())
                 ? gameRepository.findAll()
                 : gameRepository.findByGameBasicInfos_Category_Name(categoryName);
@@ -79,7 +79,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<GameDTO> findTopRatedGames(int topN) {
+    public List<GameDto> findTopRatedGames(int topN) {
         return gameRepository.findTopRatedGames(topN)
                 .stream()
                 .map(gameMapper::toDTO)

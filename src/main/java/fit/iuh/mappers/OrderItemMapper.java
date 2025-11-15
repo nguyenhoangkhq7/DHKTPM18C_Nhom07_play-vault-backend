@@ -1,6 +1,6 @@
 package fit.iuh.mappers;
 
-import fit.iuh.dtos.OrderItemDTO;
+import fit.iuh.dtos.OrderItemDto;
 import fit.iuh.dtos.PurchasedGameResponse;
 import fit.iuh.models.OrderItem;
 import org.mapstruct.Mapper;
@@ -21,7 +21,7 @@ public interface OrderItemMapper {
     @Mapping(source = "gameId", target = "game.id")
     @Mapping(source = "promotionId", target = "promotion.id")
     @Mapping(target = "total", ignore = true) // subtotal sẽ tự tính
-    OrderItem toEntity(OrderItemDTO dto);
+    OrderItem toEntity(OrderItemDto dto);
 
     // 3. Map từ OrderItem sang PurchasedGameResponse (MapStruct tự động gọi cái này khi map list ở trên)
     // Do dữ liệu nằm sâu bên trong (game -> gameBasicInfos -> ...), ta dùng dấu chấm để truy cập
