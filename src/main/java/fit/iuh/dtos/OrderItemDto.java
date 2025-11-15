@@ -6,8 +6,10 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
-@Data
-public class OrderItemDto {
+@Getter
+@Setter
+public class OrderItemDTO {
+
     private Long id;
     private Long gameId;
     private String gameTitle;   // chú ý: chỉnh theo getter trong Game (getTitle/getName)
@@ -17,5 +19,14 @@ public class OrderItemDto {
     @NotNull(message = "Giá sản phẩm không được để trống")
     @DecimalMin(value = "0.0", inclusive = false, message = "Giá sản phẩm phải lớn hơn 0")
     private BigDecimal price;
+
     private BigDecimal total;
+
+    @NotNull(message = "ID order không được để trống")
+    private Long orderId;
+
+    @NotNull(message = "ID game không được để trống")
+    private Long gameId;
+
+    private Long promotionId;
 }
