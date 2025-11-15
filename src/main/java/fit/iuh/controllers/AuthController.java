@@ -1,5 +1,6 @@
 package fit.iuh.controllers;
 
+import fit.iuh.config.JwtConfig;
 import fit.iuh.dtos.*;
 import fit.iuh.models.*;
 import fit.iuh.models.enums.AccountStatus;
@@ -8,6 +9,8 @@ import fit.iuh.repositories.CartRepository;
 import fit.iuh.repositories.CustomerRepository;
 import fit.iuh.repositories.PublisherRepository;
 import fit.iuh.services.JwtService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,6 +36,23 @@ public class AuthController {
    private final CustomerRepository customerRepository;
    private final PublisherRepository publisherRepository;
    private final CartRepository cartRepository;
+   private final JwtConfig  jwtConfig;
+
+   @PostMapping("/refresh")
+   public ResponseEntity<JwtResponse> refresh(
+           @CookieValue(value = "refreshToken") String refreshToken
+   ) {
+      if(!jwtService.validateToken(refreshToken)) {
+         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+      }
+
+      var username = jwtService.getUsernameFromToken(refreshToken);
+      var account = accountRepository.findByUsername(username).orElseThrow();
+      var accessToken = jwtService.generateToken(account);
+
+      return ResponseEntity.ok(new JwtResponse(accessToken));
+   }
+
 
    @PostMapping("/validate")
    public boolean validate(@RequestHeader("Authorization") String authHeader) {
@@ -42,7 +62,10 @@ public class AuthController {
    }
 
    @PostMapping("/login")
-   public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+   public ResponseEntity<JwtResponse> login(
+           @Valid @RequestBody LoginRequest loginRequest,
+           HttpServletResponse response
+   ) {
       authenticationManager.authenticate(
               new UsernamePasswordAuthenticationToken(
                       loginRequest.getUsername(),
@@ -51,9 +74,18 @@ public class AuthController {
       );
       var account = accountRepository.findByUsername(loginRequest.getUsername()).orElseThrow();
 
-      var token = jwtService.generateToken(account);
+      var accessToken = jwtService.generateToken(account);
+      var refreshToken = jwtService.generateRefreshToken(account);
 
-      return ResponseEntity.ok(new JwtResponse(token));
+      var cookie = new Cookie("refreshToken", refreshToken);
+      cookie.setHttpOnly(true);
+      cookie.setPath("/auth/refresh");
+      cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration()); // 7 days
+      cookie.setSecure(true);
+
+      response.addCookie(cookie);
+
+      return ResponseEntity.ok(new JwtResponse(accessToken));
    }
 
    @ExceptionHandler(BadCredentialsException.class)

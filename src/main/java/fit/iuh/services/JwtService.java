@@ -1,31 +1,36 @@
 package fit.iuh.services;
 
+import fit.iuh.config.JwtConfig;
 import fit.iuh.models.Account;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
 @Service
+@AllArgsConstructor
 public class JwtService {
 
-   @Value("${spring.jwt.secret}")
-   private String secret;
+   private final JwtConfig jwtConfig;
 
-   public String generateToken(Account acocunt) {
-      final long tokenExpiration = 86400;
+   public String generateToken(Account account) {
+      return getString(account, jwtConfig.getAccessTokenExpiration());
+   }
+   public String generateRefreshToken(Account account) {
+      return getString(account, jwtConfig.getRefreshTokenExpiration());
+   }
 
+   private String getString(Account account, long tokenExpiration) {
       return Jwts.builder()
-              .subject(acocunt.getUsername())
-              .claim("email", acocunt.getEmail())
+              .subject(account.getUsername())
+              .claim("email", account.getEmail())
               .issuedAt(new Date())
               .expiration(new Date(System.currentTimeMillis() + 1000 * tokenExpiration))
-              .signWith(Keys.hmacShaKeyFor(secret.getBytes()))
+              .signWith(jwtConfig.getSecretKey())
               .compact();
    }
 
@@ -41,7 +46,7 @@ public class JwtService {
 
    private Claims getClaims(String token) {
       return Jwts.parser()
-              .verifyWith(Keys.hmacShaKeyFor(secret.getBytes()))
+              .verifyWith(jwtConfig.getSecretKey())
               .build()
               .parseSignedClaims(token)
               .getPayload();
