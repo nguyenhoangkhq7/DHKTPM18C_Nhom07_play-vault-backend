@@ -29,6 +29,9 @@ public class Customer {
    @Column(name = "balance", precision = 10, scale = 2)
    private BigDecimal balance;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
    @OneToOne(fetch = FetchType.LAZY, optional = false)
    @JoinColumn(name = "account_username", nullable = false)
    private Account account;
@@ -37,11 +40,6 @@ public class Customer {
    @JoinColumn(name = "cart_id")
    private Cart cart;
 
-    @Column(name = "address", length = 255)
-    private String address;
-
-    @Column(name = "avatar_url", length = 255)
-    private String avatarUrl;
 
     @ManyToMany(fetch = FetchType.LAZY)
    @JoinTable(

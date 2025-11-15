@@ -56,7 +56,6 @@ public class UserProfileController {
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
         if (request.getFullName() != null) c.setFullName(request.getFullName());
         if (request.getDateOfBirth() != null) c.setDateOfBirth(java.time.LocalDate.parse(request.getDateOfBirth()));
-        if (request.getAddress() != null) c.setAddress(request.getAddress());
         if (request.getAvatarUrl() != null) c.setAvatarUrl(request.getAvatarUrl());
         customerRepository.save(c);
 
