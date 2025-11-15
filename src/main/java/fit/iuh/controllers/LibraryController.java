@@ -40,7 +40,7 @@ public class LibraryController {
 
         // --- BƯỚC 1.2: DÙNG gameMapper THAY VÌ convertToDto ---
         List<GameCardDto> gameDtos = games.stream()
-                .map(gameMapper::toDto) // ✅ Thay thế ở đây
+                .map(gameMapper::toCardDto) // ✅ Thay thế ở đây
                 .collect(Collectors.toList());
         // --- KẾT THÚC THAY ĐỔI ---
 
