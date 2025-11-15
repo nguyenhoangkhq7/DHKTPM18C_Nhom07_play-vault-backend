@@ -295,3 +295,4 @@ CREATE TABLE block_records (
                                CONSTRAINT fk_block_account
                                    FOREIGN KEY (account_username) REFERENCES accounts(username)
 );
+
