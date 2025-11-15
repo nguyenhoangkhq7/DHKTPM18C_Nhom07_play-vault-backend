@@ -93,8 +93,12 @@ public class LibraryService {
         }
 
         // 8. Trả về kết quả
-        return gameStream.collect(Collectors.toList());
-
+//        return gameStream.collect(Collectors.toList());
+        return gameStream
+                // --- THÊM DÒNG NÀY ---
+                // Đảm bảo không bao giờ trả về game có thông tin cơ bản bị null
+                .filter(game -> game.getGameBasicInfos() != null)
+                // --- KẾT THÚC THÊM ---
+                .collect(Collectors.toList());
     }
-
 }
