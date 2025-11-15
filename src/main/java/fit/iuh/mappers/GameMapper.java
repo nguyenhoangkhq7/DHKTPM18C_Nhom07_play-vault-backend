@@ -1,6 +1,5 @@
 package fit.iuh.mappers;
 
-import fit.iuh.dtos.CartItemDto;
 import fit.iuh.dtos.GameBasicInfoDto;
 import fit.iuh.dtos.GameCardDto;
 import fit.iuh.dtos.GameDTO;
@@ -8,7 +7,7 @@ import fit.iuh.models.CartItem;
 import fit.iuh.models.Game;
 import org.mapstruct.*;
 
-import java.math.BigDecimal;
+
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -25,7 +24,7 @@ public interface GameMapper {
     @Mapping(source = "gameBasicInfos.isSupportController", target = "isSupportController")
     @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
     @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisherName")
-    GameBasicInfoDto toBasicInfoDto(Game game);
+    GameBasicInfoDto toBasicInfoDto(Game game); // Input là Game
 
     List<GameBasicInfoDto> toDtoList(List<Game> games);
 
