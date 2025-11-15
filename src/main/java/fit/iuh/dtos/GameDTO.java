@@ -14,7 +14,7 @@ import java.time.LocalDate;
 public class GameDTO {
     private Long id;
     private LocalDate releaseDate;
-    private GameBasicInforDTO gameBasicInfos;
+    private GameBasicInfoDto gameBasicInfos;
     private String categoryName;
 
 }
