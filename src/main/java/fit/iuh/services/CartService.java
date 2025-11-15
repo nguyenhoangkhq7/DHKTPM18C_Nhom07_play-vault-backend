@@ -51,7 +51,7 @@ public class CartService {
             cartRepository.save(cart);
         }
 
-        return cartMapper.toCartResponse(cart, itemResponses, totalPrice);
+        return cartMapper.toCartResponse(cart);
     }
 
 
@@ -73,7 +73,6 @@ public class CartService {
             customer.setCart(cart);
             customerRepository.save(customer);
         }
-        cartDto.setTotalPrice(totalPrice);
 
         List<CartItem> myItems = cartItemRepository.findByCartId(cart.getId());
         List<CartItemResponse> itemDTOs = cartMapper.toCartItemResponseList(myItems);
@@ -88,7 +87,7 @@ public class CartService {
             cartRepository.save(cart);
         }
 
-        return cartMapper.toCartResponse(cart, itemDTOs, calculatedTotal);
+        return cartMapper.toCartResponse(cart);
     }
 
 
@@ -117,7 +116,6 @@ public class CartService {
 
         return getCartResponse(username);
     }
-    // ... (bên trong class CartService)
 
 
     // ========================================================================
@@ -134,11 +132,15 @@ public class CartService {
         newItem.setCart(cart);
         newItem.setGame(game);
 
-        // 3. (Không bắt buộc, nhưng rõ ràng) Lưu giỏ hàng đã bị xóa item
-        cartRepository.save(cart);
+        if (game.getGameBasicInfos() != null) {
+            newItem.setPrice(game.getGameBasicInfos().getPrice());
+        } else {
+            newItem.setPrice(BigDecimal.ZERO);
+        }
 
-        // 4. Trả về DTO giỏ hàng (lúc này đã trống)
-        return getCartByUsername(username);
+        newItem.setDiscount(BigDecimal.ZERO);
+
+        cartItemRepository.save(newItem);
     }
 
 

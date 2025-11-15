@@ -18,21 +18,14 @@ public interface CartMapper {
     CartDto toDto(Cart cart); // Khi map "cartItems", nó sẽ tự tìm toCartItemDtoList ở dưới
 
 
-    @Mapping(target = "cartItemId", source = "id")
-    @Mapping(target = "gameId", source = "game.id")
-    @Mapping(target = "gameName", source = "game.gameBasicInfos.name")
-    @Mapping(target = "thumbnail", source = "game.gameBasicInfos.thumbnail")
-    @Mapping(target = "originalPrice", source = "price")
-    @Mapping(target = "finalPrice", source = ".", qualifiedByName = "calculateFinalPrice")
-    CartItemResponse toCartItemResponse(CartItem cartItem);
-
     List<CartItemResponse> toCartItemResponseList(List<CartItem> cartItems);
 
-    @Mapping(target = "cartId", source = "cart.id")
-    @Mapping(target = "items", source = "items")
-    @Mapping(target = "totalPrice", source = "calculatedTotal")
-    @Mapping(target = "totalItems", expression = "java(items != null ? items.size() : 0)")
-    CartResponse toCartResponse(Cart cart, List<CartItemResponse> items, BigDecimal calculatedTotal);
+    // Nếu bạn muốn tính toán totalItems, bạn sẽ làm như sau (dựa trên List<CartItem> trong Cart entity):
+    @Mapping(target = "cartId", source = "id")
+    @Mapping(target = "items", source = "cartItems") // MapStruct tự động map List<CartItem> -> List<CartItemResponse>
+    @Mapping(target = "totalPrice", source = "totalPrice") // Lấy từ Cart.totalPrice
+    @Mapping(target = "totalItems", expression = "java(cart.getCartItems() != null ? cart.getCartItems().size() : 0)")
+    CartResponse toCartResponse(Cart cart);
 
 
     @Named("calculateFinalPrice")
@@ -41,13 +34,4 @@ public interface CartMapper {
         BigDecimal discount = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
         return price.subtract(discount);
     }
-
-    // --- THÊM CÁC PHƯƠNG THỨC ĐÃ DI CHUYỂN TỪ GameMapper VÀO ĐÂY ---
-
-    @Mapping(target = "game", source = "game", qualifiedByName = "toBasicInfoDto") // Gọi hàm map trong GameMapper (vì có uses)
-    @Mapping(target = "finalPrice", expression = "java(cartItem.getPrice().subtract(cartItem.getDiscount() != null ? cartItem.getDiscount() : java.math.BigDecimal.ZERO))")
-    CartItemDto toCartItemDto(CartItem cartItem);
-
-    // Map list CartItem (Tự động dùng phương thức ở trên)
-    List<CartItemDto> toCartItemDtoList(List<CartItem> cartItems);
 }

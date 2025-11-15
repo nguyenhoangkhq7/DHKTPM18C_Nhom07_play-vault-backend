@@ -2,16 +2,16 @@ package fit.iuh.dtos;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class OrderItemDTO {
+public class OrderItemDto {
 
     private Long id;
-    private Long gameId;
     private String gameTitle;   // chú ý: chỉnh theo getter trong Game (getTitle/getName)
     private String gameThumbnail; // optional
     private Integer quantity;   // nếu bạn có

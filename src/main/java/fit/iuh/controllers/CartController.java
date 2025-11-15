@@ -2,6 +2,7 @@ package fit.iuh.controllers;
 
 import fit.iuh.dtos.CartDto;
 import fit.iuh.dtos.CartItemRequestDto;
+import fit.iuh.dtos.CartResponse;
 import fit.iuh.services.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -68,15 +69,15 @@ public class CartController {
      * API cập nhật số lượng item trong giỏ
      * (thường giỏ hàng cần API này)
      */
-    @PutMapping("/items/{cartItemId}/{quantity}")
-    public ResponseEntity<CartResponse> updateItemQuantity(
-            @PathVariable Long cartItemId,
-            @PathVariable int quantity,
-            Principal principal
-    ) {
-        String username = principal.getName();
-        cartService.updateQuantity(username, cartItemId, quantity); // cần implement
-        return ResponseEntity.ok(cartService.getCartByUsername(username));
-    }
+//    @PutMapping("/items/{cartItemId}/{quantity}")
+//    public ResponseEntity<CartResponse> updateItemQuantity(
+//            @PathVariable Long cartItemId,
+//            @PathVariable int quantity,
+//            Principal principal
+//    ) {
+//        String username = principal.getName();
+//        cartService.updateQuantity(username, cartItemId, quantity); // cần implement
+//        return ResponseEntity.ok(cartService.getCartByUsername(username));
+//    }
 
 }

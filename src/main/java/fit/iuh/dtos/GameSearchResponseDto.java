@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @AllArgsConstructor // Thêm constructor cho dễ map
-public class GameSearchResponseDTO {
+public class GameSearchResponseDto {
     private Long id;
     private String name;
     private String thumbnail;
@@ -19,13 +19,13 @@ public class GameSearchResponseDTO {
     private String categoryName;
 
     // Tạo một hàm static để chuyển đổi (mapping)
-    public static GameSearchResponseDTO fromEntity(Game game) {
+    public static GameSearchResponseDto fromEntity(Game game) {
         // Lấy thông tin từ lazy-loading
         String gameName = game.getGameBasicInfos().getName();
         String gameThumb = game.getGameBasicInfos().getThumbnail();
         BigDecimal gamePrice = game.getGameBasicInfos().getPrice();
         String catName = game.getGameBasicInfos().getCategory().getName();
 
-        return new GameSearchResponseDTO(game.getId(), gameName, gameThumb, gamePrice, catName);
+        return new GameSearchResponseDto(game.getId(), gameName, gameThumb, gamePrice, catName);
     }
 }
