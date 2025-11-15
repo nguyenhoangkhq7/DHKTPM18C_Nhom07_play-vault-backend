@@ -16,6 +16,7 @@ CREATE TABLE accounts (
 CREATE TABLE customers (
                            id BIGINT PRIMARY KEY AUTO_INCREMENT,
                            full_name VARCHAR(255),
+                           avatar_url VARCHAR(255),
                            date_of_birth DATE,
                            balance DECIMAL(10, 2) DEFAULT 0.0,
                            account_username VARCHAR(255) NOT NULL UNIQUE,

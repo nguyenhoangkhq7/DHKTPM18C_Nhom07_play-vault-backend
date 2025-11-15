@@ -6,29 +6,24 @@ USE playvaultdb;
 -- ========================================
 
 -- 1. TÀI KHOẢN ADMIN
--- BƯỚC 1: CHẠY CÂU LỆNH NÀY TRƯỚC
 INSERT INTO accounts (username, password, created_at, status, role, email, phone) VALUES
-                                                                                      ('admin', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-01', 'ACTIVE', 'ADMIN', 'admin@playvault.com', '0901000001'),
-                                                                                      ('pub_epic', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-02', 'ACTIVE', 'PUBLISHER', 'contact@epic.com', '0901000002'),
-                                                                                      ('pub_rockstar', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-03', 'ACTIVE', 'PUBLISHER', 'contact@rockstar.com', '0901000003'),
-                                                                                      ('pub_cdpr', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-04', 'ACTIVE', 'PUBLISHER', 'contact@cdpr.com', '0901000004'),
-                                                                                      ('pub_valve', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-05', 'ACTIVE', 'PUBLISHER', 'contact@valve.com', '0901000005'),
-                                                                                      ('pub_capcom', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O', '2024-01-06', 'ACTIVE', 'PUBLISHER', 'contact@capcom.com', '0901000006');
+    ('admin', '$2b$12$9bQ9fNDsMFHyh8tdQR.BmOVa1LvfzwHFWsDHKJnnDAKtXaCy8432O
+', '2024-01-01', 'ACTIVE', 'ADMIN', 'admin@playvault.com', '0901000001');
 
 -- 2. CATEGORIES
 INSERT INTO categories (id, name, description) VALUES
-(1, 'Action', 'Game hành động, bắn súng, đánh nhau.'),
-(2, 'Adventure', 'Game phiêu lưu, khám phá thế giới.'),
-(3, 'RPG', 'Nhập vai, phát triển nhân vật.'),
-(4, 'Simulation', 'Mô phỏng cuộc sống, xây dựng.'),
-(5, 'Strategy', 'Chiến thuật, quản lý tài nguyên.'),
-(6, 'Puzzle', 'Game giải đố, tư duy.'),
-(7, 'Horror', 'Game kinh dị, sinh tồn.'),
-(8, 'Racing', 'Đua xe, tốc độ.');
+                                                   (1, 'Action', 'Game hành động, bắn súng, đánh nhau.'),
+                                                   (2, 'Adventure', 'Game phiêu lưu, khám phá thế giới.'),
+                                                   (3, 'RPG', 'Nhập vai, phát triển nhân vật.'),
+                                                   (4, 'Simulation', 'Mô phỏng cuộc sống, xây dựng.'),
+                                                   (5, 'Strategy', 'Chiến thuật, quản lý tài nguyên.'),
+                                                   (6, 'Puzzle', 'Game giải đố, tư duy.'),
+                                                   (7, 'Horror', 'Game kinh dị, sinh tồn.'),
+                                                   (8, 'Racing', 'Đua xe, tốc độ.');
 
 INSERT INTO platforms (id, name) VALUES
-(1, 'PC'),           -- Cho game máy tính (Windows, Mac, Linux)
-(2, 'PlayStation'),
-(3, 'Xbox'),
-(4, 'Nintendo Switch'),
-(5, 'Mobile');
+                                     (1, 'PC'),           -- Cho game máy tính (Windows, Mac, Linux)
+                                     (2, 'PlayStation'),
+                                     (3, 'Xbox'),
+                                     (4, 'Nintendo Switch'),
+                                     (5, 'Mobile');
