@@ -1,8 +1,11 @@
 package fit.iuh.repositories;
 
+import fit.iuh.models.Account;
 import fit.iuh.models.Publisher;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 
 
 public interface PublisherRepository extends JpaRepository<Publisher, Long> {
+   Optional<Publisher> findByAccount(Account account);
 }

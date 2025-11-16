@@ -4,6 +4,7 @@ import fit.iuh.config.JwtConfig;
 import fit.iuh.dtos.*;
 import fit.iuh.models.*;
 import fit.iuh.models.enums.AccountStatus;
+import fit.iuh.models.enums.Role;
 import fit.iuh.repositories.AccountRepository;
 import fit.iuh.repositories.CartRepository;
 import fit.iuh.repositories.CustomerRepository;
@@ -24,9 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @AllArgsConstructor
 public class AuthController {
    private final AuthenticationManager authenticationManager;
@@ -38,11 +38,57 @@ public class AuthController {
    private final CartRepository cartRepository;
    private final JwtConfig  jwtConfig;
 
+   @PostMapping("/login")
+   public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest loginRequest,
+                                            HttpServletResponse response) {
+      authenticationManager.authenticate(
+              new UsernamePasswordAuthenticationToken(
+                      loginRequest.getUsername(),
+                      loginRequest.getPassword()
+              )
+      );
+
+      var account = accountRepository.findByUsername(loginRequest.getUsername())
+              .orElseThrow();
+
+      var accessToken = jwtService.generateToken(account);
+      var refreshToken = jwtService.generateRefreshToken(account);
+
+      Cookie cookie = new Cookie("refreshToken", refreshToken);
+      cookie.setHttpOnly(true);
+      cookie.setPath("/api/auth/refresh");
+      cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration()); // 7 ngày
+      cookie.setSecure(true);
+      response.addCookie(cookie);
+
+      UserDto userDto = new UserDto();
+      userDto.setUsername(account.getUsername());
+      userDto.setEmail(account.getEmail());
+      userDto.setPhone(account.getPhone());
+      userDto.setRole(account.getRole().name());
+
+      if (account.getRole() == Role.CUSTOMER) {
+         var customer = customerRepository.findByAccount(account).orElseThrow();
+         userDto.setCustomerId(customer.getId());
+         userDto.setFullName(customer.getFullName());
+         userDto.setBalance(customer.getBalance());
+         userDto.setAvatarUrl(customer.getAvatarUrl());
+      } else if (account.getRole() == Role.PUBLISHER) {
+         var publisher = publisherRepository.findByAccount(account).orElseThrow();
+         userDto.setPublisherId(publisher.getId());
+         userDto.setStudioName(publisher.getStudioName());
+         userDto.setDescription(publisher.getDescription());
+         userDto.setWebsite(publisher.getWebsite());
+      }
+
+      return ResponseEntity.ok(new JwtResponse(accessToken, userDto));
+   }
+
+
    @PostMapping("/refresh")
    public ResponseEntity<JwtResponse> refresh(
            @CookieValue(value = "refreshToken") String refreshToken
-   ) {
-      if(!jwtService.validateToken(refreshToken)) {
+   ) {      if(!jwtService.validateToken(refreshToken)) {
          return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
       }
 
@@ -59,33 +105,6 @@ public class AuthController {
       var token =  authHeader.replace("Bearer ", "");
 
       return jwtService.validateToken(token);
-   }
-
-   @PostMapping("/login")
-   public ResponseEntity<JwtResponse> login(
-           @Valid @RequestBody LoginRequest loginRequest,
-           HttpServletResponse response
-   ) {
-      authenticationManager.authenticate(
-              new UsernamePasswordAuthenticationToken(
-                      loginRequest.getUsername(),
-                      loginRequest.getPassword()
-              )
-      );
-      var account = accountRepository.findByUsername(loginRequest.getUsername()).orElseThrow();
-
-      var accessToken = jwtService.generateToken(account);
-      var refreshToken = jwtService.generateRefreshToken(account);
-
-      var cookie = new Cookie("refreshToken", refreshToken);
-      cookie.setHttpOnly(true);
-      cookie.setPath("/auth/refresh");
-      cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration()); // 7 days
-      cookie.setSecure(true);
-
-      response.addCookie(cookie);
-
-      return ResponseEntity.ok(new JwtResponse(accessToken));
    }
 
    @ExceptionHandler(BadCredentialsException.class)
