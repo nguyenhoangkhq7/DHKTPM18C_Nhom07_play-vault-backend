@@ -37,4 +37,28 @@ public class Payment {
    @JoinColumn(name = "invoice_id")
    private Invoice invoice;
 
+   /**
+    * Kiểm tra xem giao dịch đã hoàn tất (thành công, thất bại hoặc bị hủy) hay chưa.
+    */
+   public boolean isFinalized() {
+      return this.status == PaymentStatus.SUCCESS ||
+              this.status == PaymentStatus.FAILED ||
+              this.status == PaymentStatus.PENDING;
+   }
+
+   /**
+    * Kiểm tra xem số tiền thanh toán có hợp lệ (> 0) hay không.
+    */
+   public void validateAmount() {
+      if (this.amount == null || this.amount.compareTo(BigDecimal.ZERO) <= 0) {
+         throw new IllegalArgumentException("Số tiền thanh toán phải lớn hơn 0.");
+      }
+   }
+
+   /**
+    * Liên kết thanh toán này với một hóa đơn.
+    */
+   public void linkInvoice(Invoice invoice) {
+      this.invoice = invoice;
+   }
 }
