@@ -3,7 +3,6 @@ package fit.iuh.mappers;
 import fit.iuh.dtos.CartItemResponse;
 import fit.iuh.dtos.CartResponse;
 import fit.iuh.dtos.CartDto;
-import fit.iuh.dtos.CartItemDto; // <-- THÊM IMPORT NÀY
 import fit.iuh.models.Cart;
 import fit.iuh.models.CartItem;
 import org.mapstruct.*;
@@ -11,19 +10,35 @@ import org.mapstruct.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {GameMapper.class}) // Vẫn giữ uses GameMapper
+@Mapper(componentModel = "spring", uses = {GameMapper.class})
 public interface CartMapper {
 
     @Mapping(source = "cartItems", target = "items")
-    CartDto toDto(Cart cart); // Khi map "cartItems", nó sẽ tự tìm toCartItemDtoList ở dưới
-
+    CartDto toDto(Cart cart);
 
     List<CartItemResponse> toCartItemResponseList(List<CartItem> cartItems);
 
-    // Nếu bạn muốn tính toán totalItems, bạn sẽ làm như sau (dựa trên List<CartItem> trong Cart entity):
+
+    // ========= PHƯẦN SỬA LỖI ĐÃ ĐƯỢC CẬP NHẬT =========
+    /**
+     * Phương thức này đã được sửa để truy cập vào entity lồng nhau GameBasicInfos.
+     */
+    @Mapping(target = "cartItemId", source = "id")
+    @Mapping(target = "gameId", source = "game.id")
+
+    // SỬA LỖI: Truy cập qua GameBasicInfos
+    @Mapping(target = "gameName", source = "game.gameBasicInfos.name")
+    @Mapping(target = "thumbnail", source = "game.gameBasicInfos.thumbnail")
+
+    @Mapping(target = "originalPrice", source = "price")
+    @Mapping(target = "finalPrice", source = "item", qualifiedByName = "calculateFinalPrice")
+    CartItemResponse toCartItemResponse(CartItem item);
+    // ========= KẾT THÚC PHẦN SỬA LỖI =========
+
+
     @Mapping(target = "cartId", source = "id")
-    @Mapping(target = "items", source = "cartItems") // MapStruct tự động map List<CartItem> -> List<CartItemResponse>
-    @Mapping(target = "totalPrice", source = "totalPrice") // Lấy từ Cart.totalPrice
+    @Mapping(target = "items", source = "cartItems")
+    @Mapping(target = "totalPrice", source = "totalPrice")
     @Mapping(target = "totalItems", expression = "java(cart.getCartItems() != null ? cart.getCartItems().size() : 0)")
     CartResponse toCartResponse(Cart cart);
 
