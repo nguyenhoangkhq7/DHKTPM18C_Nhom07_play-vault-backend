@@ -39,9 +39,9 @@ public class GameController {
         return ResponseEntity.ok(games);
     }
 
-    @GetMapping("/favorites/{customerId}")
-    public List<GameBasicInfo> getFavoriteGames(@PathVariable Long customerId) {
-        return gameBasicInfoService.findAllByGameFavoriteWithCustomerId(customerId);
+    @GetMapping("/favorites/{username}")
+    public List<GameBasicInfo> getFavoriteGames(@PathVariable String username) {
+        return gameBasicInfoService.findAllByGameFavoriteWithCustomerId(username);
     }
 
     @GetMapping("/search")

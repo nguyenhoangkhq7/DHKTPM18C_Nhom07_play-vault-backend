@@ -7,6 +7,7 @@ import fit.iuh.models.Customer;
 import fit.iuh.models.Game;
 import fit.iuh.repositories.AccountRepository;
 import fit.iuh.repositories.CustomerRepository;
+import fit.iuh.repositories.GameBasicInfoRepository;
 import fit.iuh.repositories.GameRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class WishlistService {
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository; // Cần Customer
     private final GameRepository gameRepository; // Cần Game
+    private final GameBasicInfoRepository gameBasicInfoRepository;
     private final GameMapper gameMapper; // <-- Sử dụng MapStruct Mapper
 
     /**
@@ -41,11 +43,11 @@ public class WishlistService {
      * LẤY danh sách game ưa thích
      */
     public List<GameBasicInfoDto> getWishlist(String username) {
-        Customer customer = findCustomer(username);
+
         
         // **DÙNG MAPSTRUCT ĐỂ CONVERT**
         // Chuyển Set<Game> (từ Customer) -> List<GameBasicInfoDto> (DTO)
-        return gameMapper.toDtoList(new ArrayList<>(customer.getWishlist()));
+        return gameMapper.toDtoList(gameBasicInfoRepository.findAllByGameFavoriteWithCustomerId(username));
     }
 
     /**
