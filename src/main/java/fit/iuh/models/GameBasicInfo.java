@@ -66,4 +66,6 @@ public class GameBasicInfo {
    )
    private List<Platform> platforms;
 
+   @OneToMany(mappedBy = "gameBasicInfo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+   private List<PreviewImage> previewImages;
 }
