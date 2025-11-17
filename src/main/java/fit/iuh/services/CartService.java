@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects; // <-- THÊM IMPORT NÀY
 
 @Service
 @RequiredArgsConstructor
@@ -42,9 +43,13 @@ public class CartService {
         List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getId());
         List<CartItemResponse> itemResponses = cartMapper.toCartItemResponseList(cartItems);
 
+        // === SỬA DÒNG NÀY ===
+        // Lọc ra các giá trị null trước khi cộng
         BigDecimal totalPrice = itemResponses.stream()
                 .map(CartItemResponse::getFinalPrice)
+                .filter(Objects::nonNull) // <-- THÊM DÒNG NÀY
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // === KẾT THÚC SỬA ===
 
         if (!totalPrice.equals(cart.getTotalPrice())) {
             cart.setTotalPrice(totalPrice);
@@ -77,9 +82,13 @@ public class CartService {
         List<CartItem> myItems = cartItemRepository.findByCartId(cart.getId());
         List<CartItemResponse> itemDTOs = cartMapper.toCartItemResponseList(myItems);
 
+        // === SỬA DÒNG NÀY ===
+        // Lọc ra các giá trị null trước khi cộng
         BigDecimal calculatedTotal = itemDTOs.stream()
                 .map(CartItemResponse::getFinalPrice)
+                .filter(Objects::nonNull) // <-- THÊM DÒNG NÀY
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // === KẾT THÚC SỬA ===
 
         // Cập nhật nếu lệch
         if (cart.getTotalPrice() == null || !cart.getTotalPrice().equals(calculatedTotal)) {
@@ -135,7 +144,7 @@ public class CartService {
         if (game.getGameBasicInfos() != null) {
             newItem.setPrice(game.getGameBasicInfos().getPrice());
         } else {
-            newItem.setPrice(BigDecimal.ZERO);
+            newItem.setPrice(BigDecimal.ZERO); // Đảm bảo không bị null
         }
 
         newItem.setDiscount(BigDecimal.ZERO);
@@ -187,8 +196,16 @@ public class CartService {
     @Transactional
     public CartResponse clearCart(String username) {
         Cart cart = findOrCreateCartByUsername(username);
-        cart.getCartItems().clear();
+        // Sửa lại logic clear:
+        // cart.getCartItems().clear() không xóa trong DB nếu không cấu hình orphanRemoval
+        // Cách an toàn nhất là xóa bằng repo:
+        List<CartItem> items = cartItemRepository.findByCartId(cart.getId());
+        cartItemRepository.deleteAll(items);
+
+        // Cập nhật lại tổng tiền trong cart
+        cart.setTotalPrice(BigDecimal.ZERO);
         cartRepository.save(cart);
+
         return getCartResponse(username);
     }
 

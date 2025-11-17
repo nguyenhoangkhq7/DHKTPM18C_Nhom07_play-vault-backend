@@ -34,7 +34,7 @@ public class WishlistController {
     /**
      * Thêm một game vào danh sách ưa thích
      */
-    @PostMapping("/{gameId}")
+    @PostMapping("/add/{gameId}")
     public ResponseEntity<Void> addGame(@PathVariable Long gameId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
