@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -37,4 +39,23 @@ public class Game {
    @JoinColumn(name = "promotion_id") // Thêm cột khóa ngoại promotion_id vào bảng games
    private Promotion promotion;
 
+
+   public BigDecimal getBasicPrice(){
+      return this.gameBasicInfos.getPrice();
+   }
+
+   public Double getAvgRating(){
+      return this.reviews.stream()
+              .collect(Collectors.averagingDouble(Review::getRating));
+   }
+
+   public void AddReview(Customer customer, Integer rating, String comment){
+      Review review = new Review();
+      review.setCustomer(customer);
+      review.setGame(this);
+      review.setComment(comment);
+      review.setCreatedAt(LocalDate.now());
+      review.setRating(rating);
+      this.reviews.add(review);
+   }
 }
