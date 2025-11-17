@@ -33,5 +33,8 @@ public class Game {
    )
    private List<Review> reviews;
 
+   @ManyToOne(fetch = FetchType.LAZY)
+   @JoinColumn(name = "promotion_id") // Thêm cột khóa ngoại promotion_id vào bảng games
+   private Promotion promotion;
 
 }
