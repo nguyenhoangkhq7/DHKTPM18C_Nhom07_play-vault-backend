@@ -12,8 +12,8 @@ import java.util.List;
 @Repository
 
 public interface GameBasicInfoRepository extends JpaRepository<GameBasicInfo, Long> {
-    @Query("Select gb from Customer c join c.wishlist join Game g join GameBasicInfo gb where c.id = :customerId")
-    List<GameBasicInfo> findAllByGameFavoriteWithCustomerId(@Param("customerId") Long customerId);
+    @Query("Select gb from Customer c join c.account join c.wishlist g join g.gameBasicInfos gb where c.account.username = :username")
+    List<GameBasicInfo> findAllByGameFavoriteWithCustomerId(@Param("username") String username);
 
     @Query("Select gb from Customer c join c.cart join CartItem ci join Game g join GameBasicInfo gb where c.id = :customerId")
     List<GameBasicInfo> findAllGameCartByCustomerId(Long cartId);

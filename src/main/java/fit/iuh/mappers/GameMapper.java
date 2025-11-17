@@ -6,6 +6,7 @@ import fit.iuh.dtos.GameCardDto;
 import fit.iuh.dtos.GameDto;
 import fit.iuh.models.CartItem;
 import fit.iuh.models.Game;
+import fit.iuh.models.GameBasicInfo;
 import org.mapstruct.*;
 
 
@@ -27,7 +28,7 @@ public interface GameMapper {
     @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisherName")
     GameBasicInfoDto toBasicInfoDto(Game game); // Input là Game
 
-    List<GameBasicInfoDto> toDtoList(List<Game> games);
+    List<GameBasicInfoDto> toDtoList(List<GameBasicInfo> games);
 
     @Mapping(source = "gameBasicInfos.name", target = "name")
     @Mapping(source = "gameBasicInfos.thumbnail", target = "thumbnail")
