@@ -51,16 +51,14 @@ public class GameController {
     }
 
     @GetMapping("/search")
-    // THAY ĐỔI KIỂU TRẢ VỀ Ở ĐÂY
     public ResponseEntity<Page<GameSearchResponseDto>> searchGames(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
-            @PageableDefault(size = 20) Pageable pageable
+            @PageableDefault(size = 12) Pageable pageable // Mặc định 12 game/trang
     ) {
-
-        // Không cần thay đổi gì ở đây
+        // Gọi hàm searchAndFilterGames mà bạn vừa viết trong Service
         Page<GameSearchResponseDto> games = gameService.searchAndFilterGames(
                 keyword, categoryId, minPrice, maxPrice, pageable);
 
@@ -69,6 +67,14 @@ public class GameController {
 
 
     @GetMapping("/{id}")
+    public ResponseEntity<fit.iuh.dtos.GameDetailDto> getGameDetail(@PathVariable Long id) {
+        fit.iuh.models.Game game = gameService.findGameEntityById(id);
+
+        if (game == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(fit.iuh.dtos.GameDetailDto.fromEntity(game));
+    }
     public ResponseEntity<GameWithRatingDto> getGameById(@PathVariable Long id) {
         // Sử dụng phương thức Service để lấy Game kèm Rating đã được tính toán
         GameWithRatingDto gameDto = gameService.getGameWithRatingById(id);

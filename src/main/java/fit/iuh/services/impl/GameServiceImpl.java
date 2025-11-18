@@ -42,10 +42,12 @@ public class GameServiceImpl implements GameService {
         BigDecimal maxPriceBd = maxPrice != null ? BigDecimal.valueOf(maxPrice) : null;
 
         Specification<Game> spec = GameSpecification.filterBy(keyword, categoryId, minPriceBd, maxPriceBd);
+
+        // Lấy danh sách Game từ DB
         Page<Game> gamePage = gameRepository.findAll(spec, pageable);
 
+        // Map sang DTO (Lúc này logic tính toán Rating trong DTO sẽ chạy)
         return gamePage.map(GameSearchResponseDto::fromEntity);
-        // Hoặc dùng MapStruct: return gamePage.map(gameMapper::toSearchResponseDTO);
     }
 
     // ========================================================================
@@ -91,6 +93,10 @@ public class GameServiceImpl implements GameService {
 
     @Override
     @Transactional(readOnly = true)
+    public Game findGameEntityById(Long id) {
+        // Trả về nguyên con Entity Game lấy từ DB
+        return gameRepository.findById(id).orElse(null);
+    }
     public List<GameWithRatingDto> getTopGamesWithRating(int topN) {
         List<Game> allGames = gameRepository.findAll();
         if(topN==0){
