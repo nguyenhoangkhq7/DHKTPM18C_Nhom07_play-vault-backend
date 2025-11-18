@@ -26,4 +26,6 @@ public interface GameService {
             Pageable pageable);
 
     GameWithRatingDto getGameWithRatingById(Long id);
+
+    boolean checkOwnership(String username, Long gameId);
 }
