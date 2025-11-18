@@ -4,8 +4,6 @@ import fit.iuh.dtos.GameDto;
 import fit.iuh.dtos.GameSearchResponseDto;
 import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.dtos.ReviewDto;
-import fit.iuh.models.GameBasicInfo;
-import fit.iuh.services.GameBasicInfoService;
 import fit.iuh.services.GameService;
 import fit.iuh.services.ReviewService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +24,6 @@ import java.util.List;
 public class GameController {
 
     private final GameService gameService;
-    private final GameBasicInfoService gameBasicInfoService;
     private final ReviewService reviewService;
 
     @GetMapping
@@ -45,10 +42,6 @@ public class GameController {
         return ResponseEntity.ok(gameWithRatingDtos);
     }
 
-    @GetMapping("/favorites/{username}")
-    public List<GameBasicInfo> getFavoriteGames(@PathVariable String username) {
-        return gameBasicInfoService.findAllByGameFavoriteWithCustomerId(username);
-    }
 
     @GetMapping("/search")
     public ResponseEntity<Page<GameSearchResponseDto>> searchGames(
