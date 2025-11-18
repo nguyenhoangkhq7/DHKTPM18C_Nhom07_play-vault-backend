@@ -3,7 +3,6 @@ package fit.iuh.mappers;
 import fit.iuh.dtos.CartItemResponse;
 import fit.iuh.dtos.CartResponse;
 import fit.iuh.dtos.CartDto;
-import fit.iuh.dtos.CartItemDto;
 import fit.iuh.models.Cart;
 import fit.iuh.models.CartItem;
 import org.mapstruct.*;
@@ -11,7 +10,7 @@ import org.mapstruct.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {GameMapper.class}) // <-- Quan trọng
+@Mapper(componentModel = "spring", uses = {GameMapper.class})
 public interface CartMapper {
 
     // === 1. MAPPING CHO Cart -> CartDto (Cái bạn bị null) ===
@@ -19,24 +18,27 @@ public interface CartMapper {
     @Mapping(source = "cartItems", target = "items")
     CartDto toDto(Cart cart);
 
+
+
+    // ========= PHƯẦN SỬA LỖI ĐÃ ĐƯỢC CẬP NHẬT =========
     /**
-     * Đây là "công thức" map 1 CartItem -> 1 CartItemDto
-     * Nó được toDto(Cart) và toCartItemDtoList(List) tự động sử dụng
+     * Phương thức này đã được sửa để truy cập vào entity lồng nhau GameBasicInfos.
      */
-    @Mapping(source = "id", target = "id")
-    @Mapping(source = "game", target = "game", qualifiedByName = "toBasicInfoDto") // <-- Dùng GameMapper
-    @Mapping(source = "price", target = "price")
-    @Mapping(source = "discount", target = "discount")
-    @Mapping(source = "cartItem", target = "finalPrice", qualifiedByName = "calculateFinalPrice") // <-- Dùng helper
-    CartItemDto toCartItemDto(CartItem cartItem);
+    @Mapping(target = "cartItemId", source = "id")
+    @Mapping(target = "gameId", source = "game.id")
 
-    List<CartItemDto> toCartItemDtoList(List<CartItem> cartItems);
+    // SỬA LỖI: Truy cập qua GameBasicInfos
+    @Mapping(target = "gameName", source = "game.gameBasicInfos.name")
+    @Mapping(target = "thumbnail", source = "game.gameBasicInfos.thumbnail")
 
+    @Mapping(target = "originalPrice", source = "price")
+    @Mapping(target = "finalPrice", source = "item", qualifiedByName = "calculateFinalPrice")
+    CartItemResponse toCartItemResponse(CartItem item);
+    // ========= KẾT THÚC PHẦN SỬA LỖI =========
 
-    // === 2. MAPPING CHO Cart -> CartResponse (Cái ban đầu của bạn) ===
 
     @Mapping(target = "cartId", source = "id")
-    @Mapping(target = "items", source = "cartItems") // Sẽ dùng toCartItemResponseList
+    @Mapping(target = "items", source = "cartItems")
     @Mapping(target = "totalPrice", source = "totalPrice")
     @Mapping(target = "totalItems", expression = "java(cart.getCartItems() != null ? cart.getCartItems().size() : 0)")
     CartResponse toCartResponse(Cart cart);

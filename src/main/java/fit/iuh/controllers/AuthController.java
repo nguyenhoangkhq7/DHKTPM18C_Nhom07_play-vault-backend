@@ -36,7 +36,7 @@ public class AuthController {
    private final CustomerRepository customerRepository;
    private final PublisherRepository publisherRepository;
    private final CartRepository cartRepository;
-   private final JwtConfig  jwtConfig;
+   private final JwtConfig jwtConfig;
 
    @PostMapping("/login")
    public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest loginRequest,
