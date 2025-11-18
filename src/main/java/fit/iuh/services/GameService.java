@@ -2,6 +2,7 @@ package fit.iuh.services;
 
 import fit.iuh.dtos.GameDto;
 import fit.iuh.dtos.GameSearchResponseDto;
+import fit.iuh.dtos.GameWithRatingDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,6 +13,7 @@ public interface GameService {
     GameDto findById(Long id);
     List<GameDto> findGamesByCategoryName(String categoryName);
     List<GameDto> findTopRatedGames(int topN);
+    List<GameWithRatingDto> getTopGamesWithRating(int topN);
 
     // Thêm method tìm kiếm nâng cao
     Page<GameSearchResponseDto> searchAndFilterGames(
@@ -20,4 +22,6 @@ public interface GameService {
             Double minPrice,
             Double maxPrice,
             Pageable pageable);
+
+    GameWithRatingDto getGameWithRatingById(Long id);
 }
