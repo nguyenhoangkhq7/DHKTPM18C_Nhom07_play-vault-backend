@@ -16,8 +16,8 @@ public class GameBasicInfoService {
 
 
     //Lấy tất cả thông tin cơ bản của các game yêu thích của khách hàng theo customerId
-    public List<GameBasicInfo> findAllByGameFavoriteWithCustomerId(Long customerId) {
-        return gameRepository.findAllByGameFavoriteWithCustomerId(customerId);
+    public List<GameBasicInfo> findAllByGameFavoriteWithCustomerId(String username) {
+        return gameRepository.findAllByGameFavoriteWithCustomerId(username);
     }
 
 }

@@ -13,10 +13,11 @@ import java.util.List;
 @Mapper(componentModel = "spring", uses = {GameMapper.class})
 public interface CartMapper {
 
+    // === 1. MAPPING CHO Cart -> CartDto (Cái bạn bị null) ===
+
     @Mapping(source = "cartItems", target = "items")
     CartDto toDto(Cart cart);
 
-    List<CartItemResponse> toCartItemResponseList(List<CartItem> cartItems);
 
 
     // ========= PHƯẦN SỬA LỖI ĐÃ ĐƯỢC CẬP NHẬT =========
@@ -42,11 +43,32 @@ public interface CartMapper {
     @Mapping(target = "totalItems", expression = "java(cart.getCartItems() != null ? cart.getCartItems().size() : 0)")
     CartResponse toCartResponse(Cart cart);
 
+    /**
+     * Đây là "công thức" map 1 CartItem -> 1 CartItemResponse
+     * (Giải quyết lỗi null ban đầu của bạn)
+     */
+    @Mapping(source = "id", target = "cartItemId")
+    @Mapping(source = "game.id", target = "gameId")
+    @Mapping(source = "game.gameBasicInfos.name", target = "gameName")
+    @Mapping(source = "game.gameBasicInfos.thumbnail", target = "thumbnail")
+    @Mapping(source = "price", target = "originalPrice")
+    @Mapping(source = "cartItem", target = "finalPrice", qualifiedByName = "calculateFinalPrice") // <-- Dùng helper
+    CartItemResponse toCartItemResponse(CartItem cartItem);
+
+    List<CartItemResponse> toCartItemResponseList(List<CartItem> cartItems);
+
+
+    // === 3. HELPER FUNCTION (Dùng chung cho cả 2) ===
 
     @Named("calculateFinalPrice")
     default BigDecimal calculateFinalPrice(CartItem item) {
+        // Đảm bảo code này an toàn với null
         BigDecimal price = item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO;
         BigDecimal discount = item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO;
-        return price.subtract(discount);
+
+        BigDecimal finalPrice = price.subtract(discount);
+
+        // Đảm bảo giá cuối cùng không bao giờ bị âm
+        return finalPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : finalPrice;
     }
 }

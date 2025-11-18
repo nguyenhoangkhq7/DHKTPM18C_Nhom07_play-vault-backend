@@ -23,7 +23,6 @@ public class Cart {
     @Column(name = "total_price", precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
-
     @OneToMany(
             mappedBy = "cart", // "cart" là tên trường Cart trong class CartItem
             cascade = CascadeType.ALL, // Lưu/Xóa Cart thì tự động Lưu/Xóa CartItem
