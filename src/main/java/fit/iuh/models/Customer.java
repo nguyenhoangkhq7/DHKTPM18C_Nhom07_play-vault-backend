@@ -7,7 +7,9 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -57,4 +59,16 @@ public class Customer {
    )
    private List<Game> wishlist;
 
+   @ManyToMany(fetch = FetchType.LAZY)
+   @JoinTable(
+           name = "user_libraries",
+           joinColumns = @JoinColumn(name = "customer_id"),
+           inverseJoinColumns = @JoinColumn(name = "game_id")
+   )
+   private Set<Game> ownedGames = new HashSet<>(); // Tên biến trong Java (CamelCase)
+
+   // Helper method (Giữ nguyên)
+   public boolean hasOwnedGame(Long gameId) {
+      return ownedGames.stream().anyMatch(g -> g.getId().equals(gameId));
+   }
 }
