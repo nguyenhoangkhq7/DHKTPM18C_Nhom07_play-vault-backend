@@ -38,6 +38,7 @@ public interface GameMapper {
 
     @Mapping(source = "gameBasicInfos", target = "gameBasicInfos")
     @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
+    @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisherName")
     GameDto toDTO(Game game);
 
     // Toàn bộ logic map CartItemDto đã được XÓA khỏi đây

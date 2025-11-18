@@ -7,6 +7,7 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -45,6 +46,9 @@ public class Promotion {
    @JoinColumn(name = "publisher_id", nullable = false)
    private Publisher publisher;
 
+   // **THUỘC TÍNH MỚI: Liên kết Một-Nhiều đến Game**
+   @OneToMany(mappedBy = "promotion", fetch = FetchType.LAZY)
+   private List<Game> games;
    // --------------------------
    // Business logic
    // --------------------------

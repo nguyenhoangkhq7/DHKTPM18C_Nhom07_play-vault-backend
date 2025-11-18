@@ -14,6 +14,7 @@ public class GameDto {
     private LocalDate releaseDate;
     private GameBasicInfoDto gameBasicInfos;
     private String categoryName;
+    private String publisherName;
 
 }
 
