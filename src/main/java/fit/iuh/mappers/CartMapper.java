@@ -26,15 +26,11 @@ public interface CartMapper {
      */
     @Mapping(target = "cartItemId", source = "id")
     @Mapping(target = "gameId", source = "game.id")
-
-    // SỬA LỖI: Truy cập qua GameBasicInfos
     @Mapping(target = "gameName", source = "game.gameBasicInfos.name")
     @Mapping(target = "thumbnail", source = "game.gameBasicInfos.thumbnail")
-
     @Mapping(target = "originalPrice", source = "price")
-    @Mapping(target = "finalPrice", source = "item", qualifiedByName = "calculateFinalPrice")
-    CartItemResponse toCartItemResponse(CartItem item);
-    // ========= KẾT THÚC PHẦN SỬA LỖI =========
+    @Mapping(target = "finalPrice", expression = "java(calculateFinalPrice(cartItem))")
+    CartItemResponse toCartItemResponse(CartItem cartItem);
 
 
     @Mapping(target = "cartId", source = "id")
@@ -43,17 +39,6 @@ public interface CartMapper {
     @Mapping(target = "totalItems", expression = "java(cart.getCartItems() != null ? cart.getCartItems().size() : 0)")
     CartResponse toCartResponse(Cart cart);
 
-    /**
-     * Đây là "công thức" map 1 CartItem -> 1 CartItemResponse
-     * (Giải quyết lỗi null ban đầu của bạn)
-     */
-    @Mapping(source = "id", target = "cartItemId")
-    @Mapping(source = "game.id", target = "gameId")
-    @Mapping(source = "game.gameBasicInfos.name", target = "gameName")
-    @Mapping(source = "game.gameBasicInfos.thumbnail", target = "thumbnail")
-    @Mapping(source = "price", target = "originalPrice")
-    @Mapping(source = "cartItem", target = "finalPrice", qualifiedByName = "calculateFinalPrice") // <-- Dùng helper
-    CartItemResponse toCartItemResponse(CartItem cartItem);
 
     List<CartItemResponse> toCartItemResponseList(List<CartItem> cartItems);
 
