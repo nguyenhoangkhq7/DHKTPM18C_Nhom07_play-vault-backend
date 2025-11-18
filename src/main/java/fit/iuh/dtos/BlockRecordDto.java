@@ -1,9 +1,16 @@
 package fit.iuh.dtos;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 
-public class BlockRecorđto {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class BlockRecordDto {
     private Long id;
-    private LocalDate createDate;
+    private LocalDate createdAt;
     private String reason;
 }
