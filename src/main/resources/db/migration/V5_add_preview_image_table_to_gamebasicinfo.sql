@@ -1,7 +1,7 @@
 USE playvaultdb;
 
 -- Tạo bảng preview_images
-CREATE TABLE preview_images (
+CREATE TABLE IF NOT EXISTS preview_images (
     -- id : Long
                                 id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
@@ -21,4 +21,4 @@ CREATE TABLE preview_images (
 );
 
 -- Thêm chỉ mục cho khóa ngoại để cải thiện hiệu suất tìm kiếm
-CREATE INDEX idx_pi_game_basic_info_id ON preview_images (game_basic_info_id);
+CREATE INDEX IF NOT EXISTS idx_pi_game_basic_info_id ON preview_images (game_basic_info_id);
