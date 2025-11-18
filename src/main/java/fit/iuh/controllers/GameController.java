@@ -2,9 +2,12 @@ package fit.iuh.controllers;
 
 import fit.iuh.dtos.GameDto;
 import fit.iuh.dtos.GameSearchResponseDto;
+import fit.iuh.dtos.GameWithRatingDto;
+import fit.iuh.dtos.ReviewDto;
 import fit.iuh.models.GameBasicInfo;
 import fit.iuh.services.GameBasicInfoService;
 import fit.iuh.services.GameService;
+import fit.iuh.services.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +27,7 @@ public class GameController {
 
     private final GameService gameService;
     private final GameBasicInfoService gameBasicInfoService;
+    private final ReviewService reviewService;
 
     @GetMapping
     public ResponseEntity<List<GameDto>> getGames(
@@ -33,10 +37,12 @@ public class GameController {
     }
 
     @GetMapping("/top")
-    public ResponseEntity<List<GameDto>> getTopRatedGames(
-            @RequestParam(defaultValue = "5") int limit) {
-        List<GameDto> games = gameService.findTopRatedGames(limit);
-        return ResponseEntity.ok(games);
+    public ResponseEntity<List<GameWithRatingDto>> getTopRatedGames(
+            @RequestParam(defaultValue = "0") int limit) {
+//        List<GameDto> games = gameService.findTopRatedGames(limit);
+//        return ResponseEntity.ok(games);
+        List<GameWithRatingDto> gameWithRatingDtos= gameService.getTopGamesWithRating(limit);
+        return ResponseEntity.ok(gameWithRatingDtos);
     }
 
     @GetMapping("/favorites/{customerId}")
@@ -60,4 +66,23 @@ public class GameController {
 
         return ResponseEntity.ok(games);
     }
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<GameWithRatingDto> getGameById(@PathVariable Long id) {
+        // Sử dụng phương thức Service để lấy Game kèm Rating đã được tính toán
+        GameWithRatingDto gameDto = gameService.getGameWithRatingById(id);
+
+        if (gameDto == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(gameDto);
+    }
+
+    @GetMapping("/reviews/{id}")
+    public ResponseEntity<List<ReviewDto>> getReviewById(@PathVariable Long id) {
+        List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
+        return ResponseEntity.ok(reviews);
+    }
+
 }
