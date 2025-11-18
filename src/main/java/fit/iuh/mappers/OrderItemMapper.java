@@ -6,6 +6,8 @@ import fit.iuh.models.OrderItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface OrderItemMapper {
 
@@ -16,6 +18,11 @@ public interface OrderItemMapper {
     @Mapping(source = "promotion.id", target = "promotionId")
     @Mapping(target = "total", ignore = true)  
     OrderItemDto toDTO(OrderItem item);
+    // 2. Map List ← THÊM 2 DÒNG NÀY LÀ XONG!
+    List<OrderItemDto> toDTOList(List<OrderItem> items);
+
+    List<PurchasedGameResponse> toPurchasedGameResponseList(List<OrderItem> orderItems);
+    // ← Dòng này nếu bạn dùng ở chỗ khác, không bắt buộc
 
     @Mapping(source = "orderId", target = "order.id")
     @Mapping(source = "gameId", target = "game.id")
