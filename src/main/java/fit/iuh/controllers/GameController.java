@@ -68,6 +68,8 @@ public class GameController {
         }
         return ResponseEntity.ok(fit.iuh.dtos.GameDetailDto.fromEntity(game));
     }
+
+    @GetMapping("card/{id}")
     public ResponseEntity<GameWithRatingDto> getGameById(@PathVariable Long id) {
         // Sử dụng phương thức Service để lấy Game kèm Rating đã được tính toán
         GameWithRatingDto gameDto = gameService.getGameWithRatingById(id);
