@@ -4,7 +4,10 @@ import fit.iuh.dtos.CartDto;
 import fit.iuh.dtos.CartItemRequestDto;
 import fit.iuh.dtos.CartResponse;
 import fit.iuh.services.CartService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal; // Import để lấy thông tin user đã đăng nhập
 
@@ -20,12 +23,15 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    /**
-     * Lấy giỏ hàng hiện tại của user
-     */
     @GetMapping
-    public ResponseEntity<CartResponse> getMyCart(Principal principal) {
-        String username = principal.getName();
+    public ResponseEntity<CartResponse> getMyCart() {
+        // Lấy thông tin xác thực từ SecurityContextHolder
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String username = auth.getName();
+
         return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
 
@@ -34,10 +40,15 @@ public class CartController {
      */
     @PostMapping("/items/{gameId}")
     public ResponseEntity<CartResponse> addItemToCart(
-            @PathVariable Long gameId,
-            Principal principal
-    ) {
-        String username = principal.getName();
+            @PathVariable Long gameId
+    ) { // Bỏ Principal principal
+        // Lấy thông tin xác thực từ SecurityContextHolder
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String username = auth.getName();
+
         cartService.addToCart(username, gameId);
         return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
@@ -47,10 +58,15 @@ public class CartController {
      */
     @DeleteMapping("/items/{cartItemId}")
     public ResponseEntity<CartResponse> removeItemFromCart(
-            @PathVariable Long cartItemId,
-            Principal principal
+            @PathVariable Long cartItemId
     ) {
-        String username = principal.getName();
+        // Lấy thông tin xác thực từ SecurityContextHolder
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String username = auth.getName();
+
         cartService.removeCartItem(username, cartItemId);
         return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
@@ -59,25 +75,16 @@ public class CartController {
      * Clear toàn bộ giỏ hàng
      */
     @DeleteMapping("/clear")
-    public ResponseEntity<CartResponse> clearCart(Principal principal) {
-        String username = principal.getName();
-        cartService.clearCart(username); // bạn sẽ cần implement trong CartService
+    public ResponseEntity<CartResponse> clearCart() { // Bỏ Principal principal
+        // Lấy thông tin xác thực từ SecurityContextHolder
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String username = auth.getName();
+
+        cartService.clearCart(username);
         return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
-
-    /**
-     * API cập nhật số lượng item trong giỏ
-     * (thường giỏ hàng cần API này)
-     */
-//    @PutMapping("/items/{cartItemId}/{quantity}")
-//    public ResponseEntity<CartResponse> updateItemQuantity(
-//            @PathVariable Long cartItemId,
-//            @PathVariable int quantity,
-//            Principal principal
-//    ) {
-//        String username = principal.getName();
-//        cartService.updateQuantity(username, cartItemId, quantity); // cần implement
-//        return ResponseEntity.ok(cartService.getCartByUsername(username));
-//    }
 
 }

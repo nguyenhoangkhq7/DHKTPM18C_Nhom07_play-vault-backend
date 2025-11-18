@@ -17,6 +17,7 @@ public class GameDto {
     private LocalDate releaseDate;
     private GameBasicInfoDto gameBasicInfos;
     private String categoryName;
+    private String publisherName;
 
     private Double rating;      // Điểm trung bình (VD: 4.5)
     private int reviewCount;    // Số lượng đánh giá (VD: 10)
