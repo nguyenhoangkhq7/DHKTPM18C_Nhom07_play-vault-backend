@@ -9,9 +9,10 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class PublisherDto {
     private Long id;
-    private String ten; // Tên Studio, lấy từ studioName
+    private String name; // Tên Studio, lấy từ studioName
     private String email; // Lấy từ Account entity
-    private LocalDate ngayTao; // Lấy từ Account entity
-    private Integer soGame; // Số game
-    private String trangThai;
+    private LocalDate date; // Lấy từ Account entity
+    private Integer games; // Số game
+    private String status;
+    private String username;
 }
