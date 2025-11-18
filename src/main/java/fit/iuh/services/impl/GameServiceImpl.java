@@ -2,6 +2,7 @@ package fit.iuh.services.impl;
 
 import fit.iuh.dtos.GameDto;
 import fit.iuh.dtos.GameSearchResponseDto;
+import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.mappers.GameMapper;
 import fit.iuh.models.Game;
 import fit.iuh.repositories.GameRepository;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -94,4 +97,32 @@ public class GameServiceImpl implements GameService {
         // Trả về nguyên con Entity Game lấy từ DB
         return gameRepository.findById(id).orElse(null);
     }
+    public List<GameWithRatingDto> getTopGamesWithRating(int topN) {
+        List<Game> allGames = gameRepository.findAll();
+        if(topN==0){
+            return gameMapper.toGameWithRatingDtoList(allGames)
+                    .stream()
+                    .sorted(Comparator.comparing(GameWithRatingDto::getAvgRating).reversed())
+                    .collect(Collectors.toList());
+        }
+        return gameMapper.toGameWithRatingDtoList(allGames)
+                .stream()
+                .sorted(Comparator.comparing(GameWithRatingDto::getAvgRating).reversed())
+                .limit(topN)
+                .collect(Collectors.toList());
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GameWithRatingDto getGameWithRatingById(Long id) {
+        // 1. Tìm Game bằng ID. Sử dụng findById và orElse(null) để xử lý trường hợp không tìm thấy.
+        Game game = gameRepository.findById(id).orElse(null);
+
+        if (game == null) {
+            return null;
+        }
+        return gameMapper.toGameWithRatingDto(game);
+    }
+
 }
