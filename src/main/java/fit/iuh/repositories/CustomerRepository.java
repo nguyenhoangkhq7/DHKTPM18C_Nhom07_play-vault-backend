@@ -24,4 +24,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             """)
     Optional<Customer> findByAccount_UsernameWithLibrary(@Param("username") String username);
 
+    boolean existsByAccount_UsernameAndOwnedGames_Id(String username, Long gameId);
+
 }
