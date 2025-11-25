@@ -1,44 +1,110 @@
 package fit.iuh.services;
 
+import fit.iuh.dtos.PaymentResponse;
 import fit.iuh.models.Customer;
+import fit.iuh.models.Invoice;
+import fit.iuh.models.Order;
+import fit.iuh.models.Payment;
+import fit.iuh.models.enums.InvoiceStatus;
+import fit.iuh.models.enums.PaymentMethod;
+import fit.iuh.models.enums.PaymentStatus;
 import fit.iuh.repositories.CustomerRepository;
+import fit.iuh.repositories.InvoiceRepository;
+import fit.iuh.repositories.OrderRepository;
+import fit.iuh.repositories.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import static fit.iuh.models.enums.PaymentStatus.SUCCESS;
 
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
+    private static final Long DEPOSIT_ORDER_ID = 7L;
     private final CustomerRepository customerRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository;
 
-    /**
-     * Thực hiện cộng tiền G-Coin vào tài khoản khách hàng.
-     * @param username Tên đăng nhập của khách hàng
-     * @param amount Số tiền G-Coin nạp
-     * @return Customer object đã cập nhật
-     */
+//    @Transactional
+//    public PaymentResponse deposit(String username, BigDecimal amount, String method) {
+//        Customer customer = customerRepository.findByAccount_Username(username)
+//                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng: " + username));
+//
+//        // 1. Tạo Invoice
+//        Invoice invoice = new Invoice();
+//        invoice.setCustomer(customer);
+//        invoice.setTotalAmount(amount);
+//        invoice.setIssueDate(LocalDate.now());
+//        invoice.setStatus(InvoiceStatus.UNPAID);
+//        invoiceRepository.save(invoice);
+//
+//        // 2. Tạo Payment
+//        Payment payment = new Payment();
+//        payment.setAmount(amount);
+//        payment.setPaymentDate(LocalDate.now());
+//        payment.setPaymentMethod(method.equalsIgnoreCase("bank") ? PaymentMethod.BANK : PaymentMethod.MOMO);
+//        payment.setStatus(PaymentStatus.PENDING);
+//        payment.setInvoice(invoice);
+//        paymentRepository.save(payment);
+//
+//        // 3. Giả lập thanh toán thành công
+//        payment.setStatus(PaymentStatus.SUCCESS);
+//        paymentRepository.save(payment);
+//
+//        // 4. Cập nhật balance
+//        BigDecimal currentBalance = customer.getBalance() != null ? customer.getBalance() : BigDecimal.ZERO;
+//        customer.setBalance(currentBalance.add(amount));
+//        customerRepository.save(customer);
+//
+//        // 5. Cập nhật invoice
+//        invoice.setStatus(InvoiceStatus.PAID);
+//        invoiceRepository.save(invoice);
+//
+//        // 6. Trả về thông tin cho frontend
+//        return new PaymentResponse(invoice.getId(), payment.getId(), customer.getBalance(), amount);
+//    }
     @Transactional
-    public Customer deposit(String username, BigDecimal amount) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0.");
+    public PaymentResponse deposit(String username, BigDecimal amount, String method) {
+        Customer customer = customerRepository.findByAccount_Username(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Số tiền phải lớn hơn 0");
         }
 
+        Payment payment = new Payment();
+        payment.setAmount(amount);
+        payment.setPaymentDate(LocalDate.now());
+
+        // ĐOẠN QUAN TRỌNG NHẤT – DÙ FRONTEND GỬI "bank", "momo", "zalopay", "ZALOPAY" gì cũng OK!
+        String methodUpper = method.toUpperCase().trim();
+        PaymentMethod paymentMethod;
+        if ("BANK".equals(methodUpper) || "MOMO".equals(methodUpper)) {
+            paymentMethod = PaymentMethod.ZALOPAY; // CỨ ĐỂ LÀ ZALOPAY – vì bạn dùng VietQR → thực chất là chuyển khoản ngân hàng!
+        } else {
+            paymentMethod = PaymentMethod.valueOf(methodUpper); // chỉ dùng khi gửi đúng ZALOPAY hoặc PAYPAL
+        }
+        payment.setPaymentMethod(paymentMethod);
+
+        payment.setStatus(PaymentStatus.SUCCESS);
+        payment.setInvoice(null);
+
+        paymentRepository.save(payment);
+
+        customer.setBalance(customer.getBalance().add(amount));
+        customerRepository.save(customer);
+
+        return new PaymentResponse(null, payment.getId(), customer.getBalance(), amount);
+    }
+
+    public BigDecimal getCustomerBalance(String username) {
         Customer customer = customerRepository.findByAccount_Username(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng: " + username));
-
-        // Đảm bảo balance không bị null trước khi cộng
-        BigDecimal currentBalance = customer.getBalance() == null ? BigDecimal.ZERO : customer.getBalance();
-
-        customer.setBalance(currentBalance.add(amount));
-
-        return customerRepository.save(customer);
+        return customer.getBalance();
     }
-
-    public Customer getCustomerByUsername(String username) {
-        return customerRepository.findByAccount_Username(username)
-                .orElse(null);
-    }
-
 }
