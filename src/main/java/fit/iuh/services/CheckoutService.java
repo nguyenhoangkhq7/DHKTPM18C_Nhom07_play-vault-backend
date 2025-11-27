@@ -106,6 +106,14 @@ public class CheckoutService {
             orderItems.add(orderItem);
         }
         orderRepository.save(order);
+        // Thêm game vào library
+        for (OrderItem item : order.getOrderItems()) {
+            if (item.getGame() != null && !customer.getLibrary().contains(item.getGame())) {
+                customer.getLibrary().add(item.getGame());
+            }
+        }
+        // Lưu customer với library mới
+        customerRepository.save(customer);
 
         // XÓA KHỎI GIỎ HÀNG
         cart.getCartItems().removeAll(itemsToCheckout);
