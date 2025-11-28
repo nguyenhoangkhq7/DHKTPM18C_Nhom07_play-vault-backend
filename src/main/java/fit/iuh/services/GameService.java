@@ -39,4 +39,6 @@ public interface GameService {
     GameWithRatingDto getGameWithRatingById(Long id);
 
     boolean checkOwnership(String username, Long gameId);
+
+    List<GameDto> getAllByGameToday();
 }
