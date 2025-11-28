@@ -10,6 +10,7 @@ import fit.iuh.repositories.AccountRepository;
 import fit.iuh.repositories.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,4 +24,6 @@ public class AccountService{
         List<Account> items = accountRepository.findAllAccountCreateToday();
         return accountMapper.toDTO(items);
     }
+
+
 }
