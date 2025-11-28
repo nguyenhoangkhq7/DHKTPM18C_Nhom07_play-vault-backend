@@ -24,13 +24,21 @@ public class PublisherRequestController {
                 .orElseGet(() -> ResponseEntity.ok(null));
     }
 
-    @PutMapping("/{id}/approve")
-    public ResponseEntity<PublisherRequestDto> approveRequest(@PathVariable Long id) {
-        return publisherRequestService.updateStatus(id, RequestStatus.APPROVED)
-                .map(req -> ResponseEntity.ok(publisherRequestMapper.toPublisherRequestDto(req)))
+    @PutMapping("/{id}/{action:approve|reject}")
+    public ResponseEntity<PublisherRequestDto> updateRequestStatus(
+            @PathVariable Long id,
+            @PathVariable String action) {
+
+        RequestStatus status = switch (action.toUpperCase()) {
+            case "APPROVE" -> RequestStatus.APPROVED;
+            case "REJECT"  -> RequestStatus.REJECTED;
+            default -> throw new IllegalArgumentException("Invalid action: " + action);
+        };
+
+        return publisherRequestService.updateStatus(id, status)
+                .map(publisherRequestMapper::toPublisherRequestDto)
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
-
-
 
 }
