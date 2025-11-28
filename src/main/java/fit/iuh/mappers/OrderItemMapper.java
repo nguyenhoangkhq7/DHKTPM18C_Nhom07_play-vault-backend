@@ -3,6 +3,7 @@ package fit.iuh.mappers;
 import fit.iuh.dtos.OrderItemDto;
 import fit.iuh.dtos.PurchasedGameResponse;
 import fit.iuh.models.OrderItem;
+import org.mapstruct.IterableMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -31,12 +32,13 @@ public interface OrderItemMapper {
         // subtotal sẽ tự tính
     OrderItem toEntity(OrderItemDto dto);
 
-    @Mapping(source = "order.id", target = "orderId")
-    @Mapping(source = "game.gameBasicInfos.id", target = "gameId")
-    @Mapping(source = "game.gameBasicInfos.name", target = "gameTitle")
-    @Mapping(source = "game.gameBasicInfos.thumbnail", target = "gameThumbnail")
-    @Mapping(source = "promotion.id", target = "promotionId")
-    @Mapping(target = "total", ignore = true)
-        // subtotal sẽ tự tính
-    List<OrderItemDto> toListDto(List<OrderItem> items);
+//    @Mapping(source = "order.id", target = "orderId")
+//    @Mapping(source = "game.gameBasicInfos.id", target = "gameId")
+//    @Mapping(source = "game.gameBasicInfos.name", target = "gameTitle")
+//    @Mapping(source = "game.gameBasicInfos.thumbnail", target = "gameThumbnail")
+//    @Mapping(source = "promotion.id", target = "promotionId")
+//    @Mapping(target = "total", ignore = true)
+//        // subtotal sẽ tự tính
+//    @IterableMapping(qualifiedByName = "basicItem")
+//    List<OrderItemDto> toListDto(List<OrderItem> items);
 }

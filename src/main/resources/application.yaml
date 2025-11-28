@@ -7,8 +7,12 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
     username: root
-    password: root
+    password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      max-file-size: 100GB
+      max-request-size: 100GB
 
   jpa:
     hibernate:
@@ -21,5 +25,13 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 300 # 5min
+    accessTokenExpiration: 3000 # 5min
     refreshTokenExpiration: 604800 # 7 days
+
+gdrive:
+  oauth:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: http://localhost:8080/api/drive/oauth2callback
+    tokens-file: ./gdrive-oauth-tokens.json
+  parent-folder-id: "1R1qSJPn2ktOyJQXz0BfEErPx7TdZYZrA"
