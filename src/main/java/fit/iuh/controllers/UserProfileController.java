@@ -82,4 +82,16 @@ public class UserProfileController {
         UserProfileDto updated = userProfileService.getProfile(id);
         return ResponseEntity.ok(updated);
     }
+
+    // trong UserProfileController.java (thêm import nếu cần)
+    @GetMapping("/by-username/{username}/profile")
+    public ResponseEntity<UserProfileDto> getProfileByUsername(@PathVariable String username) {
+        // tìm customer theo account.username
+        Customer customer = customerRepository.findByAccount_Username(username)
+                .orElseThrow(() -> new RuntimeException("Customer not found for username: " + username));
+
+        // trả profile bằng service hiện có (dùng id của customer)
+        UserProfileDto dto = userProfileService.getProfile(customer.getId());
+        return ResponseEntity.ok(dto);
+    }
 }
