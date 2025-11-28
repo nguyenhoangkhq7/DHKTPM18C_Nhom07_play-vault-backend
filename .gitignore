@@ -35,5 +35,4 @@ build/
 .vscode/
 
 # Ignore Maven/Spring Boot config files
-pom.xml
 application.yaml
