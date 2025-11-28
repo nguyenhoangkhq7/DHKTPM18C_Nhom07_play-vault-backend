@@ -39,7 +39,7 @@ public class CartController {
     /**
      * Thêm sản phẩm vào giỏ hàng theo gameId
      */
-    @PostMapping("/items/{gameId}")
+    @PostMapping("/items/{gameId}") 
     public ResponseEntity<CartResponse> addItemToCart(
             @PathVariable Long gameId
     ) { // Bỏ Principal principal
