@@ -45,7 +45,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     // 3. Doanh thu theo game (gộp theo game, trả về OrderItem để mapper xử lý)
     @Query("""
-           SELECT oi FROM OrderItem oi
+
+            SELECT oi FROM OrderItem oi
            JOIN oi.game g
            JOIN g.gameBasicInfos gbi
            JOIN oi.order o
@@ -58,4 +59,16 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             @Param("pubId") Long publisherId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
-}
+
+    @Query("SELECT oi FROM Order o JOIN o.orderItems oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
+    List<OrderItem> findAllByOrderItemToday();
+
+    }
+
+
+
+//import java.util.List;
+//
+//public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
+
+//}

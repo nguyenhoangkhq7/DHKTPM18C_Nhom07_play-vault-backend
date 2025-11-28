@@ -59,6 +59,7 @@ public class SecurityConfig {
                       .requestMatchers(HttpMethod.GET, "/api/games/top", "/api/games/top/**").permitAll()
                       .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                       .requestMatchers("/images/**").permitAll()
+                      .requestMatchers("/api/wallet/**").authenticated()
                       .anyRequest().authenticated()
               )
               .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

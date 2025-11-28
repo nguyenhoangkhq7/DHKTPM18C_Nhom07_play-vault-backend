@@ -5,6 +5,7 @@ import fit.iuh.dtos.GameSearchResponseDto;
 import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.mappers.GameMapper;
 import fit.iuh.models.Game;
+import fit.iuh.repositories.CustomerRepository; // THÊM IMPORT
 import fit.iuh.repositories.GameRepository;
 import fit.iuh.services.GameService;
 import fit.iuh.specifications.GameSpecification;
@@ -26,6 +27,7 @@ public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
     private final GameMapper gameMapper; // MapStruct
+    private final CustomerRepository customerRepository; // THÊM REPOSITORY CẦN THIẾT
 
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
@@ -116,7 +118,6 @@ public class GameServiceImpl implements GameService {
     @Override
     @Transactional(readOnly = true)
     public GameWithRatingDto getGameWithRatingById(Long id) {
-        // 1. Tìm Game bằng ID. Sử dụng findById và orElse(null) để xử lý trường hợp không tìm thấy.
         Game game = gameRepository.findById(id).orElse(null);
 
         if (game == null) {
@@ -125,4 +126,20 @@ public class GameServiceImpl implements GameService {
         return gameMapper.toGameWithRatingDto(game);
     }
 
+    // ========================================================================
+    // 3. THÊM: LOGIC KIỂM TRA QUYỀN SỞ HỮU (Buy & Download)
+    // ========================================================================
+    @Override
+    @Transactional(readOnly = true)
+    public boolean checkOwnership(String username, Long gameId) {
+        // Sử dụng phương thức mới trong CustomerRepository để kiểm tra sự tồn tại
+        // của Customer có username đó VÀ đã sở hữu Game có gameId này.
+        // Phương thức này cần được định nghĩa trong CustomerRepository.
+        return customerRepository.existsByAccount_UsernameAndOwnedGames_Id(username, gameId);
+    }
+    @Override
+    public List<GameDto> getAllByGameToday() {
+        List<Game> items = gameRepository.findAllByGameToday();
+        return gameMapper.toGameDto(items);
+    }
 }

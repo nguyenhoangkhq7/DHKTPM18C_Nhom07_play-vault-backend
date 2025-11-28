@@ -55,7 +55,7 @@ public class PublisherRevenueService {
 
         // Lấy danh sách OrderItem để đếm game + người chơi
         List<OrderItem> revenueItems = orderItemRepo.findRevenueByGame(publisherId, from, to);
-        List<OrderItemDto> items = orderItemMapper.toDTOList(revenueItems);
+        List<OrderItemDto> items = orderItemMapper.toListDto(revenueItems);
 
         long totalGames = items.stream()
                 .map(OrderItemDto::getGameId)
@@ -80,7 +80,7 @@ public class PublisherRevenueService {
         LocalDate to = toDate != null ? toDate : LocalDate.now();
 
         List<OrderItem> items = orderItemRepo.findRevenueByGame(publisherId, from, to);
-        return orderItemMapper.toDTOList(items);
+        return orderItemMapper.toListDto(items);
     }
 
     // 3. Doanh thu theo tháng
