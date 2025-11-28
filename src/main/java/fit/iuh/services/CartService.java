@@ -103,28 +103,28 @@ public class CartService {
     // ========================================================================
     // 3. THÊM GAME VÀO GIỎ HÀNG (từ đoạn 1)
     // ========================================================================
-    @Transactional
-    public CartResponse addGameToCart(String username, Long gameId) {
-        Cart cart = findOrCreateCartByUsername(username);
-
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy Game ID: " + gameId));
-
-        boolean exists = cartItemRepository.findByCartIdAndGameId(cart.getId(), gameId).isPresent();
-        if (exists) {
-            throw new RuntimeException("Game này đã có trong giỏ hàng.");
-        }
-
-        CartItem item = new CartItem();
-        item.setCart(cart);
-        item.setGame(game);
-        item.setPrice(game.getGameBasicInfos() != null ? game.getGameBasicInfos().getPrice() : BigDecimal.ZERO);
-        item.setDiscount(BigDecimal.ZERO);
-
-        cartItemRepository.save(item);
-
-        return getCartResponse(username);
-    }
+//    @Transactional
+//    public CartResponse addGameToCart(String username, Long gameId) {
+//        Cart cart = findOrCreateCartByUsername(username);
+//
+//        Game game = gameRepository.findById(gameId)
+//                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy Game ID: " + gameId));
+//
+//        boolean exists = cartItemRepository.findByCartIdAndGameId(cart.getId(), gameId).isPresent();
+//        if (exists) {
+//            throw new RuntimeException("Game này đã có trong giỏ hàng.");
+//        }
+//
+//        CartItem item = new CartItem();
+//        item.setCart(cart);
+//        item.setGame(game);
+//        item.setPrice(game.getGameBasicInfos() != null ? game.getGameBasicInfos().getPrice() : BigDecimal.ZERO);
+//        item.setDiscount(BigDecimal.ZERO);
+//
+//        cartItemRepository.save(item);
+//
+//        return getCartResponse(username);
+//    }
 
 
     // ========================================================================
@@ -133,24 +133,16 @@ public class CartService {
     @Transactional
     public void addToCart(String username, Long gameId) {
         Cart cart = findOrCreateCartByUsername(username);
-
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new RuntimeException("Game not found with ID: " + gameId));
-
+                .orElseThrow(() -> new RuntimeException("Game not found"));
         CartItem newItem = new CartItem();
         newItem.setCart(cart);
         newItem.setGame(game);
-
-        if (game.getGameBasicInfos() != null) {
-            newItem.setPrice(game.getGameBasicInfos().getPrice());
-        } else {
-            newItem.setPrice(BigDecimal.ZERO); // Đảm bảo không bị null
-        }
-
+        newItem.setPrice(game.getGameBasicInfos() != null ? game.getGameBasicInfos().getPrice() : BigDecimal.ZERO);
         newItem.setDiscount(BigDecimal.ZERO);
-
         cartItemRepository.save(newItem);
     }
+
 
 
     // ========================================================================
