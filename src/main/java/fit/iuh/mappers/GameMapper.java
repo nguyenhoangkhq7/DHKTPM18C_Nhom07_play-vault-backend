@@ -29,6 +29,7 @@ public interface GameMapper {
     @Mapping(source = "gameBasicInfos.price", target = "price")
     GameCardDto toCardDto(Game game);
 
+    @Mapping(target = "status", expression = "java(game.getStatus() != null ? game.getStatus().name() : null)")
     @Mapping(source = "gameBasicInfos", target = "gameBasicInfos")
     @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
     @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisherName")

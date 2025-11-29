@@ -1,11 +1,13 @@
 package fit.iuh.models;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -64,7 +66,7 @@ public class GameBasicInfo {
            joinColumns = @JoinColumn(name = "game_basic_info_id"),
            inverseJoinColumns = @JoinColumn(name = "platform_id")
    )
-   private List<Platform> platforms;
+   private List<Platform> platforms = new ArrayList<>();
 
    @OneToMany(mappedBy = "gameBasicInfo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
    private List<PreviewImage> previewImages;
