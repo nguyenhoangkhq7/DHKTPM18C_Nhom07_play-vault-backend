@@ -124,5 +124,4 @@ public class GameController {
         List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
         return ResponseEntity.ok(reviews);
     }
-
 }

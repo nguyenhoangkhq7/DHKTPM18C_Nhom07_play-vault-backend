@@ -1,5 +1,6 @@
 package fit.iuh.services;
 
+import fit.iuh.dtos.GameSimpleDto;
 import fit.iuh.dtos.PromotionRequestDto;
 import fit.iuh.dtos.PromotionResponseDto;
 import fit.iuh.mappers.PromotionMapper;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -85,7 +87,7 @@ public class PromotionService {
             throw new RuntimeException("Bạn không có quyền sử dụng khuyến mãi này");
         }
 
-        List<Game> gamesToApply = gameRepository.findAllById(gameIds);
+        List<Game> gamesToApply = gameRepository.findAllByIdWithPublisher(gameIds);
 
         for (Game game : gamesToApply) {
             if (game.getGameBasicInfos() == null || game.getGameBasicInfos().getPublisher() == null) {
@@ -116,4 +118,44 @@ public class PromotionService {
         game.setPromotion(null);
         gameRepository.save(game);
     }
+    // LẤY DANH SÁCH GAME CỦA PUBLISHER - TRẢ VỀ DTO ĐẦY ĐỦ THÔNG TIN
+    public List<GameSimpleDto> getMyGames(String username) {
+        return gameRepository.findByPublisherUsername(username)
+                .stream()
+                .map(this::toGameSimpleDto)
+                .collect(Collectors.toList());
+    }
+
+    private GameSimpleDto toGameSimpleDto(Game game) {
+        GameSimpleDto dto = new GameSimpleDto();
+        dto.setId(game.getId());
+
+        if (game.getGameBasicInfos() != null) {
+            dto.setName(game.getGameBasicInfos().getName());
+            dto.setThumbnail(game.getGameBasicInfos().getThumbnail());
+            dto.setPrice(game.getGameBasicInfos().getPrice());
+        } else {
+            dto.setName("Unknown Game");
+            dto.setThumbnail(null);
+            dto.setPrice(BigDecimal.ZERO);
+        }
+
+        // Tính rating
+        if (game.getReviews() != null && !game.getReviews().isEmpty()) {
+            double avg = game.getReviews().stream()
+                    .mapToInt(r -> r.getRating())
+                    .average()
+                    .orElse(0.0);
+            dto.setRating(Math.round(avg * 10.0) / 10.0);
+            dto.setReviewCount(game.getReviews().size());
+        } else {
+            dto.setRating(0.0);
+            dto.setReviewCount(0);
+        }
+
+        return dto;
+    }
+    // Lấy danh sách game của publisher hiện tại (dùng để hiển thị checkbox/dropdown)
+
+
 }

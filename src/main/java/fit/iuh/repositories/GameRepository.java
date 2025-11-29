@@ -31,6 +31,17 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
         nativeQuery = true)
     List<Game> findTopRatedGames(@Param("topN") int topN);
 
+    @Query("""
+        SELECT g FROM Game g
+        JOIN FETCH g.gameBasicInfos gbi
+        JOIN gbi.publisher p
+        JOIN p.account a
+        WHERE a.username = :username
+        ORDER BY g.id
+        """)
+    List<Game> findByPublisherUsername(@Param("username") String username);
+    @Query("SELECT g FROM Game g JOIN FETCH g.gameBasicInfos gbi JOIN FETCH gbi.publisher p JOIN FETCH p.account WHERE g.id IN :ids")
+    List<Game> findAllByIdWithPublisher(@Param("ids") List<Long> ids);
     @Query("SELECT oi FROM Order o JOIN o.customer c join c.library oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
     List<Game> findAllByOrderItemToday();
 
