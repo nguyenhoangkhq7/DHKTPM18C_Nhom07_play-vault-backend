@@ -1,7 +1,14 @@
 package fit.iuh.services.impl;
 
+import fit.iuh.dtos.GameCreateRequest;
+import fit.iuh.dtos.GameDto;
+import fit.iuh.dtos.GameSearchResponseDto;
+import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.dtos.*;
 import fit.iuh.mappers.GameMapper;
+import fit.iuh.models.*;
+import fit.iuh.models.enums.SubmissionStatus;
+import fit.iuh.repositories.*;
 import fit.iuh.models.Account;
 import fit.iuh.models.Game;
 import fit.iuh.models.GameBasicInfo;
@@ -36,13 +43,19 @@ public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
     private final GameMapper gameMapper; // MapStruct
-    
+
     // Dependency từ nhánh vanhau (Xử lý duyệt game)
     private final GameSubmissionRepository gameSubmissionRepository;
-    
+
     // Dependency từ nhánh main (Xử lý thông tin khách hàng/sở hữu)
     private final CustomerRepository customerRepository;
 
+    private final PublisherRepository publisherRepository;
+    private final CategoryRepository categoryRepository;
+    private final PlatformRepository platformRepository;
+    // Nếu bạn lưu GameBasicInfo qua cascade từ Game thì KHÔNG cần repo này.
+    // Nếu bạn lưu riêng, hãy khai báo:
+    private final GameBasicInfoRepository gameBasicInfoRepository;
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
@@ -129,6 +142,7 @@ public class GameServiceImpl implements GameService {
                 .sorted(Comparator.comparing(GameWithRatingDto::getAvgRating).reversed())
                 .limit(topN)
                 .collect(Collectors.toList());
+
     }
 
     @Override
@@ -145,7 +159,24 @@ public class GameServiceImpl implements GameService {
     // ========================================================================
     // 3. CÁC PHƯƠNG THỨC QUẢN TRỊ & PUBLISHER (FROM NHÁNH VANHAU)
     // ========================================================================
-    
+
+
+    @Override
+    @Transactional
+    public GameDto updateStatus(Long id, String status) {
+        Game game = gameRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Game không tồn tại"));
+        try {
+            SubmissionStatus s = SubmissionStatus.valueOf(status.trim().toUpperCase());
+            game.setStatus(s);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Trạng thái không hợp lệ (PENDING|APPROVED|REJECTED)");
+        }
+        game = gameRepository.save(game);
+        return gameMapper.toDTO(game);
+    }
+
+
     @Override
     @Transactional(readOnly = true)
     public Page<GameSearchResponseDto> searchAndFilterPendingGames(Pageable pageable, String searchQuery) {
@@ -252,7 +283,7 @@ public class GameServiceImpl implements GameService {
 
         gameSubmissionRepository.save(submission);
     }
-    
+
     @Override
     @Transactional
     public GameDetailDto updateApprovedGameStatus(Long gameId, String newStatus) {
@@ -339,13 +370,79 @@ public class GameServiceImpl implements GameService {
     // ========================================================================
     // 4. CÁC PHƯƠNG THỨC CHO NGƯỜI DÙNG/CUSTOMER (FROM NHÁNH MAIN)
     // ========================================================================
-    
+
     @Override
     @Transactional(readOnly = true)
     public boolean checkOwnership(String username, Long gameId) {
+        // TODO: thay bằng logic của bạn nếu khác
+        return customerRepository
+                .existsByAccount_UsernameAndOwnedGames_Id(username, gameId);
+    }
+
+    @Override
+    @Transactional
+    public GameDto createPending(GameCreateRequest req, String publisherUsername) {
+
+        // Tìm Publisher theo email
+        Publisher publisher = publisherRepository.findByAccount_Username(publisherUsername)
+                .orElseThrow(() -> new RuntimeException("Publisher không tồn tại"));
+
+        // 1️⃣ Tạo GameBasicInfo
+        GameBasicInfo info = new GameBasicInfo();
+        info.setName(req.getTitle());
+        info.setShortDescription(req.getSummary());
+        info.setDescription(req.getDescription());
+        info.setThumbnail(req.getCoverUrl());
+        info.setTrailerUrl(req.getTrailerUrl());
+        info.setPrice(BigDecimal.valueOf(req.isFree() ? 0.0 : req.getPrice()));
+        info.setIsSupportController(req.isSupportController());
+        info.setRequiredAge(req.isAge18() ? 18 : 0);
+        info.setPublisher(publisher);
+        info.setFilePath(req.getFilePath());
+        System.out.println("📁 File path nhận được từ frontend: " + req.getFilePath());
+
+
+        // Category
+        if (req.getCategoryId() != null) {
+            Category category = categoryRepository.findById(req.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy category"));
+            info.setCategory(category);
+        }
+
+        // Lưu trước info (để có id)
+        info = gameBasicInfoRepository.save(info);
+
+        // 2️⃣ Lưu platforms
+        var platformEntities = new java.util.ArrayList<Platform>();
+        for (String name : req.getPlatforms()) {
+            platformEntities.add(
+                    platformRepository.findByName(name.toUpperCase())
+                            .orElseThrow(() -> new RuntimeException("Platform không hợp lệ: " + name))
+            );
+        }
+        info.setPlatforms(platformEntities);
+
+        // 3️⃣ Tạo Game (bản chính)
+        Game game = new Game();
+        game.setGameBasicInfos(info);
+        game.setReleaseDate(req.getReleaseDate());
+        game.setStatus(SubmissionStatus.PENDING);
+
+        // Lưu vào DB
+        game = gameRepository.save(game);
+
+        return gameMapper.toDTO(game);
         // Sử dụng phương thức mới trong CustomerRepository để kiểm tra sự tồn tại
         return customerRepository.existsByAccount_UsernameAndOwnedGames_Id(username, gameId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GameDto> findByStatus(String status) {
+        List<Game> games = gameRepository.findByStatus(status); // ✅ cần repo
+        return games.stream().map(gameMapper::toDTO).toList();
+    }
+
 
     @Override
     public List<GameDto> getAllByGameToday() {

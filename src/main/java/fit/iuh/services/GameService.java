@@ -1,9 +1,14 @@
 package fit.iuh.services;
 
+import fit.iuh.dtos.GameCreateRequest;
+import fit.iuh.dtos.GameDto;
+import fit.iuh.dtos.GameSearchResponseDto;
 import fit.iuh.dtos.*;
 import fit.iuh.models.Game;
+import fit.iuh.dtos.GameWithRatingDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -50,6 +55,17 @@ public interface GameService {
     Page<GameSearchResponseDto> searchGameSubmissions(Pageable pageable, String searchQuery, String statusFilter);
 
     boolean checkOwnership(String username, Long gameId);
+
+    // ========================================================================
+    // 3. THÊM: LOGIC KIỂM TRA QUYỀN SỞ HỮU (Buy & Download)
+    // ========================================================================
+    @Transactional
+    GameDto createPending(GameCreateRequest dto, String publisherUsername);
+
+    GameDto updateStatus(Long id, String status);
+    // đã gợi ý từ trước
+    List<GameDto> findByStatus(String status);        // ✅ thêm mới
+
 
     List<GameDto> getAllByGameToday();
 }

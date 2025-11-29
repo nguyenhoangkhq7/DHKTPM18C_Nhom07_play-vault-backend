@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/games")
@@ -121,9 +123,33 @@ public class GameController {
         return ResponseEntity.ok(gameDto);
     }
 
-//    @GetMapping("/reviews/{id}")
-//    public ResponseEntity<List<ReviewDto>> getReviewById(@PathVariable Long id) {
-//        List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
-//        return ResponseEntity.ok(reviews);
-//    }
+    @GetMapping("/reviews/{id}")
+    public ResponseEntity<List<ReviewDto>> getReviewById(@PathVariable Long id) {
+        List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
+        return ResponseEntity.ok(reviews);
+    }
+
+    @PostMapping
+    public ResponseEntity<GameDto> createGame(@RequestBody GameCreateRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName(); // 👈 lấy username từ token đang đăng nhập
+
+        GameDto saved = gameService.createPending(request, username);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateStatus(@PathVariable Long id,
+                                          @RequestParam String status) {
+        GameDto updated = gameService.updateStatus(id, status);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<?> getPendingGames() {
+        List<GameDto> list = gameService.findByStatus("PENDING");
+        return ResponseEntity.ok(list);
+    }
+
+
 }
