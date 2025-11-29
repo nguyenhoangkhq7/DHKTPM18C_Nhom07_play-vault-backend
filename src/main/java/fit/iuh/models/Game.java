@@ -1,5 +1,6 @@
 package fit.iuh.models;
 
+import fit.iuh.models.enums.SubmissionStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -58,4 +59,7 @@ public class Game {
       review.setRating(rating);
       this.reviews.add(review);
    }
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private SubmissionStatus status = SubmissionStatus.PENDING; // mặc định pending khi mới tạo
 }
