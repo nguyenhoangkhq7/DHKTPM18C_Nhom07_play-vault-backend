@@ -90,4 +90,6 @@ public interface GameMapper {
         BigDecimal discountAmount = game.getPromotion().calculateDiscount(basePrice);
         return discountAmount.doubleValue();
     }
+
+    List<GameDto> toGameDto(List<Game> games);
 }

@@ -17,6 +17,4 @@ public interface AccountRepository extends JpaRepository<Account, String> {
     @Query("SELECT ac FROM Account ac WHERE ac.createdAt = current_date()")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
     List<Account> findAllAccountCreateToday();
 
-
-
 }
