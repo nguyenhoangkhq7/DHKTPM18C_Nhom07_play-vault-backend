@@ -30,11 +30,23 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
                 "LIMIT :topN",
         nativeQuery = true)
     List<Game> findTopRatedGames(@Param("topN") int topN);
+    List<Game> findByGameBasicInfos_Publisher_Id(Long publisherId);
 
+    // 1. Đếm tổng số Game
+    // Vì 'Game' được sinh ra từ 'GameSubmission' đã duyệt, nên đếm tất cả Game là được.
+    @Query("SELECT COUNT(g) FROM Game g")
+    long countTotalGames();
 
+    // 2. Tính tổng lượt tải
+    // Dựa trên Class Diagram: Không có trường 'downloads' trong Game.
+    // Lượt tải = Số lượng OrderItem đã bán ra (Mỗi OrderItem tương ứng 1 game được mua/tải)
+    // Lưu ý: Query trực tiếp entity OrderItem (Dù đang ở trong GameRepository vẫn query được nếu cùng context)
+    @Query("SELECT COUNT(oi) FROM OrderItem oi")
+    long countTotalDownloads();
 
-
-
-
-
+    // 3. Tính tổng doanh thu
+    // Doanh thu = Tổng giá trị (price) của tất cả OrderItem
+    // Sử dụng COALESCE để trả về 0 nếu chưa có đơn hàng nào (tránh lỗi null)
+    @Query("SELECT COALESCE(SUM(oi.price), 0) FROM OrderItem oi")
+    double sumTotalRevenue();
 }

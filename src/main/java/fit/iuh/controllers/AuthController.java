@@ -147,42 +147,42 @@ public class AuthController {
       return ResponseEntity.status(HttpStatus.CREATED).body("Customer đăng ký thành công");
    }
 
-   @PostMapping("/register/publisher")
-   public ResponseEntity<String> registerPublisher(@Valid @RequestBody PublisherRegisterRequest request) {
-
-      if (accountRepository.existsByUsername(request.getUsername())) {
-         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username đã tồn tại");
-      }
-
-      Account account = new Account();
-      account.setUsername(request.getUsername());
-      account.setPassword(passwordEncoder.encode(request.getPassword()));
-      account.setEmail(request.getEmail());
-      account.setPhone(request.getPhone());
-      account.setRole(request.getRole());
-      account.setStatus(AccountStatus.ACTIVE);
-      account.setCreatedAt(LocalDate.now());
-
-      accountRepository.save(account);
-
-      Publisher publisher = new Publisher();
-      publisher.setStudioName(request.getStudioName());
-      publisher.setDescription(request.getDescription());
-      publisher.setWebsite(request.getWebsite());
-
-      if (publisher.getPaymentInfo() == null) {
-         publisher.setPaymentInfo(new PaymentInfo());
-      }
-      publisher.getPaymentInfo().setPaymentMethod(request.getPaymentMethod());
-      publisher.getPaymentInfo().setAccountName(request.getAccountName());
-      publisher.getPaymentInfo().setAccountNumber(request.getAccountNumber());
-      publisher.getPaymentInfo().setBankName(request.getBankName());
-
-      publisher.setAccount(account);
-      publisherRepository.save(publisher);
-
-      return ResponseEntity.status(HttpStatus.CREATED).body("Publisher đăng ký thành công");
-   }
+//   @PostMapping("/register/publisher")
+//   public ResponseEntity<String> registerPublisher(@Valid @RequestBody PublisherRegisterRequest request) {
+//
+//      if (accountRepository.existsByUsername(request.getUsername())) {
+//         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username đã tồn tại");
+//      }
+//
+//      Account account = new Account();
+//      account.setUsername(request.getUsername());
+//      account.setPassword(passwordEncoder.encode(request.getPassword()));
+//      account.setEmail(request.getEmail());
+//      account.setPhone(request.getPhone());
+//      account.setRole(request.getRole());
+//      account.setStatus(AccountStatus.ACTIVE);
+//      account.setCreatedAt(LocalDate.now());
+//
+//      accountRepository.save(account);
+//
+//      Publisher publisher = new Publisher();
+//      publisher.setStudioName(request.getStudioName());
+//      publisher.setDescription(request.getDescription());
+//      publisher.setWebsite(request.getWebsite());
+//
+//      if (publisher.getPaymentInfo() == null) {
+//         publisher.setPaymentInfo(new PaymentInfo());
+//      }
+//      publisher.getPaymentInfo().setPaymentMethod(request.getPaymentMethod());
+//      publisher.getPaymentInfo().setAccountName(request.getAccountName());
+//      publisher.getPaymentInfo().setAccountNumber(request.getAccountNumber());
+//      publisher.getPaymentInfo().setBankName(request.getBankName());
+//
+//      publisher.setAccount(account);
+//      publisherRepository.save(publisher);
+//
+//      return ResponseEntity.status(HttpStatus.CREATED).body("Publisher đăng ký thành công");
+//   }
 
    // ---- REGISTER ADMIN ----
    @PostMapping("/register/admin")
