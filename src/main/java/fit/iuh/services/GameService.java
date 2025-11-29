@@ -1,9 +1,7 @@
 package fit.iuh.services;
 
-import fit.iuh.dtos.GameDto;
-import fit.iuh.dtos.GameSearchResponseDto;
+import fit.iuh.dtos.*;
 import fit.iuh.models.Game;
-import fit.iuh.dtos.GameWithRatingDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -26,4 +24,20 @@ public interface GameService {
             Pageable pageable);
 
     GameWithRatingDto getGameWithRatingById(Long id);
+
+    Page<GameSearchResponseDto> searchAndFilterPendingGames(Pageable pageable, String searchQuery);
+
+    Page<GameSearchResponseDto> searchAndFilterApprovedGames(Pageable pageable, String searchQuery, String categoryFilter);
+
+    GameDetailDto getGameForAdmin(Long gameId);
+
+    GameDetailDto approveGame(Long gameId);
+
+    GameDetailDto rejectGame(Long gameId);
+
+    GameDetailDto updateApprovedGameStatus(Long gameId, String newStatus);
+
+    List<GameDto> getGamesByPublisherId(Long publisherId);
+
+    DashboardStatsResponse getDashboardStats();
 }

@@ -3,6 +3,7 @@ package fit.iuh.models;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 @Setter
 @Entity
 @Table(name = "games")
+//@Where(clause = "is_deleted = false")
 public class Game {
    @Id
    @Column(name = "game_basic_info_id", nullable = false)
@@ -26,6 +28,9 @@ public class Game {
 
    @Column(name = "release_date")
    private LocalDate releaseDate;
+
+//   @Column(name = "is_deleted")
+//   private boolean isDeleted = false;
 
    @OneToMany(
            mappedBy = "game",

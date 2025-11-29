@@ -1,4 +1,9 @@
 package fit.iuh.repositories;
 
-public class PaymentInfoRepository {
+import fit.iuh.models.PaymentInfo;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface PaymentInfoRepository extends JpaRepository<PaymentInfo, Long> {
 }
