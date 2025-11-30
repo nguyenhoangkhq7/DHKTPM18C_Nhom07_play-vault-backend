@@ -110,6 +110,18 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.10.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -119,9 +131,9 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>11.7.2</version>
                 <configuration>
-                    <url>jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true</url>
+                    <url>jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true</url>
                     <user>root</user>
-                    <password>22718451</password>
+                    <password>root</password>
                     <cleanDisabled>false</cleanDisabled>
                 </configuration>
             </plugin>
