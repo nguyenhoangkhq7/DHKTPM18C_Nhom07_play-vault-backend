@@ -26,4 +26,10 @@ public interface PublisherRepository extends JpaRepository<Publisher, Long> {
 //            """)
 //   Optional<Publisher> findByAccount_UsernameWithPaymentInfo(@Param("username") String username);
 //
+   @Query("""
+           select p from Publisher p
+           join fetch p.account a
+           where p.id = :id
+           """)
+   Optional<Publisher> findWithAccountById(@Param("id") Long id);
 }
