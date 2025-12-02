@@ -1,15 +1,11 @@
 package fit.iuh.controllers;
 
-import fit.iuh.dtos.CartResponse;
-import fit.iuh.dtos.CheckoutRequestDto;
-import fit.iuh.dtos.GameDetailDto;
-import fit.iuh.dtos.OrderHistoryResponse;
+import fit.iuh.dtos.*;
 import fit.iuh.services.CheckoutService;
 import fit.iuh.services.JwtService;
 import fit.iuh.services.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -17,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class OrderController {
 
     @Autowired
@@ -28,44 +25,46 @@ public class OrderController {
     @Autowired
     private JwtService jwtService;
 
-    // GET: Lấy lịch sử mua hàng
+    // GET: Lấy lịch sử đơn hàng
     @GetMapping("/history")
     public ResponseEntity<List<OrderHistoryResponse>> getOrderHistory(
             @RequestHeader("Authorization") String authHeader) {
 
-        String token = authHeader.replace("Bearer ", "");
+        String token = authHeader.replace("Bearer ", "").trim();
         String username = jwtService.getUsernameFromToken(token);
 
         List<OrderHistoryResponse> history = orderService.getOrderHistory(username);
         return ResponseEntity.ok(history);
     }
 
+    // POST: Thanh toán các mục đã chọn
     @PostMapping("/checkout/selected")
-    public ResponseEntity<CartResponse> checkoutSelected(
-            @RequestBody (required = false) CheckoutRequestDto requestDto,
-            Principal principal
-    ) {
+    public ResponseEntity<CheckoutResponseDto> checkoutSelected(
+            @RequestBody(required = false) CheckoutRequestDto requestDto,
+            Principal principal) {
+
+        // Validate request body
         if (requestDto == null || requestDto.getItemIds() == null || requestDto.getItemIds().isEmpty()) {
-            // Nếu DTO bị null, Spring đã không thể đọc body
-            return ResponseEntity.status(400).body(null);
+            CheckoutResponseDto error = new CheckoutResponseDto(
+                    false,
+                    "Vui lòng chọn ít nhất một sản phẩm để thanh toán",
+                    0L,
+                    null
+            );
+            return ResponseEntity.badRequest().body(error);
         }
 
         String username = principal.getName();
-        // Gọi Service, truyền danh sách ID từ DTO
-        CartResponse updatedCart = checkoutService.checkoutSelectedItems(username, requestDto.getItemIds());
-        return ResponseEntity.ok(updatedCart);
+        CheckoutResponseDto response = checkoutService.checkoutSelectedItems(username, requestDto.getItemIds());
+
+        return ResponseEntity.ok(response);
     }
 
-    // ========================================================================
-    // POST: Thanh toán toàn bộ giỏ hàng (CHECKOUT ALL)
-    // ========================================================================
+    // POST: Thanh toán toàn bộ giỏ hàng
     @PostMapping("/checkout/all")
-    public ResponseEntity<CartResponse> checkoutAll(Principal principal) {
+    public ResponseEntity<CheckoutResponseDto> checkoutAll(Principal principal) {
         String username = principal.getName();
-        // Logic tìm tất cả item ID được xử lý bên trong CheckoutService
-        CartResponse updatedCart = checkoutService.checkoutAllItems(username);
-        return ResponseEntity.ok(updatedCart);
-    }
+        CheckoutResponseDto response = checkoutService.checkoutAllItems(username);
 
 
     /**

@@ -89,23 +89,22 @@ public class GameController {
     @GetMapping("/{id}")
     public ResponseEntity<GameDetailDto> getGameDetail(
             @PathVariable Long id,
-            Authentication authentication) {  // Spring tự inject user đã login
+            Authentication authentication) {
 
         var gameEntity = gameService.findGameEntityById(id);
-        if (gameEntity == null) {
-            return ResponseEntity.notFound().build();
-        }
+        if (gameEntity == null) return ResponseEntity.notFound().build();
 
         boolean isOwned = false;
         if (authentication != null && authentication.isAuthenticated()
                 && !"anonymousUser".equals(authentication.getPrincipal())) {
             String username = authentication.getName();
-            isOwned = gameService.checkOwnership(username, id);
+            isOwned = gameService.checkOwnership(username, id); // check ownership
         }
 
         GameDetailDto dto = GameDetailDto.fromEntity(gameEntity, isOwned);
         return ResponseEntity.ok(dto);
     }
+
 
     // ========================================================================
     // Giữ nguyên các phương thức còn lại
@@ -120,10 +119,10 @@ public class GameController {
         return ResponseEntity.ok(gameDto);
     }
 
-    @GetMapping("/reviews/{id}")
-    public ResponseEntity<List<ReviewDto>> getReviewById(@PathVariable Long id) {
-        List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
-        return ResponseEntity.ok(reviews);
-    }
+//    @GetMapping("/reviews/{id}")
+//    public ResponseEntity<List<ReviewDto>> getReviewById(@PathVariable Long id) {
+//        List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
+//        return ResponseEntity.ok(reviews);
+//    }
 
 }

@@ -12,5 +12,4 @@ import java.util.List;
 public interface AccountMapper {
     List<AccountDto> toDTO(List<Account> accounts);
 
-
 }

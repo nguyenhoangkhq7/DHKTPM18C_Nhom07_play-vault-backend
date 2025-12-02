@@ -137,5 +137,9 @@ public class GameServiceImpl implements GameService {
         // Phương thức này cần được định nghĩa trong CustomerRepository.
         return customerRepository.existsByAccount_UsernameAndOwnedGames_Id(username, gameId);
     }
-
+    @Override
+    public List<GameDto> getAllByGameToday() {
+        List<Game> items = gameRepository.findAllByGameToday();
+        return gameMapper.toGameDto(items);
+    }
 }
