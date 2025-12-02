@@ -33,6 +33,8 @@ public class GameDetailDto {
     private String ram;
     private String storage;
     private List<ReviewDto> reviewsList = new ArrayList<>();
+    private Boolean isOwned;
+    private String filePath;
 
     // --- CÁC TRƯỜNG THÊM MỚI (CHO FRONTEND CHI TIẾT) ---
     private String title;           // Map title = name
@@ -112,6 +114,59 @@ public class GameDetailDto {
             dto.setReviewCount(reviews.size());
             double avg = reviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
             dto.setRating(Math.round(avg * 10.0) / 10.0);
+            dto.setReviewsList(reviews.stream().map(ReviewDto::new).collect(Collectors.toList()));
+        } else {
+            dto.setRating(0.0);
+            dto.setReviewCount(0);
+        }
+
+        return dto;
+    }
+
+    public static GameDetailDto fromEntityIsOwned(Game game, boolean isOwned) {
+        GameDetailDto dto = new GameDetailDto();
+        dto.setId(game.getId());
+        dto.setReleaseDate(game.getReleaseDate());
+
+        if (game.getGameBasicInfos() != null) {
+            var info = game.getGameBasicInfos();
+            dto.setName(info.getName());
+            dto.setPrice(info.getPrice());
+            dto.setDescription(info.getDescription());
+            dto.setShortDescription(info.getShortDescription());
+            dto.setThumbnail(info.getThumbnail());
+
+            if (info.getCategory() != null) dto.setCategoryName(info.getCategory().getName());
+            if (info.getPublisher() != null) dto.setPublisherName(info.getPublisher().getStudioName());
+
+            if (info.getSystemRequirement() != null) {
+                dto.setOs(String.valueOf(info.getSystemRequirement().getOs()));
+                dto.setCpu(info.getSystemRequirement().getCpu());
+                dto.setGpu(info.getSystemRequirement().getGpu());
+                dto.setRam(info.getSystemRequirement().getRam());
+                dto.setStorage(info.getSystemRequirement().getStorage());
+            }
+
+            // ===================================
+            // LOGIC QUAN TRỌNG: MỞ KHÓA DOWNLOAD
+            // ===================================
+            dto.setIsOwned(isOwned);
+            if (isOwned) {
+                // Sử dụng filePath (Đã xác nhận là link tải)
+                dto.setFilePath(info.getFilePath());
+            } else {
+                dto.setFilePath(null); // Che giấu đường dẫn tải nếu chưa sở hữu
+            }
+            // ===================================
+        }
+
+        // Xử lý Review & Rating (Giữ nguyên)
+        List<Review> reviews = game.getReviews();
+        if (reviews != null && !reviews.isEmpty()) {
+            dto.setReviewCount(reviews.size());
+            double avg = reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
+            dto.setRating(Math.round(avg * 10.0) / 10.0);
+
             dto.setReviewsList(reviews.stream().map(ReviewDto::new).collect(Collectors.toList()));
         } else {
             dto.setRating(0.0);

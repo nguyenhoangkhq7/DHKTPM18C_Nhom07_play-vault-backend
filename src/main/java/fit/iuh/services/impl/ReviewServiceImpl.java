@@ -47,7 +47,6 @@ public class ReviewServiceImpl implements fit.iuh.services.ReviewService {
             reviewPage = reviewRepository.findByGame_Id(gameId, pageable);
         }
         return reviewPage.map(review -> new ReviewDto(
-                review.getId(),
                 review.getRating(),
                 review.getComment(),
                 review.getCreatedAt(),
