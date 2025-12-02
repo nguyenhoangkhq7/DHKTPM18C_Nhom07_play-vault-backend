@@ -10,10 +10,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReviewDto {
-    private Long id;
     private Integer rating;
     private String comment;
     private LocalDate createdAt;
     private String customerName;
-
 }

@@ -1,4 +1,3 @@
-// OrderItemRepository.java – THAY TOÀN BỘ NỘI DUNG BẰNG CÁI NÀY
 package fit.iuh.repositories;
 
 import fit.iuh.dtos.GameRevenueDto;
@@ -63,7 +62,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             "ORDER BY MONTH(o.createdAt)")
     List<Object[]> getRevenueByMonthAndYear(@Param("publisherId") Long publisherId,
                                             @Param("year") int year);
-}
+
     // 1. Tổng doanh thu Publisher
     @Query("SELECT COALESCE(SUM(oi.total), 0) " +
             "FROM OrderItem oi " +

@@ -103,7 +103,7 @@ public class GameController {
             isOwned = gameService.checkOwnership(username, id); // check ownership
         }
 
-        GameDetailDto dto = GameDetailDto.fromEntity(gameEntity, isOwned);
+        GameDetailDto dto = GameDetailDto.fromEntityIsOwned(gameEntity, isOwned);
         return ResponseEntity.ok(dto);
     }
 
