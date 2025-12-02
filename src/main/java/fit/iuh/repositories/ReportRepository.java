@@ -2,7 +2,7 @@ package fit.iuh.repositories;
 
 import fit.iuh.dtos.GameRevenueDto;
 import fit.iuh.dtos.RevenueTrendDto;
-import fit.iuh.models.Order;
+import fit.iuh.models.Report;
 import fit.iuh.models.enums.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface ReportRepository extends JpaRepository<Order, Long> {
+public interface ReportRepository extends JpaRepository<Report, Long> {
 
     // 1. Lấy doanh thu Game
     @Query("SELECT new fit.iuh.dtos.GameRevenueDto(" +
@@ -78,7 +78,4 @@ public interface ReportRepository extends JpaRepository<Order, Long> {
             "AND function('DATE', a.createdAt) >= :from " +
             "AND function('DATE', a.createdAt) <= :to")
     Long countNewUsers(@Param("from") LocalDate from, @Param("to") LocalDate to);
-  
-      List<Report> findByCustomer_Account_UsernameOrderByCreatedAtDesc(String username);
-    boolean existsByOrder_Id(Long orderId);
 }

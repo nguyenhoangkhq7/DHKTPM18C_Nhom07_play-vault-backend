@@ -9,7 +9,7 @@ import fit.iuh.models.*;
 import fit.iuh.models.enums.*;
 import fit.iuh.repositories.*;
 import fit.iuh.services.EmailService;
-import fit.iuh.services.ReportService;
+import fit.iuh.services.UserReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,9 +21,9 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ReportServiceImpl implements ReportService {
+public class UserReportServiceImpl implements UserReportService {
 
-    private final ReportRepository reportRepository;
+    private final UserReportRepository reportRepository;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final CustomerRepository customerRepository;

@@ -4,7 +4,7 @@ import fit.iuh.dtos.AdminReportResponse;
 import fit.iuh.dtos.CreateReportRequest;
 import fit.iuh.dtos.ProcessReportRequest;
 import fit.iuh.dtos.ReportResponse;
-import fit.iuh.services.ReportService;
+import fit.iuh.services.UserReportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminReportController {
 
-    private final ReportService reportService;
+    private final UserReportService reportService;
 
     // 1. Lấy danh sách báo cáo (Dashboard)
     // GET /api/admin/reports?page=0&size=10
