@@ -1,6 +1,7 @@
 package fit.iuh.repositories;
 
 import fit.iuh.models.Order;
+import fit.iuh.models.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,4 +30,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "orderItems.game.gameBasicInfos.category"
     })
     List<Order> findByCustomer_Account_UsernameOrderByCreatedAtDesc(String username);
+    // fit.iuh.repositories.OrderRepository.java
+    List<Order> findByCustomer_Account_UsernameAndStatusOrderByCreatedAtDesc(
+            String username, OrderStatus status);
 }

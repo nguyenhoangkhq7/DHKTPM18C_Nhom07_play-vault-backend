@@ -1,6 +1,7 @@
 package fit.iuh.controllers;
 
 import fit.iuh.dtos.ApplyPromotionDto;
+import fit.iuh.dtos.GameSimpleDto;
 import fit.iuh.dtos.PromotionRequestDto;
 import fit.iuh.dtos.PromotionResponseDto;
 import fit.iuh.services.PromotionService;
@@ -74,4 +75,12 @@ public class PromotionController {
 
         return ResponseEntity.ok(result);
     }
+    // 6. LẤY DANH SÁCH GAME CỦA CHÍNH PUBLISHER ĐÓ (có ảnh, giá, tên, rating)
+    @GetMapping("/my-games")
+    public ResponseEntity<List<GameSimpleDto>> getMyGames(Authentication authentication) {
+        List<GameSimpleDto> myGames = promotionService.getMyGames(authentication.getName());
+        return ResponseEntity.ok(myGames);
+    }
+    // 6. LẤY DANH SÁCH GAME CỦA CHÍNH PUBLISHER ĐÓ (QUAN TRỌNG NHẤT!)
+
 }

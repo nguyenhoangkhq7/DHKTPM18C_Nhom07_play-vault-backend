@@ -5,6 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
+public record GameRevenueDto(
+        Long gameId,
+        String gameTitle,
+        String gameThumbnail,
+        Long totalOrders,
+        BigDecimal totalRevenue
+) {}
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
