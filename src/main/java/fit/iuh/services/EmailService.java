@@ -105,4 +105,55 @@ public class EmailService {
             log.error("Gửi email từ chối Publisher thất bại cho {}: {}", toEmail, e.getMessage());
         }
     }
+
+
+    /**
+     * Gửi email thông báo kết quả xử lý báo cáo sự cố
+     */
+    @Async
+    public void sendReportResultEmail(String toEmail, String username, Long reportId, String reportTitle, boolean isApproved, String adminNote) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            String subject = isApproved ? "✅ Khiếu nại của bạn đã được giải quyết - PlayVault"
+                    : "❌ Thông báo về khiếu nại của bạn - PlayVault";
+
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+
+            // Tùy chỉnh màu sắc và nội dung dựa trên trạng thái duyệt
+            String headerColor = isApproved ? "#2e7d32" : "#c62828"; // Xanh hoặc Đỏ
+            String statusText = isApproved ? "ĐÃ ĐƯỢC CHẤP NHẬN" : "ĐÃ BỊ TỪ CHỐI";
+            String introText = isApproved
+                    ? "Chúng tôi đã xác minh và xử lý sự cố cho đơn hàng của bạn."
+                    : "Sau khi kiểm tra, chúng tôi không thể xác thực yêu cầu của bạn.";
+
+            String html = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                <h2 style="color: %s;">Kết quả xử lý báo cáo #%d</h2>
+                <p>Xin chào <strong>%s</strong>,</p>
+                <p>Chúng tôi gửi mail này để thông báo về báo cáo: <strong>"%s"</strong>.</p>
+                
+                <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                    <p><strong>Trạng thái:</strong> <span style="color: %s; font-weight: bold;">%s</span></p>
+                    <p>%s</p>
+                    <p><strong>Ghi chú từ Admin:</strong></p>
+                    <p style="font-style: italic; color: #555;">"%s"</p>
+                </div>
+
+                <p>Cảm ơn bạn đã sử dụng dịch vụ của PlayVault.</p>
+                <br>
+                <p>Trân trọng,<br>Đội ngũ Hỗ trợ PlayVault</p>
+            </div>
+            """.formatted(headerColor, reportId, username, reportTitle, headerColor, statusText, introText, adminNote);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+
+            log.info("Đã gửi email kết quả báo cáo #{} đến: {}", reportId, toEmail);
+        } catch (Exception e) {
+            log.error("Gửi email báo cáo thất bại cho {}: {}", toEmail, e.getMessage());
+        }
+    }
 }
