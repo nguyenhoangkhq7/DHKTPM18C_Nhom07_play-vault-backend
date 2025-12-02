@@ -8,6 +8,7 @@ import fit.iuh.mappers.ReportMapper;
 import fit.iuh.models.*;
 import fit.iuh.models.enums.*;
 import fit.iuh.repositories.*;
+import fit.iuh.services.EmailService;
 import fit.iuh.services.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,7 @@ public class ReportServiceImpl implements ReportService {
     private final CustomerRepository customerRepository;
     private final AccountRepository accountRepository;
     private final ReportMapper reportMapper;
+    private final EmailService emailService;
 
     // --- ADMIN: Lấy danh sách hiển thị bảng ---
     @Override
@@ -104,7 +106,25 @@ public class ReportServiceImpl implements ReportService {
             // Không làm gì với Order/Payment cả
         }
 
-        return reportMapper.toDto(reportRepository.save(report));
+        Report savedReport = reportRepository.save(report);
+        try {
+            String toEmail = report.getCustomer().getAccount().getEmail();
+            String username = report.getCustomer().getFullName();
+
+            emailService.sendReportResultEmail(
+                    toEmail,
+                    username,
+                    report.getId(),
+                    report.getTitle(),
+                    request.getApproved(), // true/false
+                    request.getAdminNote() // Ghi chú của admin
+            );
+        } catch (Exception e) {
+            // Log lỗi nhưng không throw exception để tránh rollback transaction
+            System.err.println("Lỗi gửi email báo cáo: " + e.getMessage());
+        }
+
+        return reportMapper.toDto(savedReport);
     }
 
 
