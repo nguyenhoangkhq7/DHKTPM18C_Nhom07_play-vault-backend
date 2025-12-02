@@ -121,9 +121,9 @@ public class GameController {
         return ResponseEntity.ok(gameDto);
     }
 
-    @GetMapping("/reviews/{id}")
-    public ResponseEntity<List<ReviewDto>> getReviewById(@PathVariable Long id) {
-        List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
-        return ResponseEntity.ok(reviews);
-    }
+//    @GetMapping("/reviews/{id}")
+//    public ResponseEntity<List<ReviewDto>> getReviewById(@PathVariable Long id) {
+//        List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
+//        return ResponseEntity.ok(reviews);
+//    }
 }

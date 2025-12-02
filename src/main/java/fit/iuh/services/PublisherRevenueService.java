@@ -57,11 +57,11 @@ public class PublisherRevenueService {
                     .multiply(BigDecimal.valueOf(100));
         }
 
-        List<GameRevenueDto> revenueItems = orderItemRepo.findRevenueByGame(publisherId, from, to);
+        List<PublisherGameRevenueDto> revenueItems = orderItemRepo.findRevenueByGame(publisherId, from, to);
 
         long totalGames = revenueItems.size();
         long totalPlayers = revenueItems.stream()
-                .mapToLong(GameRevenueDto::totalOrders)
+                .mapToLong(PublisherGameRevenueDto::totalOrders)
                 .sum();
 
         BigDecimal avgPerGame = totalGames > 0
@@ -72,7 +72,7 @@ public class PublisherRevenueService {
     }
 
     // 2. Doanh thu theo từng game
-    public List<GameRevenueDto> getRevenueByGame(Long publisherId, LocalDate fromDate, LocalDate toDate) {
+    public List<PublisherGameRevenueDto> getRevenueByGame(Long publisherId, LocalDate fromDate, LocalDate toDate) {
         LocalDate from = fromDate != null ? fromDate : LocalDate.of(2000, 1, 1);
         LocalDate to = toDate != null ? toDate : LocalDate.now();
 
