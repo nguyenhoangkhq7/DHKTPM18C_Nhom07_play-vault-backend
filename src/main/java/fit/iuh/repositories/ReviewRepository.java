@@ -1,6 +1,8 @@
 package fit.iuh.repositories;
 
 import fit.iuh.models.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +25,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "JOIN g.gameBasicInfos info " +
             "WHERE info.publisher.id = :publisherId")
     Long countTotalRatingsByPublisher(@Param("publisherId") Long publisherId);
+    Page<Review> findByGame_Id(Long gameId, Pageable pageable);
+    Page<Review> findByGame_IdAndRating(Long gameId, Integer rating, Pageable pageable);
 }

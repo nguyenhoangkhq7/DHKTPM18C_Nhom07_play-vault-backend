@@ -8,6 +8,7 @@ import fit.iuh.models.GameBasicInfo;
 import fit.iuh.models.GameSubmission;
 import fit.iuh.models.enums.RequestStatus;
 import fit.iuh.models.enums.SubmissionStatus;
+import fit.iuh.repositories.CustomerRepository;
 import fit.iuh.repositories.GameRepository;
 import fit.iuh.repositories.GameSubmissionRepository;
 import fit.iuh.services.GameService;
@@ -35,10 +36,17 @@ public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
     private final GameMapper gameMapper; // MapStruct
+    
+    // Dependency từ nhánh vanhau (Xử lý duyệt game)
     private final GameSubmissionRepository gameSubmissionRepository;
+    
+    // Dependency từ nhánh main (Xử lý thông tin khách hàng/sở hữu)
+    private final CustomerRepository customerRepository;
+
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
+    @Override
     @Transactional(readOnly = true)
     public Page<GameSearchResponseDto> searchAndFilterGames(
             String keyword,
@@ -60,7 +68,7 @@ public class GameServiceImpl implements GameService {
     }
 
     // ========================================================================
-    // 2. CÁC PHƯƠNG THỨC CƠ BẢN
+    // 2. CÁC PHƯƠNG THỨC CƠ BẢN (COMMON)
     // ========================================================================
     @Override
     @Transactional(readOnly = true)
@@ -106,9 +114,11 @@ public class GameServiceImpl implements GameService {
         // Trả về nguyên con Entity Game lấy từ DB
         return gameRepository.findById(id).orElse(null);
     }
+
+    @Override
     public List<GameWithRatingDto> getTopGamesWithRating(int topN) {
         List<Game> allGames = gameRepository.findAll();
-        if(topN==0){
+        if(topN == 0){
             return gameMapper.toGameWithRatingDtoList(allGames)
                     .stream()
                     .sorted(Comparator.comparing(GameWithRatingDto::getAvgRating).reversed())
@@ -119,13 +129,11 @@ public class GameServiceImpl implements GameService {
                 .sorted(Comparator.comparing(GameWithRatingDto::getAvgRating).reversed())
                 .limit(topN)
                 .collect(Collectors.toList());
-
     }
 
     @Override
     @Transactional(readOnly = true)
     public GameWithRatingDto getGameWithRatingById(Long id) {
-        // 1. Tìm Game bằng ID. Sử dụng findById và orElse(null) để xử lý trường hợp không tìm thấy.
         Game game = gameRepository.findById(id).orElse(null);
 
         if (game == null) {
@@ -134,7 +142,10 @@ public class GameServiceImpl implements GameService {
         return gameMapper.toGameWithRatingDto(game);
     }
 
-    // --- ADMIN: SỬA LẠI TRẢ VỀ PAGE ---
+    // ========================================================================
+    // 3. CÁC PHƯƠNG THỨC QUẢN TRỊ & PUBLISHER (FROM NHÁNH VANHAU)
+    // ========================================================================
+    
     @Override
     @Transactional(readOnly = true)
     public Page<GameSearchResponseDto> searchAndFilterPendingGames(Pageable pageable, String searchQuery) {
@@ -164,15 +175,12 @@ public class GameServiceImpl implements GameService {
 
         Page<GameSearchResponseDto> dtoPage = page.map(GameSearchResponseDto::fromEntity);
 
-
         if (!dtoPage.isEmpty()) {
-
             List<Long> gameIds = dtoPage.getContent().stream()
                     .map(GameSearchResponseDto::getId)
                     .toList();
 
             if (!gameIds.isEmpty()) {
-
                 List<Object[]> stats = gameRepository.findStatsForGameIds(gameIds);
 
                 java.util.Map<Long, double[]> statsMap = new java.util.HashMap<>();
@@ -188,7 +196,6 @@ public class GameServiceImpl implements GameService {
                     if (statsMap.containsKey(dto.getId())) {
                         double[] s = statsMap.get(dto.getId());
                         dto.setDownloads((long) s[0]); // Set Lượt tải
-
                         dto.setRevenue(s[1]);
                     } else {
                         dto.setDownloads(0L);
@@ -200,10 +207,6 @@ public class GameServiceImpl implements GameService {
 
         return dtoPage;
     }
-
-//    @Override
-//    @Transactional(readOnly = true)
-//    public GameDetailDto getGameForAdmin(Long gameId) { return null; }
 
     @Override
     @Transactional
@@ -233,7 +236,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     @Transactional
-    public void rejectGame(Long submissionId, String reason) { // Sửa thành void và thêm reason
+    public void rejectGame(Long submissionId, String reason) {
         GameSubmission submission = gameSubmissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu duyệt"));
 
@@ -249,6 +252,7 @@ public class GameServiceImpl implements GameService {
 
         gameSubmissionRepository.save(submission);
     }
+    
     @Override
     @Transactional
     public GameDetailDto updateApprovedGameStatus(Long gameId, String newStatus) {
@@ -259,18 +263,16 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public List<GameDto> getGamesByPublisherId(Long publisherId) {
-
         List<Game> games = gameRepository.findByGameBasicInfos_Publisher_Id(publisherId);
-
         return games.stream()
-                .map(gameMapper::toDTO) // Đảm bảo gameMapper.toDto đã sửa ở bước trước
+                .map(gameMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public DashboardStatsResponse getDashboardStats() {
-        // Các hàm này phải khớp với tên trong GameRepository đã sửa ở bước trước
+        // Các hàm này phải khớp với tên trong GameRepository
         long totalGames = gameRepository.countTotalGames();
         long totalDownloads = gameRepository.countTotalDownloads();
         double totalRevenue = gameRepository.sumTotalRevenue();
@@ -297,12 +299,9 @@ public class GameServiceImpl implements GameService {
                     // Nếu tìm thấy, set ngày gửi thật sự
                     dto.setSubmittedDate(originSubmission.get().getSubmittedAt().toString());
                 } else {
-                    // Trường hợp data cũ hoặc lỗi không tìm thấy submission gốc
                     dto.setSubmittedDate("N/A");
                 }
             }
-            // -------------------------------------------------------
-
             return dto;
         }
 
@@ -335,5 +334,22 @@ public class GameServiceImpl implements GameService {
 
         // Map sang DTO
         return page.map(GameSearchResponseDto::fromSubmissionEntity);
+    }
+
+    // ========================================================================
+    // 4. CÁC PHƯƠNG THỨC CHO NGƯỜI DÙNG/CUSTOMER (FROM NHÁNH MAIN)
+    // ========================================================================
+    
+    @Override
+    @Transactional(readOnly = true)
+    public boolean checkOwnership(String username, Long gameId) {
+        // Sử dụng phương thức mới trong CustomerRepository để kiểm tra sự tồn tại
+        return customerRepository.existsByAccount_UsernameAndOwnedGames_Id(username, gameId);
+    }
+
+    @Override
+    public List<GameDto> getAllByGameToday() {
+        List<Game> items = gameRepository.findAllByGameToday();
+        return gameMapper.toGameDto(items);
     }
 }

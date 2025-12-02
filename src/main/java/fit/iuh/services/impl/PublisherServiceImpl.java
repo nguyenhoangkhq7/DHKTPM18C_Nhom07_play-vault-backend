@@ -2,6 +2,7 @@ package fit.iuh.services.impl;
 
 import fit.iuh.dtos.*;
 import fit.iuh.mappers.GameMapper;
+import fit.iuh.mappers.PublisherMapper;
 import fit.iuh.models.*;
 import fit.iuh.models.enums.AccountStatus;
 import fit.iuh.models.enums.RequestStatus;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PublisherServiceImpl implements PublisherService {
 
+    // --- Dependencies từ nhánh vanhau ---
     private final AccountRepository accountRepository;
     private final PublisherRepository publisherRepository;
     private final PublisherRequestRepository publisherRequestRepository;
@@ -34,6 +36,20 @@ public class PublisherServiceImpl implements PublisherService {
     private final CategoryRepository categoryRepository;
     private final GameMapper gameMapper; // Mapper tự viết hoặc dùng MapStruct
 
+    // --- Dependencies từ nhánh main ---
+    private final PublisherMapper publisherMapper;
+
+    // ========================================================================
+    // 1. CÁC PHƯƠNG THỨC TỪ NHÁNH MAIN (User/Common features)
+    // ========================================================================
+    @Override
+    public List<PublisherDto> findAll() {
+        return publisherMapper.toPublisherDTOs(publisherRepository.findAll());
+    }
+
+    // ========================================================================
+    // 2. CÁC PHƯƠNG THỨC TỪ NHÁNH VANHAU (Publisher Dashboard & Logic)
+    // ========================================================================
     @Override
     @Transactional
     public void registerPublisher(PublisherRegisterRequest request) {
@@ -189,25 +205,4 @@ public class PublisherServiceImpl implements PublisherService {
 
         return gameMapper.toDTO(savedGame);
     }
-
-//    @Override
-//    @Transactional
-//    public void deleteGameByPublisher(Long publisherId, Long gameId) {
-//        // Lưu ý: Khi dùng @Where, nếu game đã bị xóa (isDeleted=true),
-//        // lệnh findById này có thể sẽ không tìm thấy game đó nữa (trả về null).
-//        // Tuy nhiên với logic xóa lần đầu thì không sao.
-//
-//        Game game = gameRepository.findById(gameId)
-//                .orElseThrow(() -> new RuntimeException("Không tìm thấy game!"));
-//
-//        if (!game.getGameBasicInfos().getPublisher().getId().equals(publisherId)) {
-//            throw new RuntimeException("Không có quyền xóa!");
-//        }
-//
-//        // Đánh dấu xóa
-//        game.setDeleted(true);
-//        gameRepository.save(game);
-//    }
-
-
 }

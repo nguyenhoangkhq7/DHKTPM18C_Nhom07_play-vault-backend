@@ -110,4 +110,6 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
             "WHERE oi.game.id IN :ids " +
             "GROUP BY oi.game.id")
     List<Object[]> findStatsForGameIds(@Param("ids") List<Long> ids);
+    @Query("SELECT oi FROM Order o JOIN o.customer ci join ci.library oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
+    List<Game> findAllByGameToday();
 }

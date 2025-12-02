@@ -21,5 +21,19 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 36000 # 5min
+    accessTokenExpiration: 300 # 5min
     refreshTokenExpiration: 604800 # 7 days
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: phucvinh20112004@gmail.com
+    password: xmnh pvos vncb lpmo
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          from: phucvinh20112004@gmail.com
+    default-encoding: UTF-8
+    test-connection: true
