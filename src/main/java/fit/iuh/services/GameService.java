@@ -27,17 +27,19 @@ public interface GameService {
 
     Page<GameSearchResponseDto> searchAndFilterPendingGames(Pageable pageable, String searchQuery);
 
-    Page<GameSearchResponseDto> searchAndFilterApprovedGames(Pageable pageable, String searchQuery, String categoryFilter);
+    Page<GameSearchResponseDto> searchAndFilterApprovedGames(Pageable pageable, String searchQuery, String categoryFilter, String sortBy);
 
     GameDetailDto getGameForAdmin(Long gameId);
 
     GameDetailDto approveGame(Long gameId);
 
-    GameDetailDto rejectGame(Long gameId);
+    void rejectGame(Long gameId, String reason);
 
     GameDetailDto updateApprovedGameStatus(Long gameId, String newStatus);
 
     List<GameDto> getGamesByPublisherId(Long publisherId);
 
     DashboardStatsResponse getDashboardStats();
+
+    Page<GameSearchResponseDto> searchGameSubmissions(Pageable pageable, String searchQuery, String statusFilter);
 }

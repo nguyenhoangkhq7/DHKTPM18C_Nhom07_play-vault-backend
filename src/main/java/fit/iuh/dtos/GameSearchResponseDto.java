@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -26,12 +27,34 @@ public class GameSearchResponseDto {
     private String shortDescription;
     private Double rating;
     private int reviewCount;
-
+    private Long downloads; // Số lượt tải
+    private Double revenue; // Doanh thu thực tế
+    private String reviewedAt;
     // =======================================================================
     // PHƯƠNG THỨC TƯƠNG THÍCH NGƯỢC (BACKWARD COMPATIBILITY)
     // Giúp GameDto.java cũ gọi setThumbnail/setCategoryName không bị lỗi
     // =======================================================================
 
+    public GameSearchResponseDto(Long id, String name, String image, String publisher,
+                                 BigDecimal price, LocalDate releaseDate, String category,
+                                 Long downloads, BigDecimal revenue,LocalDate reviewedAtDate) {
+        this.id = id;
+        this.name = name;
+        this.image = image;
+        this.publisher = publisher;
+        this.price = price;
+        // Chuyển LocalDate sang String ngay trong constructor
+        this.releaseDate = releaseDate != null ? releaseDate.toString() : "N/A";
+        this.category = category;
+        this.downloads = downloads != null ? downloads : 0L;
+        this.revenue = revenue != null ? revenue.doubleValue() : 0.0;
+        this.reviewedAt = reviewedAtDate != null ? reviewedAtDate.toString() : "N/A";
+        // Các trường không select thì set mặc định
+        this.status = "APPROVED";
+        this.rating = 0.0;
+        this.reviewCount = 0;
+        this.shortDescription = "";
+    }
     // Khi GameDto gọi setThumbnail, ta chuyển nó vào biến image
     public void setThumbnail(String thumbnail) {
         this.image = thumbnail;
@@ -58,53 +81,50 @@ public class GameSearchResponseDto {
     public static GameSearchResponseDto fromEntity(Game game) {
         GameSearchResponseDto dto = new GameSearchResponseDto();
         dto.setId(game.getId());
+        dto.setStatus("APPROVED"); // Mặc định là Approved vì nằm trong bảng Game
 
-
-        // Sửa logic lấy releaseDate từ Game (như yêu cầu trước đó)
         if (game.getReleaseDate() != null) {
-            dto.setReleaseDate(game.getReleaseDate().toString());
+            String dateStr = game.getReleaseDate().toString();
+            dto.setReleaseDate(dateStr);
+            // Với Game đã duyệt (trong bảng Game), coi ngày phát hành là ngày duyệt
+            dto.setReviewedAt(dateStr);
         } else {
             dto.setReleaseDate("Chưa cập nhật");
+            dto.setReviewedAt("N/A");
         }
 
-        // Sửa logic lấy info từ OneToOne
         GameBasicInfo info = game.getGameBasicInfos();
-
         if (info != null) {
             dto.setName(info.getName());
-            dto.setImage(info.getThumbnail()); // set vào image
+            dto.setImage(info.getThumbnail());
             dto.setPrice(info.getPrice());
             dto.setShortDescription(info.getShortDescription());
 
             if (info.getPublisher() != null) {
-                dto.setPublisher(info.getPublisher().getStudioName());
+                dto.setPublisher(info.getPublisher().getStudioName()); // Sửa studioName cho khớp model
             } else {
                 dto.setPublisher("Unknown Publisher");
             }
 
             if (info.getCategory() != null) {
-                dto.setCategory(info.getCategory().getName()); // set vào category
-            } else {
-                dto.setCategory("Uncategorized");
+                dto.setCategory(info.getCategory().getName());
             }
-        } else {
-            dto.setName("Game ID: " + game.getId());
-            dto.setPublisher("N/A");
-            dto.setPrice(BigDecimal.ZERO);
         }
 
+        // Tính rating
         List<Review> reviews = game.getReviews();
         if (reviews != null && !reviews.isEmpty()) {
             dto.setReviewCount(reviews.size());
-            double average = reviews.stream()
-                    .mapToInt(Review::getRating)
-                    .average()
-                    .orElse(0.0);
+            double average = reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
             dto.setRating(Math.round(average * 10.0) / 10.0);
         } else {
             dto.setReviewCount(0);
             dto.setRating(0.0);
         }
+
+        // Mặc định 0 nếu không join bảng OrderItem (tránh null)
+        dto.setDownloads(0L);
+        dto.setRevenue(0.0);
 
         return dto;
     }
@@ -116,18 +136,27 @@ public class GameSearchResponseDto {
         GameSearchResponseDto dto = new GameSearchResponseDto();
         dto.setId(submission.getId());
         dto.setStatus(submission.getStatus().toString());
-        dto.setReleaseDate("Chờ duyệt");
+        // Use actual submission date or "Chờ duyệt" based on your preference
+        dto.setReleaseDate(submission.getSubmittedAt() != null ? submission.getSubmittedAt().toString() : "Chờ duyệt");
 
         if (submission.getGameBasicInfos() != null) {
-            dto.setName(submission.getGameBasicInfos().getName());
-            dto.setImage(submission.getGameBasicInfos().getThumbnail());
-            dto.setPrice(submission.getGameBasicInfos().getPrice());
-            dto.setShortDescription(submission.getGameBasicInfos().getShortDescription());
+            var info = submission.getGameBasicInfos();
+            dto.setName(info.getName());
+            dto.setImage(info.getThumbnail());
+            dto.setPrice(info.getPrice());
+            dto.setShortDescription(info.getShortDescription());
 
-            if (submission.getGameBasicInfos().getCategory() != null) {
-                dto.setCategory(submission.getGameBasicInfos().getCategory().getName());
+            if (info.getCategory() != null) {
+                dto.setCategory(info.getCategory().getName());
             }
-            dto.setPublisher("Pending Publisher");
+
+            // --- FIX: Get actual publisher name instead of hardcoded string ---
+            if (info.getPublisher() != null) {
+                dto.setPublisher(info.getPublisher().getStudioName()); // Or whatever field stores the name
+            } else {
+                dto.setPublisher("Unknown Publisher");
+            }
+            // -----------------------------------------------------------------
         }
 
         dto.setReviewCount(0);

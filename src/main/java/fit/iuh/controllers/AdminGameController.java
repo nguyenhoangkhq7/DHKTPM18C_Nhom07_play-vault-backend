@@ -24,11 +24,17 @@ public class AdminGameController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String searchQuery,
-            @RequestParam(required = false, defaultValue = "all") String categoryFilter
+            @RequestParam(defaultValue = "all") String categoryFilter,
+            @RequestParam(defaultValue = "default") String sortBy
     ) {
-        String effectiveCategory = "all".equalsIgnoreCase(categoryFilter) ? null : categoryFilter;
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<GameSearchResponseDto> result = gameService.searchAndFilterApprovedGames(pageable, searchQuery, effectiveCategory);
+        Page<GameSearchResponseDto> result = gameService.searchAndFilterApprovedGames(
+                pageable,
+                searchQuery,
+                categoryFilter,
+                sortBy
+        );
+
         return ResponseEntity.ok(result);
     }
 
@@ -71,13 +77,24 @@ public class AdminGameController {
     }
 
     @PutMapping("/{gameId}/reject")
-    public ResponseEntity<GameDetailDto> rejectGame(@PathVariable Long gameId) {
-        try {
-            GameDetailDto rejectedGame = gameService.rejectGame(gameId);
-            return ResponseEntity.ok(rejectedGame);
-        } catch (Exception e) {
-            return ResponseEntity.ok().build();
-        }
+    public ResponseEntity<Void> rejectGame(
+            @PathVariable Long gameId,
+            @RequestParam(defaultValue = "Không đạt yêu cầu") String reason // Thêm lý do
+    ) {
+        gameService.rejectGame(gameId, reason);
+        return ResponseEntity.ok().build();
     }
 
+    // API này thay thế cho /pending cũ, hỗ trợ lấy ALL, APPROVED, REJECTED
+    @GetMapping("/submissions")
+    public ResponseEntity<Page<GameSearchResponseDto>> getGameSubmissions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "all") String status // Param lọc trạng thái
+    ) {
+        Pageable pageable = PageRequest.of(page, size); // Sort đã được xử lý trong Query
+        Page<GameSearchResponseDto> result = gameService.searchGameSubmissions(pageable, searchQuery, status);
+        return ResponseEntity.ok(result);
+    }
 }
