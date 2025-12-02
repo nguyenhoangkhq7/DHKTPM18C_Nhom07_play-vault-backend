@@ -78,4 +78,7 @@ public interface ReportRepository extends JpaRepository<Order, Long> {
             "AND function('DATE', a.createdAt) >= :from " +
             "AND function('DATE', a.createdAt) <= :to")
     Long countNewUsers(@Param("from") LocalDate from, @Param("to") LocalDate to);
+  
+      List<Report> findByCustomer_Account_UsernameOrderByCreatedAtDesc(String username);
+    boolean existsByOrder_Id(Long orderId);
 }
