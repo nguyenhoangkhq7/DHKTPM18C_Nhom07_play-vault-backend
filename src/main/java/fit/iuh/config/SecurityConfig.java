@@ -55,6 +55,7 @@ public class SecurityConfig {
                       .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                       .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                       .requestMatchers(HttpMethod.POST, "/api/auth/register/**").permitAll()
+                      .requestMatchers(HttpMethod.POST, "/api/publishers/register").permitAll()
                       .requestMatchers(HttpMethod.GET, "/api/games", "/api/games/**").permitAll()
                       .requestMatchers(HttpMethod.GET, "/api/games/top", "/api/games/top/**").permitAll()
                       .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()

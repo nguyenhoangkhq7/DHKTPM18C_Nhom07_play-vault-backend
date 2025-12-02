@@ -15,6 +15,55 @@ import java.util.List;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
+    // 1. Tính TỔNG doanh thu của Publisher
+    @Query("SELECT SUM(oi.price) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN g.gameBasicInfos info " +
+            "WHERE info.publisher.id = :publisherId")
+    Double sumTotalRevenueByPublisher(@Param("publisherId") Long publisherId);
+
+    // 2. Tính doanh thu THÁNG NÀY (cần truyền tháng và năm hiện tại)
+    @Query("SELECT SUM(oi.price) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN g.gameBasicInfos info " +
+            "JOIN oi.order o " +
+            "WHERE info.publisher.id = :publisherId " +
+            "AND MONTH(o.createdAt) = :month AND YEAR(o.createdAt) = :year")
+    Double sumMonthlyRevenueByPublisher(@Param("publisherId") Long publisherId,
+                                        @Param("month") int month,
+                                        @Param("year") int year);
+
+    // 3. Tính TỔNG lượt tải (số game đã bán)
+    @Query("SELECT COUNT(oi) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN g.gameBasicInfos info " +
+            "WHERE info.publisher.id = :publisherId")
+    Long countTotalDownloadsByPublisher(@Param("publisherId") Long publisherId);
+
+    // 4. Tính lượt tải THÁNG NÀY
+    @Query("SELECT COUNT(oi) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN g.gameBasicInfos info " +
+            "JOIN oi.order o " +
+            "WHERE info.publisher.id = :publisherId " +
+            "AND MONTH(o.createdAt) = :month AND YEAR(o.createdAt) = :year")
+    Long countMonthlyDownloadsByPublisher(@Param("publisherId") Long publisherId,
+                                          @Param("month") int month,
+                                          @Param("year") int year);
+
+    // 5. Query đặc biệt cho BIỂU ĐỒ (Group by Month)
+    // Trả về List<Object[]>: [Tháng, Tổng tiền]
+    @Query("SELECT MONTH(o.createdAt), SUM(oi.price) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN g.gameBasicInfos info " +
+            "JOIN oi.order o " +
+            "WHERE info.publisher.id = :publisherId " +
+            "AND YEAR(o.createdAt) = :year " +
+            "GROUP BY MONTH(o.createdAt) " +
+            "ORDER BY MONTH(o.createdAt)")
+    List<Object[]> getRevenueByMonthAndYear(@Param("publisherId") Long publisherId,
+                                            @Param("year") int year);
+}
     // 1. Tổng doanh thu Publisher
     @Query("SELECT COALESCE(SUM(oi.total), 0) " +
             "FROM OrderItem oi " +
@@ -69,11 +118,3 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     @Query("SELECT GameRevenueDto(g.id, g.gameBasicInfos.name, SUM(oi.total), COUNT(oi.id), g.gameBasicInfos.thumbnail, g.gameBasicInfos.category.name) FROM OrderItem oi JOIN oi.game g JOIN oi.order o WHERE o.status = fit.iuh.models.enums.OrderStatus.COMPLETED AND o.createdAt BETWEEN :from AND :to GROUP BY g.id, g.gameBasicInfos.name, g.gameBasicInfos.thumbnail, g.gameBasicInfos.category.name ORDER BY SUM(oi.total) DESC")
     List<GameRevenueDto> getGameRevenueBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 }
-
-
-
-//import java.util.List;
-//
-//public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
-
-//}
