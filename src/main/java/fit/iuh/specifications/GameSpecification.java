@@ -1,8 +1,11 @@
 // trong package fit.iuh.specifications
 package fit.iuh.specifications;
 
+import fit.iuh.models.Category;
 import fit.iuh.models.Game;
 import fit.iuh.models.GameBasicInfo;
+import fit.iuh.models.Publisher;
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
@@ -52,6 +55,42 @@ public class GameSpecification {
             // Cần distinct để tránh trùng lặp kết quả khi join
             query.distinct(true);
 
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public static Specification<Game> filterApprovedGames(String searchQuery, String categoryFilter) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // 1. Join bảng: Game -> GameBasicInfos
+            Join<Game, GameBasicInfo> basicInfoJoin = root.join("gameBasicInfos", JoinType.LEFT);
+
+            // 2. Tìm kiếm (Search Query)
+            if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+                String likePattern = "%" + searchQuery.toLowerCase().trim() + "%";
+
+                // a. Tìm theo tên Game (Field 'name' trong GameBasicInfo là đúng)
+                Predicate nameLike = cb.like(cb.lower(basicInfoJoin.get("name")), likePattern);
+
+                // b. Tìm theo tên Publisher (CẦN SỬA TẠI ĐÂY)
+                // Join vào bảng Publisher
+                Join<GameBasicInfo, Publisher> publisherJoin = basicInfoJoin.join("publisher", JoinType.LEFT);
+
+                // LỖI TRƯỚC ĐÓ: publisherJoin.get("name") -> Sai vì Entity Publisher dùng 'studioName'
+                // SỬA LẠI: Dùng "studioName" khớp với file Entity bạn cung cấp
+                Predicate publisherLike = cb.like(cb.lower(publisherJoin.get("studioName")), likePattern);
+
+                predicates.add(cb.or(nameLike, publisherLike));
+            }
+
+            // 3. Lọc theo Category
+            if (categoryFilter != null && !categoryFilter.isEmpty() && !"all".equalsIgnoreCase(categoryFilter)) {
+                Join<GameBasicInfo, Category> categoryJoin = basicInfoJoin.join("category", JoinType.INNER);
+                predicates.add(cb.equal(cb.lower(categoryJoin.get("name")), categoryFilter.toLowerCase()));
+            }
+
+            query.distinct(true);
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
