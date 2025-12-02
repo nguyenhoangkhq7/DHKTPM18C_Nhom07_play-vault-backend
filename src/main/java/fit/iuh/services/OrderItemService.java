@@ -15,5 +15,8 @@ public class OrderItemService {
     private final OrderItemRepository itemRepository;
     private final OrderItemMapper itemMapper;
 
-
+    public List<OrderItemDto> getItemOrderToday() {
+        List<OrderItem> items = itemRepository.findAllByOrderItemToday();
+        return itemMapper.toListDto(items);
+    }
 }

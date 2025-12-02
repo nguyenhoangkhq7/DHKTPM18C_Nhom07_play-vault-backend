@@ -1,6 +1,7 @@
 package fit.iuh.repositories;
 
 import fit.iuh.dtos.GameRevenueDto;
+import fit.iuh.dtos.PublisherGameRevenueDto;
 import fit.iuh.models.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -94,7 +95,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     // 3. Doanh thu theo game (gộp theo game, trả về OrderItem để mapper xử lý)
     @Query("""
-        SELECT NEW fit.iuh.dtos.GameRevenueDto(
+        SELECT NEW fit.iuh.dtos.PublisherGameRevenueDto(
             gbi.id,
             gbi.name,
             gbi.thumbnail,
@@ -111,7 +112,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
         GROUP BY gbi.id, gbi.name, gbi.thumbnail
         ORDER BY SUM(oi.total) DESC
         """)
-    List<GameRevenueDto> findRevenueByGame(
+    List<PublisherGameRevenueDto> findRevenueByGame(
             @Param("pubId") Long publisherId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
@@ -133,7 +134,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             @Param("gameId") Long gameId,
             @Param("year") int year);
 
-}
-    @Query("SELECT GameRevenueDto(g.id, g.gameBasicInfos.name, SUM(oi.total), COUNT(oi.id), g.gameBasicInfos.thumbnail, g.gameBasicInfos.category.name) FROM OrderItem oi JOIN oi.game g JOIN oi.order o WHERE o.status = fit.iuh.models.enums.OrderStatus.COMPLETED AND o.createdAt BETWEEN :from AND :to GROUP BY g.id, g.gameBasicInfos.name, g.gameBasicInfos.thumbnail, g.gameBasicInfos.category.name ORDER BY SUM(oi.total) DESC")
-    List<GameRevenueDto> getGameRevenueBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
+    @Query("SELECT oi FROM Order o JOIN o.orderItems oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
+    List<OrderItem> findAllByOrderItemToday();
 }
