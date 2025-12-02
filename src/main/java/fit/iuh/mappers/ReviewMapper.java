@@ -10,7 +10,6 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ReviewMapper {
-    @Mapping(source = "id", target = "id")
     @Mapping(source = "rating", target = "rating")
     @Mapping(source = "comment", target = "comment")
     @Mapping(source = "createdAt", target = "createdAt")
