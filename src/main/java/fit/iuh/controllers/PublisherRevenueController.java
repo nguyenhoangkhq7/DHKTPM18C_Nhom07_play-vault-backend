@@ -35,13 +35,22 @@ public class PublisherRevenueController {
     }
 
     @GetMapping("/by-game")
-    public ResponseEntity<List<OrderItemDto>> getRevenueByGame(
+    public ResponseEntity<List<GameRevenueDto>> getRevenueByGame(
             Authentication authentication,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
         Long publisherId = getCurrentPublisherId(authentication);
         return ResponseEntity.ok(revenueService.getRevenueByGame(publisherId, from, to));
+    }
+    @GetMapping("/by-game/{gameId}/monthly")
+    public ResponseEntity<List<MonthlyRevenueDto>> getGameMonthlyRevenue(
+            Authentication authentication,
+            @PathVariable Long gameId,
+            @RequestParam(defaultValue = "2025") int year) {
+
+        Long publisherId = getCurrentPublisherId(authentication);
+        return ResponseEntity.ok(revenueService.getGameMonthlyRevenue(publisherId, gameId, year));
     }
 
     @GetMapping("/monthly")
@@ -52,4 +61,6 @@ public class PublisherRevenueController {
         Long publisherId = getCurrentPublisherId(authentication);
         return ResponseEntity.ok(revenueService.getMonthlyRevenue(publisherId, year));
     }
+
+
 }

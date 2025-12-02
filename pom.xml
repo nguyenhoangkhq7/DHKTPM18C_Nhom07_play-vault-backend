@@ -48,6 +48,12 @@
             <version>4.0.0</version>
         </dependency>
         <dependency>
+
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.13.0</version>
@@ -143,7 +149,8 @@
                 <configuration>
                     <url>jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true</url>
                     <user>root</user>
-                    <password>22718451</password>
+                    <password>Thanh042004</password>
+
                     <cleanDisabled>false</cleanDisabled>
                 </configuration>
             </plugin>

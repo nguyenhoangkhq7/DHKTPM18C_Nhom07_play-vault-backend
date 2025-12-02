@@ -94,26 +94,46 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     // 3. Doanh thu theo game (gộp theo game, trả về OrderItem để mapper xử lý)
     @Query("""
-
-            SELECT oi FROM OrderItem oi
-           JOIN oi.game g
-           JOIN g.gameBasicInfos gbi
-           JOIN oi.order o
-           WHERE gbi.publisher.id = :pubId
-             AND o.status = 'COMPLETED'
-             AND o.createdAt BETWEEN :from AND :to
-           ORDER BY oi.total DESC
-           """)
-    List<OrderItem> findRevenueByGame(
+        SELECT NEW fit.iuh.dtos.GameRevenueDto(
+            gbi.id,
+            gbi.name,
+            gbi.thumbnail,
+            COUNT(DISTINCT o.id),
+            SUM(oi.total)
+        )
+        FROM OrderItem oi
+        JOIN oi.game g
+        JOIN g.gameBasicInfos gbi
+        JOIN oi.order o
+        WHERE gbi.publisher.id = :pubId
+          AND o.status = 'COMPLETED'
+          AND o.createdAt BETWEEN :from AND :to
+        GROUP BY gbi.id, gbi.name, gbi.thumbnail
+        ORDER BY SUM(oi.total) DESC
+        """)
+    List<GameRevenueDto> findRevenueByGame(
             @Param("pubId") Long publisherId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
 
-    @Query("SELECT oi FROM Order o JOIN o.orderItems oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
-    List<OrderItem> findAllByOrderItemToday();
+    // 4. Doanh thu theo tháng của 1 game cụ thể
+    @Query("SELECT MONTH(o.createdAt), COALESCE(SUM(oi.total), 0) " +
+            "FROM OrderItem oi " +
+            "JOIN oi.order o " +
+            "JOIN oi.game g " +
+            "JOIN g.gameBasicInfos gbi " +
+            "WHERE gbi.publisher.id = :pubId " +
+            "  AND g.id = :gameId " +
+            "  AND o.status = 'COMPLETED' " +
+            "  AND YEAR(o.createdAt) = :year " +
+            "GROUP BY MONTH(o.createdAt) " +
+            "ORDER BY MONTH(o.createdAt)")
+    List<Object[]> getGameMonthlyRevenueRaw(
+            @Param("pubId") Long publisherId,
+            @Param("gameId") Long gameId,
+            @Param("year") int year);
 
-
-
+}
     @Query("SELECT GameRevenueDto(g.id, g.gameBasicInfos.name, SUM(oi.total), COUNT(oi.id), g.gameBasicInfos.thumbnail, g.gameBasicInfos.category.name) FROM OrderItem oi JOIN oi.game g JOIN oi.order o WHERE o.status = fit.iuh.models.enums.OrderStatus.COMPLETED AND o.createdAt BETWEEN :from AND :to GROUP BY g.id, g.gameBasicInfos.name, g.gameBasicInfos.thumbnail, g.gameBasicInfos.category.name ORDER BY SUM(oi.total) DESC")
     List<GameRevenueDto> getGameRevenueBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 }
