@@ -2,11 +2,13 @@ package fit.iuh.services.impl;
 
 import fit.iuh.models.Account;
 import fit.iuh.models.PublisherRequest;
+import fit.iuh.models.enums.AccountStatus;
 import fit.iuh.models.enums.RequestStatus;
 import fit.iuh.repositories.PublisherRequestRepository;
 import fit.iuh.services.EmailService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +31,7 @@ public class PublisherRequestServiceImpl implements fit.iuh.services.PublisherRe
     }
 
     @Override
+    @Transactional
     public Optional<PublisherRequest> updateStatus(Long id, RequestStatus status){
         return repository.findById(id).map(req -> {
             Account account = req.getAccountUsername();
@@ -37,6 +40,7 @@ public class PublisherRequestServiceImpl implements fit.iuh.services.PublisherRe
             req.setStatus(status);
             req.setUpdatedAt(LocalDate.now());
             if(status == RequestStatus.APPROVED){
+                account.setStatus(AccountStatus.ACTIVE);
                 emailService.sendPublisherApprovedEmail(email, username);
             }
             else if(status == RequestStatus.REJECTED){
