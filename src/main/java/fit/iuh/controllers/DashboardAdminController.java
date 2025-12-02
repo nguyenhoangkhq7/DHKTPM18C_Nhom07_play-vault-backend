@@ -1,9 +1,9 @@
 package fit.iuh.controllers;
 
 import fit.iuh.dtos.AccountDto;
-import fit.iuh.dtos.OrderItemDto;
+import fit.iuh.dtos.GameDto;
 import fit.iuh.services.AccountService;
-import fit.iuh.services.OrderItemService;
+import fit.iuh.services.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,12 +16,12 @@ import java.util.List;
 @RequestMapping("/admin")
 @RequiredArgsConstructor
 public class DashboardAdminController {  // Sửa typo: DashBoard → Dashboard
-    private final OrderItemService orderItemService;
+    private final GameService gameService;
     private final AccountService accountService;
 
     @GetMapping("/orderitems/today")
-    public ResponseEntity<List<OrderItemDto>> getOrderItemsToday() {
-        return ResponseEntity.ok(orderItemService.getItemOrderToday());
+    public ResponseEntity<List<GameDto>> getOrderItemsToday() {
+        return ResponseEntity.ok(gameService.getAllByGameToday());
     }
     @GetMapping("/accounts/today")
     public ResponseEntity<List<AccountDto>> getAccountToday() {
