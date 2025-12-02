@@ -8,11 +8,17 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface GameService {
+
     List<GameDto> findAll();
+
     GameDto findById(Long id);
+
     List<GameDto> findGamesByCategoryName(String categoryName);
+
     List<GameDto> findTopRatedGames(int topN);
+
     Game findGameEntityById(Long id);
+
     List<GameWithRatingDto> getTopGamesWithRating(int topN);
 
     // Thêm method tìm kiếm nâng cao
@@ -42,4 +48,8 @@ public interface GameService {
     DashboardStatsResponse getDashboardStats();
 
     Page<GameSearchResponseDto> searchGameSubmissions(Pageable pageable, String searchQuery, String statusFilter);
+
+    boolean checkOwnership(String username, Long gameId);
+
+    List<GameDto> getAllByGameToday();
 }

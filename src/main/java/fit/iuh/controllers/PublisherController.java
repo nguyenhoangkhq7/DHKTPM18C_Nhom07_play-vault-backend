@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -60,13 +62,9 @@ public class PublisherController {
 
         return ResponseEntity.ok(publisherService.updateGameByPublisher(publisherId, gameId, request));
     }
-//    @DeleteMapping("/{publisherId}/games/{gameId}")
-//    public ResponseEntity<String> deleteGame(
-//            @PathVariable Long publisherId,
-//            @PathVariable Long gameId) {
-//
-//        publisherService.deleteGameByPublisher(publisherId, gameId);
-//
-//        return ResponseEntity.ok("Xóa game thành công");
-//    }
+    @GetMapping
+    public ResponseEntity<List<PublisherDto>> getPublisher(){
+
+        return ResponseEntity.ok(publisherService.findAll());
+    }
 }

@@ -54,7 +54,7 @@ public class Game {
               .collect(Collectors.averagingDouble(Review::getRating));
    }
 
-   public void AddReview(Customer customer, Integer rating, String comment){
+   public void addReview(Customer customer, Integer rating, String comment){
       Review review = new Review();
       review.setCustomer(customer);
       review.setGame(this);

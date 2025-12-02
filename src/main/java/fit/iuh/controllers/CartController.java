@@ -4,6 +4,7 @@ import fit.iuh.dtos.CartDto;
 import fit.iuh.dtos.CartItemRequestDto;
 import fit.iuh.dtos.CartResponse;
 import fit.iuh.services.CartService;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -38,7 +39,7 @@ public class CartController {
     /**
      * Thêm sản phẩm vào giỏ hàng theo gameId
      */
-    @PostMapping("/items/{gameId}")
+    @PostMapping("/items/{gameId}") 
     public ResponseEntity<CartResponse> addItemToCart(
             @PathVariable Long gameId
     ) { // Bỏ Principal principal
@@ -86,5 +87,6 @@ public class CartController {
         cartService.clearCart(username);
         return ResponseEntity.ok(cartService.getCartByUsername(username));
     }
+
 
 }
