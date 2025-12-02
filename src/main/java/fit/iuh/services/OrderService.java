@@ -25,4 +25,12 @@ public class OrderService {
         // 2. Dùng MapStruct để chuyển đổi (1 dòng duy nhất!)
         return orderMapper.toOrderHistoryResponseList(orders);
     }
+
+    // --- PHƯƠNG THỨC MỚI: CHECK QUYỀN SỞ HỮU ---
+    @Transactional(readOnly = true)
+    public boolean checkIsOwnOrder(Long orderId, String username) {
+        return orderRepository.findById(orderId)
+                .map(order -> order.getCustomer().getAccount().getUsername().equals(username))
+                .orElse(false); // Nếu không tìm thấy order hoặc không khớp user -> trả về false
+    }
 }

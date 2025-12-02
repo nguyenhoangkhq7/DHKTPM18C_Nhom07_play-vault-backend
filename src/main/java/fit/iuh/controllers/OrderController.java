@@ -94,4 +94,27 @@ public class OrderController {
 
         return ResponseEntity.ok(dtos);
     }
+
+    /**
+     * API Kiểm tra đơn hàng có tồn tại và thuộc về User đang đăng nhập hay không.
+     * URL: GET http://localhost:8080/api/orders/{id}/validate
+     * Return: true (nếu đúng chính chủ), false (nếu sai hoặc không tồn tại)
+     */
+        @GetMapping("/{id}/validate")
+        public ResponseEntity<Boolean> validateOrderOwnership(
+                @PathVariable Long id,
+                Principal principal) {
+
+            // 1. Nếu chưa đăng nhập -> auto false
+            if (principal == null) {
+                return ResponseEntity.ok(false);
+            }
+
+            // 2. Gọi Service kiểm tra (đã viết ở bước trước)
+            boolean isValid = orderService.checkIsOwnOrder(id, principal.getName());
+
+            // 3. Trả về true/false (HTTP 200)
+            return ResponseEntity.ok(isValid);
+        }
+
 }
