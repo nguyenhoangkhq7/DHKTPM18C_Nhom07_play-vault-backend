@@ -30,6 +30,16 @@ public class PublisherServiceImpl implements fit.iuh.services.PublisherService {
     private final PublisherRepository publisherRepository;
     private final PublisherMapper publisherMapper;
 
+    // --- Dependencies từ nhánh vanhau ---
+    private final AccountRepository accountRepository;
+    private final PublisherRequestRepository publisherRequestRepository;
+    private final PaymentInfoRepository paymentInfoRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final GameRepository gameRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ReviewRepository reviewRepository;
+    private final CategoryRepository categoryRepository;
+    private final GameMapper gameMapper; // Mapper tự viết hoặc dùng MapStruct
     @Override
     public List<PublisherDto> findAll() {
         return publisherMapper.toPublisherDTOs(publisherRepository.findAll());
@@ -75,7 +85,6 @@ public class PublisherServiceImpl implements fit.iuh.services.PublisherService {
                 .games(null) // TODO: nếu có bảng Game thì đếm thật
                 .build();
     }
-}
 
     // ========================================================================
     // 2. CÁC PHƯƠNG THỨC TỪ NHÁNH VANHAU (Publisher Dashboard & Logic)
