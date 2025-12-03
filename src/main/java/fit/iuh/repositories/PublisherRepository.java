@@ -19,10 +19,17 @@ public interface PublisherRepository extends JpaRepository<Publisher, Long> {
    Optional<Publisher> findByAccount_Username(String username);
 
    // Tìm Publisher theo username và fetch các liên quan nếu cần (ví dụ PaymentInfo)
+//   @Query("""
+//            SELECT p FROM Publisher p
+//            LEFT JOIN FETCH p.paymentInfo
+//            WHERE p.account.username = :username
+//            """)
+//   Optional<Publisher> findByAccount_UsernameWithPaymentInfo(@Param("username") String username);
+//
    @Query("""
-            SELECT p FROM Publisher p
-            LEFT JOIN FETCH p.paymentInfo
-            WHERE p.account.username = :username
-            """)
-   Optional<Publisher> findByAccount_UsernameWithPaymentInfo(@Param("username") String username);
+           select p from Publisher p
+           join fetch p.account a
+           where p.id = :id
+           """)
+   Optional<Publisher> findWithAccountById(@Param("id") Long id);
 }

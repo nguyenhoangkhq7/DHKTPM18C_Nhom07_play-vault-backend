@@ -7,6 +7,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class PublisherDto {
     private Long id;
     private String name; // Tên Studio, lấy từ studioName
@@ -15,4 +16,7 @@ public class PublisherDto {
     private Integer games; // Số game
     private String status;
     private String username;
+    private String phone;
+    private String website;
+    private String description;
 }
