@@ -6,11 +6,13 @@ import fit.iuh.dtos.GameSearchResponseDto;
 import fit.iuh.dtos.*;
 import fit.iuh.models.Game;
 import fit.iuh.dtos.GameWithRatingDto;
+import fit.iuh.models.GameSubmission;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface GameService {
 
@@ -66,6 +68,8 @@ public interface GameService {
     // đã gợi ý từ trước
     List<GameDto> findByStatus(String status);        // ✅ thêm mới
 
+    // GameService
+    Optional<GameSubmission> getLatestSubmissionByGameId(Long gameId);
 
     List<GameDto> getAllByGameToday();
 }

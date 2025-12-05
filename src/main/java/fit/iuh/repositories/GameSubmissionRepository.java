@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -26,4 +27,7 @@ public interface GameSubmissionRepository extends JpaRepository<GameSubmission, 
                                            @Param("status") SubmissionStatus status,
                                            Pageable pageable);
 
+    Optional<GameSubmission> findByGameBasicInfos_Id(Long id);
+    List<GameSubmission> findByGameBasicInfos_IdIn(Iterable<Long> ids);
+    List<GameSubmission> findByStatus(SubmissionStatus status);
 }

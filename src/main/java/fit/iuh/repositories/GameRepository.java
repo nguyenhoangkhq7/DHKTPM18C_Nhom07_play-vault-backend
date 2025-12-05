@@ -33,7 +33,14 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
                 "LIMIT :topN",
         nativeQuery = true)
     List<Game> findTopRatedGames(@Param("topN") int topN);
-    List<Game> findByStatus(String status);
+    @Query("""
+    SELECT g
+    FROM Game g
+    JOIN GameSubmission s ON s.gameBasicInfos = g.gameBasicInfos
+    WHERE s.status = :status
+""")
+    List<Game> findBySubmissionStatus(@Param("status") fit.iuh.models.enums.SubmissionStatus status);
+
     List<Game> findByGameBasicInfos_Publisher_Id(Long publisherId);
 
     @Query("""

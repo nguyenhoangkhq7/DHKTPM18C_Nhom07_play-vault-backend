@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.security.core.Authentication; // Thêm import Authentication
@@ -106,6 +107,11 @@ public class GameController {
         }
 
         GameDetailDto dto = GameDetailDto.fromEntityIsOwned(gameEntity, isOwned);
+        // ➜ Bổ sung status + submittedDate từ GameSubmission
+        gameService.getLatestSubmissionByGameId(id).ifPresent(sub -> {
+            dto.setStatus(sub.getStatus() != null ? sub.getStatus().name() : null);
+            dto.setSubmittedDate(sub.getSubmittedAt() != null ? sub.getSubmittedAt().toString() : null);
+        });
         return ResponseEntity.ok(dto);
     }
 
@@ -121,12 +127,6 @@ public class GameController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(gameDto);
-    }
-
-    @GetMapping("/reviews/{id}")
-    public ResponseEntity<List<ReviewDto>> getReviewById(@PathVariable Long id) {
-        List<ReviewDto> reviews= reviewService.findReviewsByGame_IdOrderByCreatedAtDesc(id);
-        return ResponseEntity.ok(reviews);
     }
 
     @PostMapping
@@ -150,6 +150,4 @@ public class GameController {
         List<GameDto> list = gameService.findByStatus("PENDING");
         return ResponseEntity.ok(list);
     }
-
-
 }
