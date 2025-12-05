@@ -6,7 +6,7 @@ spring:
     name: play-vault-backend
   datasource:
     url: jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true
-    username: root
+    username: root    
     password: sapassword
     driver-class-name: com.mysql.cj.jdbc.Driver
 
