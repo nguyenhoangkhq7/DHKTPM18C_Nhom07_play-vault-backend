@@ -1,10 +1,8 @@
 package fit.iuh.models;
 
-import fit.iuh.models.enums.SubmissionStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,9 +27,6 @@ public class Game {
 
    @Column(name = "release_date")
    private LocalDate releaseDate;
-
-//   @Column(name = "is_deleted")
-//   private boolean isDeleted = false;
 
    @OneToMany(
            mappedBy = "game",
@@ -64,7 +59,4 @@ public class Game {
       review.setRating(rating);
       this.reviews.add(review);
    }
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private SubmissionStatus status = SubmissionStatus.PENDING; // mặc định pending khi mới tạo
 }

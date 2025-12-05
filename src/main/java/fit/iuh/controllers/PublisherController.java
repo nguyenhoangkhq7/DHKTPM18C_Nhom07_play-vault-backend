@@ -4,6 +4,7 @@ import fit.iuh.dtos.*;
 import fit.iuh.services.GameService;
 import fit.iuh.services.PublisherService;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/publishers")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PublisherController {
 
     private final PublisherService publisherService;
