@@ -5,6 +5,7 @@ import fit.iuh.mappers.GameMapper;
 import fit.iuh.mappers.PublisherMapper;
 import fit.iuh.models.Account;
 import fit.iuh.models.Publisher;
+import fit.iuh.models.enums.OrderStatus;
 import fit.iuh.repositories.PublisherRepository;
 import jakarta.transaction.Transactional;
 import fit.iuh.models.*;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -141,13 +143,13 @@ public class PublisherServiceImpl implements fit.iuh.services.PublisherService {
 
     @Override
     public PublisherDashboardDto getPublisherDashboardStats(Long publisherId) {
-        LocalDate now = LocalDate.now();
+        List<OrderStatus> successStatuses = Arrays.asList(OrderStatus.PAID, OrderStatus.COMPLETED);        LocalDate now = LocalDate.now();
         int currentMonth = now.getMonthValue();
         int currentYear = now.getYear();
 
         // 1. Query Doanh thu
-        Double totalRevenue = orderItemRepository.sumTotalRevenueByPublisher(publisherId);
-        Double monthlyRevenue = orderItemRepository.sumMonthlyRevenueByPublisher(publisherId, currentMonth, currentYear);
+        Double totalRevenue = orderItemRepository.sumTotalRevenueByPublisher(publisherId, successStatuses);
+        Double monthlyRevenue = orderItemRepository.sumMonthlyRevenueByPublisher(publisherId, currentMonth, currentYear, successStatuses);
 
         // 2. Query Lượt tải (Sales)
         Long monthlyDownloads = orderItemRepository.countMonthlyDownloadsByPublisher(publisherId, currentMonth, currentYear);

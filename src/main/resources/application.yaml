@@ -5,7 +5,7 @@ spring:
   application:
     name: play-vault-backend
   datasource:
-    url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,7 +25,7 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 300 # 5min
+    accessTokenExpiration: 30000 # 5min
     refreshTokenExpiration: 604800 # 7 days
   mail:
     host: smtp.gmail.com
