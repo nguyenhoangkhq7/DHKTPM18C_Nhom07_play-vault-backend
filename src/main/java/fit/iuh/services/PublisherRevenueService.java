@@ -30,22 +30,26 @@ public class PublisherRevenueService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Publisher với username: " + username))
                 .getId();
     }
-
     // 1. Tổng hợp doanh thu (Dashboard chính)
     public RevenueSummaryDto getSummary(Long publisherId, LocalDate fromDate, LocalDate toDate) {
+        // QUAN TRỌNG: Vì Order.createdAt là LocalDate (không có giờ)
+        // Nên khi truyền to = 2025-11-29 → nó hiểu là đến hết ngày 29/11
+        // Nhưng JPA so sánh LocalDate với LocalDate → vẫn đúng!
+        // → Không cần cộng 1 ngày ở đây (vì cùng kiểu)
+
         LocalDate from = fromDate != null ? fromDate : LocalDate.of(2000, 1, 1);
         LocalDate to = toDate != null ? toDate : LocalDate.now();
 
-        // Tổng doanh thu hiện tại
+        // Nếu bạn để nguyên query dùng BETWEEN → VỚI LocalDate LÀ HOÀN TOÀN ĐÚNG!
+        // Không bị lỗi như LocalDateTime
+
         BigDecimal revenue = orderItemRepo.getRevenueByPublisher(publisherId, from, to);
         if (revenue == null) revenue = BigDecimal.ZERO;
 
-        // Doanh thu kỳ trước (cùng kỳ năm ngoái)
         BigDecimal prevRevenue = orderItemRepo.getRevenueByPublisher(publisherId,
                 from.minusYears(1), to.minusYears(1));
         if (prevRevenue == null) prevRevenue = BigDecimal.ZERO;
 
-        // Tính % tăng trưởng
         BigDecimal growth = BigDecimal.ZERO;
         if (prevRevenue.compareTo(BigDecimal.ZERO) > 0) {
             growth = revenue.subtract(prevRevenue)
@@ -53,19 +57,12 @@ public class PublisherRevenueService {
                     .multiply(BigDecimal.valueOf(100));
         }
 
-        // Lấy danh sách OrderItem để đếm game + người chơi
-        List<OrderItem> revenueItems = orderItemRepo.findRevenueByGame(publisherId, from, to);
-        List<OrderItemDto> items = orderItemMapper.toListDto(revenueItems);
+        List<PublisherGameRevenueDto> revenueItems = orderItemRepo.findRevenueByGame(publisherId, from, to);
 
-        long totalGames = items.stream()
-                .map(OrderItemDto::getGameId)
-                .distinct()
-                .count();
-
-        long totalPlayers = items.stream()
-                .map(item -> item.getOrderId())
-                .distinct()
-                .count();
+        long totalGames = revenueItems.size();
+        long totalPlayers = revenueItems.stream()
+                .mapToLong(PublisherGameRevenueDto::totalOrders)
+                .sum();
 
         BigDecimal avgPerGame = totalGames > 0
                 ? revenue.divide(BigDecimal.valueOf(totalGames), 0, RoundingMode.HALF_UP)
@@ -75,17 +72,24 @@ public class PublisherRevenueService {
     }
 
     // 2. Doanh thu theo từng game
-    public List<OrderItemDto> getRevenueByGame(Long publisherId, LocalDate fromDate, LocalDate toDate) {
+    public List<PublisherGameRevenueDto> getRevenueByGame(Long publisherId, LocalDate fromDate, LocalDate toDate) {
         LocalDate from = fromDate != null ? fromDate : LocalDate.of(2000, 1, 1);
         LocalDate to = toDate != null ? toDate : LocalDate.now();
 
-        List<OrderItem> items = orderItemRepo.findRevenueByGame(publisherId, from, to);
-        return orderItemMapper.toListDto(items);
+        // Vì createdAt là LocalDate → BETWEEN hoạt động chính xác 100%
+        return orderItemRepo.findRevenueByGame(publisherId, from, to);
     }
 
     // 3. Doanh thu theo tháng
     public List<MonthlyRevenueDto> getMonthlyRevenue(Long publisherId, int year) {
         List<Object[]> rawData = orderItemRepo.getMonthlyRevenueRaw(publisherId, year);
+        return rawData.stream()
+                .map(row -> new MonthlyRevenueDto((Integer) row[0], (BigDecimal) row[1]))
+                .collect(Collectors.toList());
+    }
+    // 4. Doanh thu theo tháng của 1 game cụ thể
+    public List<MonthlyRevenueDto> getGameMonthlyRevenue(Long publisherId, Long gameId, int year) {
+        List<Object[]> rawData = orderItemRepo.getGameMonthlyRevenueRaw(publisherId, gameId, year);
         return rawData.stream()
                 .map(row -> new MonthlyRevenueDto((Integer) row[0], (BigDecimal) row[1]))
                 .collect(Collectors.toList());

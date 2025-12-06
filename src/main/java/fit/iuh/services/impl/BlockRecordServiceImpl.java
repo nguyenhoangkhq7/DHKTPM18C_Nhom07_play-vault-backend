@@ -9,6 +9,7 @@ import fit.iuh.models.BlockRecord;
 import fit.iuh.models.enums.AccountStatus;
 import fit.iuh.repositories.AccountRepository;
 import fit.iuh.repositories.BlockRecordRepository;
+import fit.iuh.services.EmailService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class BlockRecordServiceImpl implements fit.iuh.services.BlockRecordServi
     private final BlockRecordRepository blockRecordRepository;
     private final BlockRecordMapper blockRecordMapper;
     private final AccountRepository accountRepository;
+    private final EmailService emailService;
 
     @Override
     public List<BlockRecordDto> getBlockRecordsByUserName(String userName) {
@@ -49,6 +51,13 @@ public class BlockRecordServiceImpl implements fit.iuh.services.BlockRecordServi
         blockRecordRepository.save(entity);
         account.setStatus(AccountStatus.BANNED);
         accountRepository.save(account);
+
+        // GỬI EMAIL THÔNG BÁO CHO NGƯỜI DÙNG (không làm chậm API nhờ @Async)
+        emailService.sendBlockEmail(
+                account.getEmail(),
+                username,
+                request.reason()
+        );
 
         BlockResponse response = blockRecordMapper.toResponse(entity);
         return new BlockResponse(

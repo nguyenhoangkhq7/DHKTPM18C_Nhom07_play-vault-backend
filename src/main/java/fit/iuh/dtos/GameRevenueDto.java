@@ -1,10 +1,18 @@
 package fit.iuh.dtos;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
-public record GameRevenueDto(
-        Long gameId,
-        String gameName,
-        BigDecimal revenue,
-        Long playerCount
-) {}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class GameRevenueDto {
+    private Long gameId;
+    private String name;
+    private BigDecimal revenue;
+    private Long sales;
+    private String thumbnail; // Map với GameBasicInfo.thumbnail
+    private String category;  // Map với Category.name
+}

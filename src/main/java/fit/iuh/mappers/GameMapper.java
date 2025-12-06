@@ -29,6 +29,11 @@ public interface GameMapper {
     @Mapping(source = "gameBasicInfos.price", target = "price")
     GameCardDto toCardDto(Game game);
 
+    @Mapping(target = "status",
+            expression = "java(game.getGameBasicInfos()!=null && " +
+                    "game.getGameBasicInfos().getSubmission()!=null && " +
+                    "game.getGameBasicInfos().getSubmission().getStatus()!=null ? " +
+                    "game.getGameBasicInfos().getSubmission().getStatus().name() : null)")
     @Mapping(source = "gameBasicInfos", target = "gameBasicInfos")
     @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
     @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisherName")
@@ -45,7 +50,6 @@ public interface GameMapper {
     @Mapping(source = ".", target = "discount", qualifiedByName = "calculateFinalDiscountAmount")
     @Mapping(source = "gameBasicInfos.systemRequirement", target = "systemRequirement")
     GameWithRatingDto toGameWithRatingDto(Game game);
-
 
     List<GameWithRatingDto> toGameWithRatingDtoList(List<Game> games);
 

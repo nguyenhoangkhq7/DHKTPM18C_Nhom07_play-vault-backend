@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 @Setter
 @Entity
 @Table(name = "games")
+//@Where(clause = "is_deleted = false")
 public class Game {
    @Id
    @Column(name = "game_basic_info_id", nullable = false)
@@ -49,7 +50,7 @@ public class Game {
               .collect(Collectors.averagingDouble(Review::getRating));
    }
 
-   public void AddReview(Customer customer, Integer rating, String comment){
+   public void addReview(Customer customer, Integer rating, String comment){
       Review review = new Review();
       review.setCustomer(customer);
       review.setGame(this);

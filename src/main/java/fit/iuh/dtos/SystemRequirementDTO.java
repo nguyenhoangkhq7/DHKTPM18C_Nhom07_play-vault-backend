@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SystemRequirementDTO {
-    private Long id;
-
     private String os;
     private String cpu;
     private String gpu;
