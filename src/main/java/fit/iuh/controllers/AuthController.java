@@ -24,6 +24,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -113,38 +116,46 @@ public class AuthController {
    }
 
    @PostMapping("/register/customer")
-   public ResponseEntity<String> registerCustomer(@Valid @RequestBody CustomerRegisterRequest request) {
+   public ResponseEntity<?> registerCustomer(@Valid @RequestBody CustomerRegisterRequest request) {
 
       if (accountRepository.existsByUsername(request.getUsername())) {
-         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username đã tồn tại");
+         // Trả về JSON lỗi thay vì String
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                 .body(Collections.singletonMap("message", "Username đã tồn tại"));
       }
 
-      // tạo account cơ bản
+      // 1. Tạo Account
       Account account = new Account();
       account.setUsername(request.getUsername());
       account.setPassword(passwordEncoder.encode(request.getPassword()));
       account.setEmail(request.getEmail());
       account.setPhone(request.getPhone());
-      account.setRole(request.getRole());
+      account.setRole(Role.CUSTOMER); // Mặc định là user
       account.setStatus(AccountStatus.ACTIVE);
       account.setCreatedAt(LocalDate.now());
 
       accountRepository.save(account);
 
+      // 2. Tạo Cart
       Cart cart = new Cart();
       cart.setTotalPrice(BigDecimal.ZERO);
       cartRepository.save(cart);
 
-      // tạo customer
+      // 3. Tạo Customer
       Customer customer = new Customer();
-      customer.setFullName(request.getFullName());
+      customer.setFullName(request.getFullName()); // Lưu ý: Client phải gửi fullName
       customer.setDateOfBirth(request.getDateOfBirth());
       customer.setAccount(account);
-
       customer.setCart(cart);
-      customerRepository.save(customer);
 
-      return ResponseEntity.status(HttpStatus.CREATED).body("Customer đăng ký thành công");
+      Customer savedCustomer = customerRepository.save(customer);
+
+      // 4. Trả về thông tin User để Frontend hiển thị (Quan trọng)
+      Map<String, Object> response = new HashMap<>();
+      response.put("message", "Đăng ký thành công");
+      response.put("user", savedCustomer); // Trả về object đã lưu để FE lấy ID, Name...
+
+      return ResponseEntity.status(HttpStatus.CREATED).body(response);
    }
 
 //   @PostMapping("/register/publisher")
