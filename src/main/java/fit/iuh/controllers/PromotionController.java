@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,6 +81,20 @@ public class PromotionController {
     public ResponseEntity<List<GameSimpleDto>> getMyGames(Authentication authentication) {
         List<GameSimpleDto> myGames = promotionService.getMyGames(authentication.getName());
         return ResponseEntity.ok(myGames);
+    }
+    // Thêm vào PromotionController.java
+
+    // 7. SỬA KHUYẾN MÃI
+    @PutMapping("/{id}")
+    public ResponseEntity<PromotionResponseDto> updatePromotion(
+            Authentication authentication,
+            @PathVariable Long id,
+            @Valid @RequestBody PromotionRequestDto request) {
+
+        PromotionResponseDto updated = promotionService.updatePromotion(
+                authentication.getName(), id, request);
+
+        return ResponseEntity.ok(updated);
     }
     // 6. LẤY DANH SÁCH GAME CỦA CHÍNH PUBLISHER ĐÓ (QUAN TRỌNG NHẤT!)
 
