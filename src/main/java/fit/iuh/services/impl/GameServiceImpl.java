@@ -7,6 +7,7 @@ import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.dtos.*;
 import fit.iuh.mappers.GameMapper;
 import fit.iuh.models.*;
+import fit.iuh.models.enums.Os;
 import fit.iuh.models.enums.SubmissionStatus;
 import fit.iuh.repositories.*;
 import fit.iuh.models.Account;
@@ -56,6 +57,8 @@ public class GameServiceImpl implements GameService {
     private final PublisherRepository publisherRepository;
     private final CategoryRepository categoryRepository;
     private final PlatformRepository platformRepository;
+
+    private final SystemRequirementRepository systemRequirementRepository;
     // Nếu bạn lưu GameBasicInfo qua cascade từ Game thì KHÔNG cần repo này.
     // Nếu bạn lưu riêng, hãy khai báo:
     private final GameBasicInfoRepository gameBasicInfoRepository;
@@ -424,56 +427,74 @@ public class GameServiceImpl implements GameService {
 
     @Override
     @Transactional
-    public GameDto createPending(GameCreateRequest req, String publisherUsername) {
-        Publisher publisher = publisherRepository.findByAccount_Username(publisherUsername)
-                .orElseThrow(() -> new RuntimeException("Publisher không tồn tại"));
+    public GameDto createPending(GameCreateRequest req, String username) {
+        // 1️⃣ Lấy Category
+        Category category = categoryRepository.findById(req.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
 
-        // Tạo & lưu GameBasicInfo
-        GameBasicInfo info = new GameBasicInfo();
-        info.setName(req.getTitle());
-        info.setShortDescription(req.getSummary());
-        info.setDescription(req.getDescription());
-        info.setThumbnail(req.getCoverUrl());
-        info.setTrailerUrl(req.getTrailerUrl());
-        info.setPrice(BigDecimal.valueOf(req.isFree() ? 0.0 : req.getPrice()));
-        info.setIsSupportController(req.isSupportController());
-        info.setRequiredAge(req.isAge18() ? 18 : 0);
-        info.setPublisher(publisher);
-        info.setFilePath(req.getFilePath());
+        // 2️⃣ Lấy Publisher theo account
+        Publisher publisher = publisherRepository.findByAccount_Username(username)
+                .orElseThrow(() -> new RuntimeException("Publisher không tồn tại cho tài khoản: " + username));
 
-        if (req.getCategoryId() != null) {
-            Category category = categoryRepository.findById(req.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy category"));
-            info.setCategory(category);
+        // 3️⃣ Tạo SystemRequirement
+        var srDto = req.getSystemRequirement();  // DTO có getter Lombok
+        SystemRequirement sr = new SystemRequirement();
+        sr.setOs(srDto.getOs());          // dùng enum Os trực tiếp
+        sr.setCpu(srDto.getCpu());
+        sr.setGpu(srDto.getGpu());
+        sr.setStorage(srDto.getStorage());
+        sr.setRam(srDto.getRam());
+        sr = systemRequirementRepository.save(sr);
+
+        // 4️⃣ Tạo GameBasicInfo
+        GameBasicInfo gbi = new GameBasicInfo();
+        gbi.setName(req.getName());
+        gbi.setShortDescription(req.getShortDescription());
+        gbi.setDescription(req.getDescription());       // ghi chú phát hành
+        gbi.setPrice(req.getPrice());
+        gbi.setTrailerUrl(req.getTrailerUrl());
+        gbi.setRequiredAge(req.getRequiredAge());
+        gbi.setFilePath(req.getFilePath());
+        gbi.setThumbnail(req.getThumbnail());
+        gbi.setIsSupportController(Boolean.TRUE.equals(req.getIsSupportController()));
+        gbi.setCategory(category);
+        gbi.setPublisher(publisher);
+        gbi.setSystemRequirement(sr);
+
+        // 5️⃣ Platforms
+        if (req.getPlatformIds() != null && !req.getPlatformIds().isEmpty()) {
+            List<Platform> platforms = platformRepository.findAllById(req.getPlatformIds());
+            if (platforms.size() != req.getPlatformIds().size()) {
+                throw new RuntimeException("platformIds chứa id không tồn tại");
+            }
+            // Dựa theo entity GameBasicInfo của bạn:
+            gbi.setPlatforms(platforms); // hoặc setPlatform(platforms)
         }
-        info = gameBasicInfoRepository.save(info);
 
-        // Platforms
-        var platforms = new java.util.ArrayList<Platform>();
-        for (String name : req.getPlatforms()) {
-            platforms.add(platformRepository.findByName(name.toUpperCase())
-                    .orElseThrow(() -> new RuntimeException("Platform không hợp lệ: " + name)));
-        }
-        info.setPlatforms(platforms);
+        gbi = gameBasicInfoRepository.save(gbi);
 
-        // Tạo & lưu Game (id = game_basic_info_id)
+        // 6️⃣ Tạo Game
         Game game = new Game();
-        game.setGameBasicInfos(info);
+        game.setGameBasicInfos(gbi);  // hoặc setGameBasicInfo(gbi)
         game.setReleaseDate(req.getReleaseDate());
         game = gameRepository.save(game);
 
-        // Tạo submission PENDING
-        GameSubmission sub = new GameSubmission();
-        sub.setGameBasicInfos(info);            // đúng field theo entity bạn gửi
-        sub.setStatus(SubmissionStatus.PENDING);
-        sub.setSubmittedAt(LocalDate.now());
-        submissionRepository.save(sub);
+        // 7️⃣ Tạo Submission (Pending)
+        GameSubmission submission = new GameSubmission();
+        submission.setGameBasicInfos(gbi);  // hoặc setGameBasicInfo(gbi)
+        submission.setStatus(SubmissionStatus.PENDING);
+        submission.setSubmittedAt(LocalDate.now());
+        gameSubmissionRepository.save(submission);
 
-        // Trả DTO (đơn giản): map rồi set status thủ công
+        // 8️⃣ Trả DTO
         GameDto dto = gameMapper.toDTO(game);
         dto.setStatus(SubmissionStatus.PENDING.name());
         return dto;
     }
+
+
+
+
 
 
     @Override

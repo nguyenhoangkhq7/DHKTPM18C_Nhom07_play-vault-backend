@@ -80,4 +80,10 @@ public class PublisherController {
                                                @RequestBody PublisherDto dto) {
         return ResponseEntity.ok(publisherService.updateProfile(id, dto));
     }
+
+    @PostMapping("/games")
+    public ResponseEntity<?> create(@Valid @RequestBody GameCreateRequest req, Authentication auth) {
+        var dto = gameService.createPending(req, auth.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    }
 }

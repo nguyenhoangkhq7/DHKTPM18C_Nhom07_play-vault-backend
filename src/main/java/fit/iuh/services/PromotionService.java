@@ -155,6 +155,46 @@ public class PromotionService {
 
         return dto;
     }
+    // Thêm vào PromotionService.java (cùng class hiện tại)
+
+    // Thay toàn bộ method updatePromotion hiện tại bằng cái này
+    @Transactional
+    public PromotionResponseDto updatePromotion(String username, Long promotionId, PromotionRequestDto request) {
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new RuntimeException("Khuyến mãi không tồn tại"));
+
+        // Kiểm tra quyền sở hữu
+        if (!promotion.getPublisher().getAccount().getUsername().equals(username)) {
+            throw new RuntimeException("Bạn không có quyền sửa khuyến mãi này");
+        }
+
+        // === KIỂM TRA ĐÃ CÓ ĐƠN HÀNG THÀNH CÔNG DÙNG KHUYẾN MÃI NÀY CHƯA? ===
+        // Bạn cần thêm method này vào OrderRepository (xem Bước 3)
+        // Nếu chưa có ai mua → cho sửa thoải mái, không cần kiểm tra
+
+        // Cập nhật dữ liệu
+        promotionMapper.updateEntityFromDto(request, promotion);
+
+        // Tự động cập nhật trạng thái Active dựa trên ngày
+        boolean shouldBeActive = promotion.getStartDate() != null
+                && promotion.getEndDate() != null
+                && !LocalDate.now().isBefore(promotion.getStartDate())
+                && !LocalDate.now().isAfter(promotion.getEndDate());
+
+        promotion.setIsActive(shouldBeActive);
+
+        Promotion saved = promotionRepository.save(promotion);
+        return promotionMapper.toDto(saved);
+    }
+    private String getDisplayStatus(Promotion p) {
+        if (Boolean.FALSE.equals(p.getIsActive())) {
+            return "Đã tắt thủ công";
+        }
+        LocalDate now = LocalDate.now();
+        if (now.isBefore(p.getStartDate())) return "Sắp diễn ra";
+        if (now.isAfter(p.getEndDate())) return "Đã kết thúc";
+        return "Đang diễn ra";
+    }
     // Lấy danh sách game của publisher hiện tại (dùng để hiển thị checkbox/dropdown)
 
 

@@ -1,5 +1,6 @@
 package fit.iuh.dtos;
 
+import fit.iuh.models.enums.Os;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SystemRequirementDTO {
-    private String os;
+    private Os os;
     private String cpu;
     private String gpu;
     private String storage;
