@@ -240,10 +240,10 @@ public class GameServiceImpl implements GameService {
         String search = (searchQuery == null || searchQuery.isBlank()) ? null : searchQuery;
 
         if ("revenue_desc".equalsIgnoreCase(sortBy)) {
-            return gameRepository.findGamesSortedByRevenue(search, category, pageable);
+            return gameRepository.findGamesSortedByRevenue(search, category, SubmissionStatus.APPROVED, pageable);
         }
         if ("downloads_desc".equalsIgnoreCase(sortBy)) {
-            return gameRepository.findGamesSortedByDownloads(search, category, pageable);
+            return gameRepository.findGamesSortedByDownloads(search, category, SubmissionStatus.APPROVED, pageable);
         }
 
         Specification<Game> spec = GameSpecification.filterApprovedGames(searchQuery, categoryFilter);
@@ -360,21 +360,31 @@ public class GameServiceImpl implements GameService {
     @Override
     @Transactional(readOnly = true)
     public GameDetailDto getGameForAdmin(Long id) {
-        // TRƯỜNG HỢP 1: Tìm trong bảng Game (Game ĐÃ DUYỆT/ĐANG BÁN)
+        // 1. Tìm trong bảng Game trước
         Optional<Game> gameOpt = gameRepository.findById(id);
+
         if (gameOpt.isPresent()) {
             Game game = gameOpt.get();
             GameDetailDto dto = GameDetailDto.fromEntity(game);
 
-            // --- LOGIC MỚI: Truy ngược lại ngày gửi (SubmittedAt) ---
+            // --- QUAN TRỌNG: Lấy status thực sự từ bảng GameSubmission ---
             if (game.getGameBasicInfos() != null) {
-                // Tìm submission tương ứng với info của game này
-                Optional<GameSubmission> originSubmission = gameSubmissionRepository
+                // Tìm submission mới nhất của game này
+                Optional<GameSubmission> submissionOpt = gameSubmissionRepository
                         .findFirstByGameBasicInfos_IdOrderBySubmittedAtDesc(game.getGameBasicInfos().getId());
 
-                if (originSubmission.isPresent()) {
-                    // Nếu tìm thấy, set ngày gửi thật sự
-                    dto.setSubmittedDate(originSubmission.get().getSubmittedAt().toString());
+                if (submissionOpt.isPresent()) {
+                    GameSubmission sub = submissionOpt.get();
+
+                    // Đè status của Game bằng status của Submission (PENDING/REJECTED/APPROVED)
+                    dto.setStatus(sub.getStatus().name());
+
+                    // Map thêm thông tin khác
+                    dto.setSubmittedDate(sub.getSubmittedAt() != null ? sub.getSubmittedAt().toString() : "N/A");
+                    if (sub.getStatus() == SubmissionStatus.REJECTED) {
+                        // Nếu DTO có trường rejectReason thì set vào, nếu không thì bỏ qua
+                        // dto.setRejectReason(sub.getRejectReason());
+                    }
                 } else {
                     dto.setSubmittedDate("N/A");
                 }
@@ -382,13 +392,12 @@ public class GameServiceImpl implements GameService {
             return dto;
         }
 
-        // TRƯỜNG HỢP 2: Tìm trong bảng GameSubmission (Game CHỜ DUYỆT/TỪ CHỐI)
+        // 2. Nếu không có trong bảng Game, tìm trực tiếp trong GameSubmission (trường hợp data cũ hoặc lỗi)
         Optional<GameSubmission> submissionOpt = gameSubmissionRepository.findById(id);
         if (submissionOpt.isPresent()) {
             return GameDetailDto.fromSubmissionEntity(submissionOpt.get());
         }
 
-        // Không tìm thấy
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin game ID: " + id);
     }
 

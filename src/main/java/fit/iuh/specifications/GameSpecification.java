@@ -1,14 +1,11 @@
 // trong package fit.iuh.specifications
 package fit.iuh.specifications;
 
-import fit.iuh.models.Category;
-import fit.iuh.models.Game;
-import fit.iuh.models.GameBasicInfo;
-import fit.iuh.models.Publisher;
-import jakarta.persistence.criteria.JoinType;
+import fit.iuh.models.*;
+import fit.iuh.models.enums.SubmissionStatus;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
+
 import java.math.BigDecimal; // Sử dụng BigDecimal cho giá
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +60,14 @@ public class GameSpecification {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<GameSubmission> subRoot = subquery.from(GameSubmission.class);
+
+            subquery.select(subRoot.get("id")); // id của GameSubmission maps với gameBasicInfoId
+            subquery.where(cb.equal(subRoot.get("status"), SubmissionStatus.APPROVED));
+
+            // Điều kiện: Game.gameBasicInfos.id PHẢI NẰM TRONG danh sách ID của subquery trên
+            predicates.add(root.get("gameBasicInfos").get("id").in(subquery));
             // 1. Join bảng: Game -> GameBasicInfos
             Join<Game, GameBasicInfo> basicInfoJoin = root.join("gameBasicInfos", JoinType.LEFT);
 
