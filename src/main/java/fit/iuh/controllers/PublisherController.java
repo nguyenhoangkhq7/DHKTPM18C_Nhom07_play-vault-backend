@@ -7,11 +7,13 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -82,8 +84,11 @@ public class PublisherController {
     }
 
     @PostMapping("/games")
-    public ResponseEntity<?> create(@Valid @RequestBody GameCreateRequest req, Authentication auth) {
+    public ResponseEntity<?> create(@RequestBody @Valid GameCreateRequest req,
+                                    Authentication auth) {
         var dto = gameService.createPending(req, auth.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
+
+
 }

@@ -10,6 +10,7 @@ import fit.iuh.models.GameSubmission;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -62,7 +63,13 @@ public interface GameService {
     // 3. THÊM: LOGIC KIỂM TRA QUYỀN SỞ HỮU (Buy & Download)
     // ========================================================================
     @Transactional
-    GameDto createPending(GameCreateRequest dto, String publisherUsername);
+    // ✅ Bản cũ: chỉ nhận JSON
+    GameDto createPending(GameCreateRequest req, String username);
+
+    // ✅ Bản có file: dùng khi controller multipart
+    GameDto createPendingWithFile(GameCreateRequest req,
+                                  MultipartFile thumbnailFile,
+                                  String username) throws Exception;
 
     GameDto updateStatus(Long id, String status);
     // đã gợi ý từ trước
