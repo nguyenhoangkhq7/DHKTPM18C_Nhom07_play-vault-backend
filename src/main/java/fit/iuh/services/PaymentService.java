@@ -2,10 +2,7 @@ package fit.iuh.services;
 
 import fit.iuh.dtos.PaymentResponse;
 import fit.iuh.models.Customer;
-import fit.iuh.models.Invoice;
-import fit.iuh.models.Order;
 import fit.iuh.models.Payment;
-import fit.iuh.models.enums.InvoiceStatus;
 import fit.iuh.models.enums.PaymentMethod;
 import fit.iuh.models.enums.PaymentStatus;
 import fit.iuh.repositories.CustomerRepository;
@@ -19,8 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import static fit.iuh.models.enums.PaymentStatus.SUCCESS;
-
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -30,44 +25,6 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
 
-//    @Transactional
-//    public PaymentResponse deposit(String username, BigDecimal amount, String method) {
-//        Customer customer = customerRepository.findByAccount_Username(username)
-//                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng: " + username));
-//
-//        // 1. Tạo Invoice
-//        Invoice invoice = new Invoice();
-//        invoice.setCustomer(customer);
-//        invoice.setTotalAmount(amount);
-//        invoice.setIssueDate(LocalDate.now());
-//        invoice.setStatus(InvoiceStatus.UNPAID);
-//        invoiceRepository.save(invoice);
-//
-//        // 2. Tạo Payment
-//        Payment payment = new Payment();
-//        payment.setAmount(amount);
-//        payment.setPaymentDate(LocalDate.now());
-//        payment.setPaymentMethod(method.equalsIgnoreCase("bank") ? PaymentMethod.BANK : PaymentMethod.MOMO);
-//        payment.setStatus(PaymentStatus.PENDING);
-//        payment.setInvoice(invoice);
-//        paymentRepository.save(payment);
-//
-//        // 3. Giả lập thanh toán thành công
-//        payment.setStatus(PaymentStatus.SUCCESS);
-//        paymentRepository.save(payment);
-//
-//        // 4. Cập nhật balance
-//        BigDecimal currentBalance = customer.getBalance() != null ? customer.getBalance() : BigDecimal.ZERO;
-//        customer.setBalance(currentBalance.add(amount));
-//        customerRepository.save(customer);
-//
-//        // 5. Cập nhật invoice
-//        invoice.setStatus(InvoiceStatus.PAID);
-//        invoiceRepository.save(invoice);
-//
-//        // 6. Trả về thông tin cho frontend
-//        return new PaymentResponse(invoice.getId(), payment.getId(), customer.getBalance(), amount);
-//    }
     @Transactional
     public PaymentResponse deposit(String username, BigDecimal amount, String method) {
         Customer customer = customerRepository.findByAccount_Username(username)

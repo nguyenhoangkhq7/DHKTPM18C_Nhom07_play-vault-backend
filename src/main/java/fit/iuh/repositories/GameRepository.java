@@ -3,6 +3,7 @@ package fit.iuh.repositories;
 import fit.iuh.dtos.GameSearchResponseDto;
 import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.models.Game;
+import fit.iuh.models.enums.SubmissionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -84,19 +85,23 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
             "g.gameBasicInfos.category.name, " +
             "COUNT(oi), " +
             "cast(COALESCE(SUM(oi.total), 0) as BigDecimal), " +
-            // Subquery lấy ngày duyệt từ GameSubmission
             "(SELECT MAX(gs.reviewedAt) FROM GameSubmission gs WHERE gs.gameBasicInfos.id = g.gameBasicInfos.id) ) " +
             "FROM Game g " +
             "LEFT JOIN OrderItem oi ON g.id = oi.game.id " +
+            // --- THÊM DÒNG JOIN NÀY ---
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
             "WHERE (:search IS NULL OR LOWER(g.gameBasicInfos.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:category = 'all' OR g.gameBasicInfos.category.name = :category) " +
+            // --- SỬA ĐIỀU KIỆN NÀY: Check gs.status thay vì g.status ---
+            "AND gs.status = :status " +
             "GROUP BY g.id, g.gameBasicInfos.name, g.gameBasicInfos.thumbnail, g.gameBasicInfos.publisher.studioName, g.gameBasicInfos.price, g.releaseDate, g.gameBasicInfos.category.name " +
             "ORDER BY SUM(oi.total) DESC")
     Page<GameSearchResponseDto> findGamesSortedByRevenue(@Param("search") String search,
                                                          @Param("category") String category,
+                                                         @Param("status") SubmissionStatus status, // Dùng SubmissionStatus
                                                          Pageable pageable);
 
-    // 2. Sắp xếp theo Lượt tải (Downloads)
+    // ==========================================================
     @Query("SELECT new fit.iuh.dtos.GameSearchResponseDto(" +
             "g.id, " +
             "g.gameBasicInfos.name, " +
@@ -107,16 +112,20 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
             "g.gameBasicInfos.category.name, " +
             "COUNT(oi), " +
             "cast(COALESCE(SUM(oi.total), 0) as BigDecimal), " +
-            // Subquery lấy ngày duyệt
             "(SELECT MAX(gs.reviewedAt) FROM GameSubmission gs WHERE gs.gameBasicInfos.id = g.gameBasicInfos.id) ) " +
             "FROM Game g " +
             "LEFT JOIN OrderItem oi ON g.id = oi.game.id " +
+            // --- THÊM DÒNG JOIN NÀY ---
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
             "WHERE (:search IS NULL OR LOWER(g.gameBasicInfos.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:category = 'all' OR g.gameBasicInfos.category.name = :category) " +
+            // --- SỬA ĐIỀU KIỆN NÀY ---
+            "AND gs.status = :status " +
             "GROUP BY g.id, g.gameBasicInfos.name, g.gameBasicInfos.thumbnail, g.gameBasicInfos.publisher.studioName, g.gameBasicInfos.price, g.releaseDate, g.gameBasicInfos.category.name " +
             "ORDER BY COUNT(oi) DESC")
     Page<GameSearchResponseDto> findGamesSortedByDownloads(@Param("search") String search,
                                                            @Param("category") String category,
+                                                           @Param("status") SubmissionStatus status,
                                                            Pageable pageable);
 
     // ... các query cũ giữ nguyên ...

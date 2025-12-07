@@ -7,6 +7,7 @@ import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.dtos.*;
 import fit.iuh.mappers.GameMapper;
 import fit.iuh.models.*;
+import fit.iuh.models.enums.Os;
 import fit.iuh.models.enums.SubmissionStatus;
 import fit.iuh.repositories.*;
 import fit.iuh.models.Account;
@@ -18,6 +19,7 @@ import fit.iuh.models.enums.SubmissionStatus;
 import fit.iuh.repositories.CustomerRepository;
 import fit.iuh.repositories.GameRepository;
 import fit.iuh.repositories.GameSubmissionRepository;
+import fit.iuh.services.DriveService;
 import fit.iuh.services.GameService;
 import fit.iuh.specifications.GameSpecification;
 import fit.iuh.specifications.GameSubmissionSpecification;
@@ -32,11 +34,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+// import
+import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
@@ -56,9 +61,13 @@ public class GameServiceImpl implements GameService {
     private final PublisherRepository publisherRepository;
     private final CategoryRepository categoryRepository;
     private final PlatformRepository platformRepository;
+
+    private final SystemRequirementRepository systemRequirementRepository;
     // Nếu bạn lưu GameBasicInfo qua cascade từ Game thì KHÔNG cần repo này.
     // Nếu bạn lưu riêng, hãy khai báo:
     private final GameBasicInfoRepository gameBasicInfoRepository;
+    private final DriveService driveUploader;
+    private final PreviewImageRepository previewImageRepository;
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
@@ -237,10 +246,10 @@ public class GameServiceImpl implements GameService {
         String search = (searchQuery == null || searchQuery.isBlank()) ? null : searchQuery;
 
         if ("revenue_desc".equalsIgnoreCase(sortBy)) {
-            return gameRepository.findGamesSortedByRevenue(search, category, pageable);
+            return gameRepository.findGamesSortedByRevenue(search, category, SubmissionStatus.APPROVED, pageable);
         }
         if ("downloads_desc".equalsIgnoreCase(sortBy)) {
-            return gameRepository.findGamesSortedByDownloads(search, category, pageable);
+            return gameRepository.findGamesSortedByDownloads(search, category, SubmissionStatus.APPROVED, pageable);
         }
 
         Specification<Game> spec = GameSpecification.filterApprovedGames(searchQuery, categoryFilter);
@@ -357,21 +366,31 @@ public class GameServiceImpl implements GameService {
     @Override
     @Transactional(readOnly = true)
     public GameDetailDto getGameForAdmin(Long id) {
-        // TRƯỜNG HỢP 1: Tìm trong bảng Game (Game ĐÃ DUYỆT/ĐANG BÁN)
+        // 1. Tìm trong bảng Game trước
         Optional<Game> gameOpt = gameRepository.findById(id);
+
         if (gameOpt.isPresent()) {
             Game game = gameOpt.get();
             GameDetailDto dto = GameDetailDto.fromEntity(game);
 
-            // --- LOGIC MỚI: Truy ngược lại ngày gửi (SubmittedAt) ---
+            // --- QUAN TRỌNG: Lấy status thực sự từ bảng GameSubmission ---
             if (game.getGameBasicInfos() != null) {
-                // Tìm submission tương ứng với info của game này
-                Optional<GameSubmission> originSubmission = gameSubmissionRepository
+                // Tìm submission mới nhất của game này
+                Optional<GameSubmission> submissionOpt = gameSubmissionRepository
                         .findFirstByGameBasicInfos_IdOrderBySubmittedAtDesc(game.getGameBasicInfos().getId());
 
-                if (originSubmission.isPresent()) {
-                    // Nếu tìm thấy, set ngày gửi thật sự
-                    dto.setSubmittedDate(originSubmission.get().getSubmittedAt().toString());
+                if (submissionOpt.isPresent()) {
+                    GameSubmission sub = submissionOpt.get();
+
+                    // Đè status của Game bằng status của Submission (PENDING/REJECTED/APPROVED)
+                    dto.setStatus(sub.getStatus().name());
+
+                    // Map thêm thông tin khác
+                    dto.setSubmittedDate(sub.getSubmittedAt() != null ? sub.getSubmittedAt().toString() : "N/A");
+                    if (sub.getStatus() == SubmissionStatus.REJECTED) {
+                        // Nếu DTO có trường rejectReason thì set vào, nếu không thì bỏ qua
+                        // dto.setRejectReason(sub.getRejectReason());
+                    }
                 } else {
                     dto.setSubmittedDate("N/A");
                 }
@@ -379,13 +398,12 @@ public class GameServiceImpl implements GameService {
             return dto;
         }
 
-        // TRƯỜNG HỢP 2: Tìm trong bảng GameSubmission (Game CHỜ DUYỆT/TỪ CHỐI)
+        // 2. Nếu không có trong bảng Game, tìm trực tiếp trong GameSubmission (trường hợp data cũ hoặc lỗi)
         Optional<GameSubmission> submissionOpt = gameSubmissionRepository.findById(id);
         if (submissionOpt.isPresent()) {
             return GameDetailDto.fromSubmissionEntity(submissionOpt.get());
         }
 
-        // Không tìm thấy
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin game ID: " + id);
     }
 
@@ -424,56 +442,202 @@ public class GameServiceImpl implements GameService {
 
     @Override
     @Transactional
-    public GameDto createPending(GameCreateRequest req, String publisherUsername) {
-        Publisher publisher = publisherRepository.findByAccount_Username(publisherUsername)
-                .orElseThrow(() -> new RuntimeException("Publisher không tồn tại"));
+    public GameDto createPending(GameCreateRequest req, String username) {
+        // 1️⃣ Lấy Category
+        Category category = categoryRepository.findById(req.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
 
-        // Tạo & lưu GameBasicInfo
-        GameBasicInfo info = new GameBasicInfo();
-        info.setName(req.getTitle());
-        info.setShortDescription(req.getSummary());
-        info.setDescription(req.getDescription());
-        info.setThumbnail(req.getCoverUrl());
-        info.setTrailerUrl(req.getTrailerUrl());
-        info.setPrice(BigDecimal.valueOf(req.isFree() ? 0.0 : req.getPrice()));
-        info.setIsSupportController(req.isSupportController());
-        info.setRequiredAge(req.isAge18() ? 18 : 0);
-        info.setPublisher(publisher);
-        info.setFilePath(req.getFilePath());
+        // 2️⃣ Lấy Publisher theo account
+        Publisher publisher = publisherRepository.findByAccount_Username(username)
+                .orElseThrow(() -> new RuntimeException("Publisher không tồn tại cho tài khoản: " + username));
 
-        if (req.getCategoryId() != null) {
-            Category category = categoryRepository.findById(req.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy category"));
-            info.setCategory(category);
+        // 3️⃣ Tạo SystemRequirement
+        var srDto = req.getSystemRequirement();  // DTO có getter Lombok
+        SystemRequirement sr = new SystemRequirement();
+        sr.setOs(srDto.getOs());          // dùng enum Os trực tiếp
+        sr.setCpu(srDto.getCpu());
+        sr.setGpu(srDto.getGpu());
+        sr.setStorage(srDto.getStorage());
+        sr.setRam(srDto.getRam());
+        sr = systemRequirementRepository.save(sr);
+
+        // 4️⃣ Tạo GameBasicInfo
+        GameBasicInfo gbi = new GameBasicInfo();
+        gbi.setName(req.getName());
+        gbi.setShortDescription(req.getShortDescription());
+        gbi.setDescription(req.getDescription()); // ghi chú phát hành
+        gbi.setPrice(req.getPrice());
+        gbi.setTrailerUrl(req.getTrailerUrl());
+        gbi.setRequiredAge(req.getRequiredAge());
+        gbi.setFilePath(req.getFilePath());
+        gbi.setIsSupportController(Boolean.TRUE.equals(req.getIsSupportController()));
+        gbi.setCategory(category);
+        gbi.setPublisher(publisher);
+        gbi.setSystemRequirement(sr);
+
+        // 5️⃣ Chuẩn hoá thumbnail (nếu có link Drive)
+        if (req.getThumbnail() != null && !req.getThumbnail().isBlank()) {
+            String thumbUrl = req.getThumbnail();
+            String id = extractGoogleDriveId(thumbUrl);
+            if (id != null) {
+                // ✅ Chuyển link drive sang link ảnh public
+                thumbUrl = "https://lh3.googleusercontent.com/d/" + id + "=w1200";
+            }
+            gbi.setThumbnail(thumbUrl);
         }
-        info = gameBasicInfoRepository.save(info);
 
-        // Platforms
-        var platforms = new java.util.ArrayList<Platform>();
-        for (String name : req.getPlatforms()) {
-            platforms.add(platformRepository.findByName(name.toUpperCase())
-                    .orElseThrow(() -> new RuntimeException("Platform không hợp lệ: " + name)));
+        // 6️⃣ Gán platforms
+        if (req.getPlatformIds() != null && !req.getPlatformIds().isEmpty()) {
+            var platforms = platformRepository.findAllById(req.getPlatformIds());
+            if (platforms.size() != req.getPlatformIds().size()) {
+                throw new RuntimeException("platformIds chứa id không tồn tại");
+            }
+            gbi.setPlatforms(platforms);
         }
-        info.setPlatforms(platforms);
 
-        // Tạo & lưu Game (id = game_basic_info_id)
+        gbi = gameBasicInfoRepository.save(gbi);
+
+        // 7️⃣ Tạo Game
         Game game = new Game();
-        game.setGameBasicInfos(info);
+        game.setGameBasicInfos(gbi);
         game.setReleaseDate(req.getReleaseDate());
         game = gameRepository.save(game);
 
-        // Tạo submission PENDING
-        GameSubmission sub = new GameSubmission();
-        sub.setGameBasicInfos(info);            // đúng field theo entity bạn gửi
-        sub.setStatus(SubmissionStatus.PENDING);
-        sub.setSubmittedAt(LocalDate.now());
-        submissionRepository.save(sub);
+        // 8️⃣ Tạo Submission (Pending)
+        GameSubmission submission = new GameSubmission();
+        submission.setGameBasicInfos(gbi);
+        submission.setStatus(SubmissionStatus.PENDING);
+        submission.setSubmittedAt(LocalDate.now());
+        gameSubmissionRepository.save(submission);
 
-        // Trả DTO (đơn giản): map rồi set status thủ công
+        // 9️⃣ Trả DTO
         GameDto dto = gameMapper.toDTO(game);
         dto.setStatus(SubmissionStatus.PENDING.name());
         return dto;
     }
+
+    private String extractGoogleDriveId(String url) {
+        if (url == null || url.isBlank()) return null;
+
+        // /file/d/<ID>/view?...
+        var m1 = java.util.regex.Pattern.compile("/file/d/([A-Za-z0-9_-]{20,})").matcher(url);
+        if (m1.find()) return m1.group(1);
+
+        // ?id=<ID>
+        var m2 = java.util.regex.Pattern.compile("[?&]id=([A-Za-z0-9_-]{20,})").matcher(url);
+        if (m2.find()) return m2.group(1);
+
+        // không khớp
+        return null;
+    }
+
+    /** Bản đầy đủ: hỗ trợ upload thumbnail file (multipart) */
+    @Transactional
+    public GameDto createPendingWithFile(GameCreateRequest req, MultipartFile thumbnailFile,String username) throws Exception {
+        // 1) Category
+        Category category = categoryRepository.findById(req.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
+
+        // 2) Publisher
+        Publisher publisher = publisherRepository.findByAccount_Username(username)
+                .orElseThrow(() -> new RuntimeException("Publisher không tồn tại cho tài khoản: " + username));
+
+        // 3) SystemRequirement
+        var srDto = req.getSystemRequirement();
+        SystemRequirement sr = new SystemRequirement();
+        sr.setOs(srDto.getOs());
+        sr.setCpu(srDto.getCpu());
+        sr.setGpu(srDto.getGpu());
+        sr.setStorage(srDto.getStorage());
+        sr.setRam(srDto.getRam());
+        sr = systemRequirementRepository.save(sr);
+
+        // 4) GameBasicInfo
+        GameBasicInfo gbi = new GameBasicInfo();
+        gbi.setName(req.getName());
+        gbi.setShortDescription(req.getShortDescription());
+        gbi.setDescription(req.getDescription());      // ghi chú phát hành
+        gbi.setPrice(req.getPrice());
+        gbi.setTrailerUrl(req.getTrailerUrl());
+        gbi.setRequiredAge(req.getRequiredAge());
+        gbi.setFilePath(req.getFilePath());            // nếu bạn có lưu đường dẫn build
+        gbi.setIsSupportController(Boolean.TRUE.equals(req.getIsSupportController()));
+        gbi.setCategory(category);
+        gbi.setPublisher(publisher);
+        gbi.setSystemRequirement(sr);
+
+        // 4.1) Thumbnail:
+        // - Nếu có file upload → upload lên Drive và set URL lh3
+        // - Nếu không có file mà req.getThumbnail() có sẵn link → chuẩn hoá sang lh3 (nếu là link Drive)
+        if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+            String embeddableUrl = driveUploader.uploadImageAndGetEmbeddableUrl(thumbnailFile);
+            gbi.setThumbnail(embeddableUrl); // https://lh3.googleusercontent.com/d/<ID>=w1200
+        } else if (req.getThumbnail() != null && !req.getThumbnail().isBlank()) {
+            gbi.setThumbnail(DriveLinkUtil.toEmbeddableIfDriveUrl(req.getThumbnail()));
+        }
+
+        // 5) Platforms
+        if (req.getPlatformIds() != null && !req.getPlatformIds().isEmpty()) {
+            var platforms = platformRepository.findAllById(req.getPlatformIds());
+            if (platforms.size() != req.getPlatformIds().size())
+                throw new RuntimeException("platformIds chứa id không tồn tại");
+            gbi.setPlatforms(platforms);  // đúng với entity của bạn
+        }
+
+        gbi = gameBasicInfoRepository.save(gbi);
+
+
+        // 5.1) Preview images (gallery)
+        List<PreviewImage> images = new ArrayList<>();
+
+        // a) từ file upload
+        if (req.getGalleryFiles() != null) {
+            for (MultipartFile f : req.getGalleryFiles()) {
+                if (f != null && !f.isEmpty()) {
+                    String url = driveUploader.uploadImageAndGetEmbeddableUrl(f); // ra lh3
+                    PreviewImage pi = new PreviewImage();
+                    pi.setGameBasicInfo(gbi);
+                    pi.setUrl(url);
+                    gbi.getPreviewImages().add(pi);
+                }
+            }
+        }
+
+        // b) từ link có sẵn trong request
+        if (req.getGallery() != null) {
+            for (String raw : req.getGallery()) {
+                if (raw != null && !raw.isBlank()) {
+                    String url = DriveLinkUtil.toEmbeddableIfDriveUrl(raw);
+                    PreviewImage pi = new PreviewImage();
+                    pi.setGameBasicInfo(gbi);
+                    pi.setUrl(url);
+                    gbi.getPreviewImages().add(pi);
+                }
+            }
+        }
+
+        // 6) Game
+        Game game = new Game();
+        game.setGameBasicInfos(gbi);
+        game.setReleaseDate(req.getReleaseDate());
+        game = gameRepository.save(game);
+
+        // 7) Submission
+        GameSubmission submission = new GameSubmission();
+        submission.setGameBasicInfos(gbi);
+        submission.setStatus(SubmissionStatus.PENDING);
+        submission.setSubmittedAt(java.time.LocalDate.now());
+        gameSubmissionRepository.save(submission);
+
+        // 8) DTO
+        GameDto dto = gameMapper.toDTO(game);
+        dto.setStatus(SubmissionStatus.PENDING.name());
+        return dto;
+    }
+
+
+
+
 
 
     @Override

@@ -69,7 +69,7 @@ public class GameBasicInfo {
    private List<Platform> platforms = new ArrayList<>();
 
    @OneToMany(mappedBy = "gameBasicInfo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-   private List<PreviewImage> previewImages;
+   private List<PreviewImage> previewImages = new ArrayList<>();
 
     @OneToOne(mappedBy = "gameBasicInfos", fetch = FetchType.LAZY, optional = true)
     private GameSubmission submission;

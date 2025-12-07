@@ -14,4 +14,6 @@ public class PromotionResponseDto {
     private Boolean isActive;
     private BigDecimal discountPercent;
     private BigDecimal discountAmount;
+    // Thêm vào PromotionResponseDto.java
+    private String displayStatus; // "Đang diễn ra", "Sắp tới", "Đã kết thúc", "Bị tắt bởi Publisher"
 }
