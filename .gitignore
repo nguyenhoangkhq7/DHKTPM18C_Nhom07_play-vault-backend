@@ -33,3 +33,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignore Maven/Spring Boot config files
+pom.xml
+application.yaml
+gdrive-oauth-tokens.json
