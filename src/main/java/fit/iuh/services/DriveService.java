@@ -1,8 +1,11 @@
 package fit.iuh.services;
 
+import com.google.api.client.http.FileContent;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.Permission;
+import fit.iuh.models.DriveLinkUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,5 +85,28 @@ public class DriveService {
     /** Xoá file theo ID */
     public void deleteFile(String fileId) throws IOException {
         drive().files().delete(fileId).execute();
+    }
+
+    private final com.google.api.services.drive.Drive drive;
+
+    public String uploadImageAndGetEmbeddableUrl(MultipartFile multipart) throws Exception {
+        var meta = new com.google.api.services.drive.model.File()
+                .setName(multipart.getOriginalFilename());
+
+        java.io.File temp = java.io.File.createTempFile("upload-", "-" + multipart.getOriginalFilename());
+        multipart.transferTo(temp);
+
+        var media = new com.google.api.client.http.FileContent(multipart.getContentType(), temp);
+        var uploaded = drive.files().create(meta, media).setFields("id").execute();
+        String fileId = uploaded.getId();
+
+        var perm = new com.google.api.services.drive.model.Permission()
+                .setType("anyone").setRole("reader");
+        drive.permissions().create(fileId, perm).setFields("id").execute();
+
+        temp.delete();
+
+        // URL embeddable dùng trực tiếp trong <img>
+        return "https://lh3.googleusercontent.com/d/" + fileId + "=w1200";
     }
 }
