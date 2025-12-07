@@ -34,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -66,6 +67,7 @@ public class GameServiceImpl implements GameService {
     // Nếu bạn lưu riêng, hãy khai báo:
     private final GameBasicInfoRepository gameBasicInfoRepository;
     private final DriveService driveUploader;
+    private final PreviewImageRepository previewImageRepository;
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
@@ -522,7 +524,7 @@ public class GameServiceImpl implements GameService {
 
     /** Bản đầy đủ: hỗ trợ upload thumbnail file (multipart) */
     @Transactional
-    public GameDto createPendingWithFile(GameCreateRequest req, MultipartFile thumbnailFile, String username) throws Exception {
+    public GameDto createPendingWithFile(GameCreateRequest req, MultipartFile thumbnailFile,String username) throws Exception {
         // 1) Category
         Category category = categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
@@ -571,6 +573,41 @@ public class GameServiceImpl implements GameService {
             if (platforms.size() != req.getPlatformIds().size())
                 throw new RuntimeException("platformIds chứa id không tồn tại");
             gbi.setPlatforms(platforms);  // đúng với entity của bạn
+        }
+
+
+
+        // 5.1) Preview images (gallery)
+        List<PreviewImage> images = new ArrayList<>();
+
+        // a) từ file upload
+        if (req.getGalleryFiles() != null) {
+            for (MultipartFile f : req.getGalleryFiles()) {
+                if (f != null && !f.isEmpty()) {
+                    String url = driveUploader.uploadImageAndGetEmbeddableUrl(f); // ra lh3
+                    PreviewImage pi = new PreviewImage();
+                    pi.setGameBasicInfo(gbi);
+                    pi.setUrl(url);
+                    images.add(pi);
+                }
+            }
+        }
+
+        // b) từ link có sẵn trong request
+        if (req.getGallery() != null) {
+            for (String raw : req.getGallery()) {
+                if (raw != null && !raw.isBlank()) {
+                    String url = DriveLinkUtil.toEmbeddableIfDriveUrl(raw);
+                    PreviewImage pi = new PreviewImage();
+                    pi.setGameBasicInfo(gbi);
+                    pi.setUrl(url);
+                    images.add(pi);
+                }
+            }
+        }
+
+        if (!images.isEmpty()) {
+            previewImageRepository.saveAll(images);
         }
 
         gbi = gameBasicInfoRepository.save(gbi);

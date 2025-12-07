@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -89,6 +90,37 @@ public class PublisherController {
         var dto = gameService.createPending(req, auth.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
+
+    @PostMapping(
+            value = "/api/publishers/games/pending",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<GameDto> createPendingMultipart(
+            @ModelAttribute GameCreateRequest req,
+            @RequestPart(value = "thumbnailFile", required = false) MultipartFile thumbnailFile,
+            @RequestPart(value = "galleryFiles", required = false) List<MultipartFile> galleryFiles,
+            Principal principal
+    ) throws Exception {
+        req.setGalleryFiles(galleryFiles);
+        return ResponseEntity.ok(
+                gameService.createPendingWithFile(req, thumbnailFile, principal.getName())
+        );
+    }
+
+    @PostMapping(
+            value = "/games/pending",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<GameDto> createPendingJson(
+            @RequestBody GameCreateRequest req,
+            Principal principal
+    ) throws Exception {
+        // Không có file => truyền null cho thumbnailFile
+        GameDto dto = gameService.createPendingWithFile(req, null, principal.getName());
+        return ResponseEntity.ok(dto);
+    }
+
 
 
 }

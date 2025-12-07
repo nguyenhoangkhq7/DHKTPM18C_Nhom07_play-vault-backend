@@ -29,4 +29,9 @@ public class PreviewImage {
     @JoinColumn(name = "game_basic_info_id", nullable = false)
     private GameBasicInfo gameBasicInfo;
 
+    public void setUrl(String url) {
+        this.url = DriveLinkUtil.toEmbeddableIfDriveUrl(url); // <— convert tại setter
+    }
+
+    public void setGameBasicInfo(GameBasicInfo gbi) { this.gameBasicInfo = gbi; }
 }
