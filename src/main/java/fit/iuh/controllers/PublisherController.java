@@ -92,7 +92,7 @@ public class PublisherController {
     }
 
     @PostMapping(
-            value = "/api/publishers/games/pending",
+            value = "/games/pending",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<GameDto> createPendingMultipart(

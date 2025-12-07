@@ -575,6 +575,7 @@ public class GameServiceImpl implements GameService {
             gbi.setPlatforms(platforms);  // đúng với entity của bạn
         }
 
+        gbi = gameBasicInfoRepository.save(gbi);
 
 
         // 5.1) Preview images (gallery)
@@ -588,7 +589,7 @@ public class GameServiceImpl implements GameService {
                     PreviewImage pi = new PreviewImage();
                     pi.setGameBasicInfo(gbi);
                     pi.setUrl(url);
-                    images.add(pi);
+                    gbi.getPreviewImages().add(pi);
                 }
             }
         }
@@ -601,16 +602,10 @@ public class GameServiceImpl implements GameService {
                     PreviewImage pi = new PreviewImage();
                     pi.setGameBasicInfo(gbi);
                     pi.setUrl(url);
-                    images.add(pi);
+                    gbi.getPreviewImages().add(pi);
                 }
             }
         }
-
-        if (!images.isEmpty()) {
-            previewImageRepository.saveAll(images);
-        }
-
-        gbi = gameBasicInfoRepository.save(gbi);
 
         // 6) Game
         Game game = new Game();
