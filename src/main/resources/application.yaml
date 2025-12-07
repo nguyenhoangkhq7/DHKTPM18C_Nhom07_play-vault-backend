@@ -13,6 +13,13 @@ spring:
     multipart:
       max-file-size: 100GB
       max-request-size: 100GB
+  ai:
+    ollama:
+      base-url: http://localhost:11434  # URL mặc định của Ollama
+      embedding:
+        model: nomic-embed-text       # Tên model bạn đã pull về
+      chat:
+        enabled: false
 
   jpa:
     hibernate:
@@ -25,7 +32,7 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 300 # 5min
+    accessTokenExpiration: 30000 # 5min
     refreshTokenExpiration: 604800 # 7 days
   mail:
     host: smtp.gmail.com
