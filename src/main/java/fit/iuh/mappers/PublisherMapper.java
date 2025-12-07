@@ -17,7 +17,7 @@ public interface PublisherMapper {
     @Mapping(source = "account.email", target = "email") // Lấy từ Account.email
     @Mapping(source = "account.createdAt", target = "date") // Lấy từ Account.createdAt
     @Mapping(source = "account.status", target = "status") // Lấy từ Account.status (MapStruct xử lý enum -> String)
-
+    @Mapping(source = "account.phone", target = "phone")
     // 3. Ánh xạ tùy chỉnh (dùng Service)
     @Mapping(source = "publisher", target = "games")
     @Mapping(source = "account.username", target = "username")
