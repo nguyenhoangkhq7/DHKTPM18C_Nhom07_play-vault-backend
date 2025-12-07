@@ -4,6 +4,7 @@ server:
 spring:
   application:
     name: play-vault-backend
+    api-prefix: /api
   datasource:
     url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
     username: root
@@ -25,8 +26,8 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 30000 # 5min
-    refreshTokenExpiration: 604800 # 7 days
+    accessTokenExpiration: 30000
+    refreshTokenExpiration: 604800
   mail:
     host: smtp.gmail.com
     port: 587
@@ -41,6 +42,7 @@ spring:
           from: phucvinh20112004@gmail.com
     default-encoding: UTF-8
     test-connection: true
+
 gdrive:
   oauth:
     client-id: ${GOOGLE_CLIENT_ID}
