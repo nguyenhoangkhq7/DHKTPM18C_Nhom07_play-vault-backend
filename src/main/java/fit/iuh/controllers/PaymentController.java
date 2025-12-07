@@ -18,21 +18,6 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-//    @PostMapping("/deposit")
-//    public ResponseEntity<?> deposit(@RequestParam BigDecimal amount,
-//                                     @RequestParam String method,
-//                                     Principal principal) {
-//        if (principal == null) {
-//            return ResponseEntity.status(401).body("Vui lòng đăng nhập.");
-//        }
-//
-//        String username = principal.getName();
-//
-//        PaymentResponse response = paymentService.deposit(username, amount, method);
-//
-//        return ResponseEntity.ok(response);
-//    }
-
     @PostMapping("/deposit")
     public ResponseEntity<?> deposit(@RequestParam BigDecimal amount,
                                      @RequestParam String method,

@@ -5,9 +5,9 @@ spring:
   application:
     name: play-vault-backend
   datasource:
-    url: jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
     username: root
-    password: 123456
+    password: 22718451
     driver-class-name: com.mysql.cj.jdbc.Driver
   servlet:
     multipart:
@@ -48,3 +48,13 @@ gdrive:
     redirect-uri: http://localhost:8080/api/drive/oauth2callback
     tokens-file: ./gdrive-oauth-tokens.json
   parent-folder-id: "1R1qSJPn2ktOyJQXz0BfEErPx7TdZYZrA"
+
+payment:
+  vnPay:
+    url: ${PAY_URL}
+    tmnCode: ${TMN_CODE}
+    secretKey: ${SECRET_KEY}
+    returnUrl: ${RETURN_URL}
+    version: ${VERSION}
+    command: ${COMMAND}
+    orderType: ${ORDER_TYPE}
