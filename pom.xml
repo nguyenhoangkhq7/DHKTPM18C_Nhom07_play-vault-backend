@@ -230,9 +230,9 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>11.7.2</version>
                 <configuration>
-                    <url>jdbc:mysql://localhost:7/playvaultdb?createDatabaseIfNotExist=true</url>
+                    <url>jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true</url>
                     <user>root</user>
-                    <password>sapassword</password>
+                    <password>22718451</password>
                     <cleanDisabled>false</cleanDisabled>
                 </configuration>
             </plugin>
