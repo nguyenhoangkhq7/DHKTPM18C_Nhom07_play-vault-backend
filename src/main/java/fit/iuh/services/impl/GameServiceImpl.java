@@ -294,27 +294,46 @@ public class GameServiceImpl implements GameService {
     @Override
     @Transactional
     public GameDetailDto approveGame(Long submissionId) {
+        // 1. Tìm yêu cầu duyệt (Submission)
         GameSubmission submission = gameSubmissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu duyệt"));
 
+        // 2. Validate trạng thái
         if (submission.getStatus() != SubmissionStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể duyệt game đang PENDING");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể duyệt game đang ở trạng thái PENDING");
         }
 
-        // Cập nhật trạng thái
-        Account admin = new Account(); admin.setUsername("admin"); // TODO: Lấy ID thật từ SecurityContext
+        // 3. Cập nhật trạng thái Submission -> APPROVED
+        Account admin = new Account();
+        admin.setUsername("admin"); // TODO: Lấy admin thực tế từ SecurityContext nếu cần
+
         submission.setStatus(SubmissionStatus.APPROVED);
         submission.setReviewerUsername(admin);
         submission.setReviewedAt(LocalDate.now());
-        GameSubmission savedSubmission = gameSubmissionRepository.save(submission);
 
-        // Tạo Game Mới
-        Game newGame = new Game();
-        newGame.setReleaseDate(LocalDate.now());
-        newGame.setGameBasicInfos(savedSubmission.getGameBasicInfos());
-        // Map thêm các field cần thiết nếu có
+        // Lưu thay đổi vào bảng game_submissions
+        gameSubmissionRepository.save(submission);
 
-        return GameDetailDto.fromEntity(gameRepository.save(newGame));
+        // 4. Lấy thông tin Game đã tồn tại (KHÔNG TẠO MỚI)
+        // Vì lúc createPending đã tạo Game rồi, giờ ta chỉ cần tìm lại nó.
+        Long basicInfoId = submission.getGameBasicInfos().getId();
+
+        // Tìm game dựa trên GameBasicInfo ID
+        // Lưu ý: Bạn cần đảm bảo GameRepository có hàm findByGameBasicInfos_Id
+        // Hoặc nếu bảng Games dùng chung ID với BasicInfo thì dùng findById(basicInfoId)
+        Game existingGame = gameRepository.findByGameBasicInfos_Id(basicInfoId);
+
+        if (existingGame == null) {
+            // Fallback: Thử tìm bằng ID nếu cấu hình OneToOne @MapsId
+            existingGame = gameRepository.findById(basicInfoId)
+                    .orElseThrow(() -> new RuntimeException("Lỗi dữ liệu: Không tìm thấy Game gốc trong database"));
+        }
+
+        // (Tuỳ chọn) Cập nhật ngày phát hành chính thức là ngày duyệt
+        existingGame.setReleaseDate(LocalDate.now());
+
+        // Lưu cập nhật Game (nếu có thay đổi) và trả về DTO
+        return GameDetailDto.fromEntity(gameRepository.save(existingGame));
     }
 
     @Override

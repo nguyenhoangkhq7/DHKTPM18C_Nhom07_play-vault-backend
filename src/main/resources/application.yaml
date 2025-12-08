@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true
     username: root
-    password: 20112004
+    password: sapassword
     driver-class-name: com.mysql.cj.jdbc.Driver
   servlet:
     multipart:
@@ -60,10 +60,11 @@ gdrive:
 
 payment:
   vnPay:
-    url: ${PAY_URL}
-    tmnCode: ${TMN_CODE}
-    secretKey: ${SECRET_KEY}
-    returnUrl: ${RETURN_URL}
-    version: ${VERSION}
-    command: ${COMMAND}
-    orderType: ${ORDER_TYPE}
+    # Cấu hình VNPAY (Hardcode trực tiếp để chạy được ngay)
+    url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    tmnCode: TEST_CODE       # Nếu chưa có mã thật thì điền bừa text này vào
+    secretKey: TEST_SECRET   # Nếu chưa có mã thật thì điền bừa text này vào
+    returnUrl: http://localhost:8080/api/payment/vnpay-return
+    version: 2.1.0
+    command: pay
+    orderType: other
