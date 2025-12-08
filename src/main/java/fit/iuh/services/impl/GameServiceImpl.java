@@ -21,6 +21,7 @@ import fit.iuh.repositories.GameRepository;
 import fit.iuh.repositories.GameSubmissionRepository;
 import fit.iuh.services.DriveService;
 import fit.iuh.services.GameService;
+import fit.iuh.services.GameVectorService;
 import fit.iuh.specifications.GameSpecification;
 import fit.iuh.specifications.GameSubmissionSpecification;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +69,8 @@ public class GameServiceImpl implements GameService {
     private final GameBasicInfoRepository gameBasicInfoRepository;
     private final DriveService driveUploader;
     private final PreviewImageRepository previewImageRepository;
+
+    private final GameVectorService gameVectorService;
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
@@ -313,8 +316,10 @@ public class GameServiceImpl implements GameService {
         newGame.setReleaseDate(LocalDate.now());
         newGame.setGameBasicInfos(savedSubmission.getGameBasicInfos());
         // Map thêm các field cần thiết nếu có
+        Game savedGame = gameRepository.save(newGame);
+        gameVectorService.addGames(List.of(savedGame));
 
-        return GameDetailDto.fromEntity(gameRepository.save(newGame));
+        return GameDetailDto.fromEntity(savedGame);
     }
 
     @Override
