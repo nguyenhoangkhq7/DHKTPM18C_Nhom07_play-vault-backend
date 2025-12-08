@@ -23,6 +23,7 @@ public class GameDto {
     private int reviewCount;    // Số lượng đánh giá (VD: 10)
     private String status;
 
+
     public static GameSearchResponseDto fromEntity(Game game) {
         GameSearchResponseDto dto = new GameSearchResponseDto();
 

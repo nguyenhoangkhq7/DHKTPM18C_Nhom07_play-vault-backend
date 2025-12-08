@@ -530,6 +530,21 @@ public class GameServiceImpl implements GameService {
         return gameMapper.toGameDto(items);
     }
 
+//    @Override
+//    public List<Game> searchByName(String keyword) {
+//        return gameRepository.searchByName(keyword);
+//    }
+
+//    @Override
+//    public List<Game> findBySystem(String os, String cpu, String gpu, Integer ram, Integer storage) {
+//        return gameRepository.findBySystem(os, cpu, gpu, ram, storage);
+//    }
+
+//    @Override
+//    public List<Game> searchAdvanced(String os, String cpu, String gpu, Integer ram, Integer storage, String keyword, Long categoryId, Double minRating, Double maxPrice) {
+//        return gameRepository.searchAdvanced(os, cpu, gpu, ram, storage, keyword, categoryId, minRating, maxPrice);
+//    }
+
     // GameServiceImpl
     @Override
     @Transactional(readOnly = true)
