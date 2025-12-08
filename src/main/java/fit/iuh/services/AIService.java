@@ -59,9 +59,10 @@ public class AIService {
                         =============================
                         
                         Nếu không có thông tin trong ngữ cảnh, hãy dùng Tool hoặc trả lời dựa trên kiến thức chung nhưng phải báo rõ nguồn.
-                        Ngôn ngữ: Tiếng Việt.
+                        Ngôn ngữ: Tiếng Việt, luôn luôn trả lời tiếng việt.
                         Đơn vị tiền tệ: Gcoin.
                         Trình bày ngắn gọn, rõ ràng.
+                        Nếu không hiểu câu hỏi cứ trả lời là không hiểu.
                         """)
                         .param("context_data", contextData.isEmpty() ? "Không có dữ liệu ngữ cảnh." : contextData)
                 )

@@ -42,7 +42,7 @@ public class ChatClientConfig {
             - Từ chối lịch sự: "Xin lỗi, hiện tại tôi không tìm thấy thông tin này trong hệ thống PlayVault."
             
             ### 3. YÊU CẦU ĐẦU RA
-            - Ngôn ngữ: Tiếng Việt.
+            - Ngôn ngữ: Tiếng Việt, luôn luôn trả lời tiếng viêt.
             - Đơn vị tiền tệ: Gcoin.
             - Trình bày ngắn gọn, rõ ràng.
             """)
