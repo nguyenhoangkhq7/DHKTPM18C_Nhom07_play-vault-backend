@@ -16,6 +16,7 @@ import java.util.List;
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificationExecutor<Game> {
     List<Game> findByGameBasicInfos_Category_Name(String categoryName);
+    Game findByGameBasicInfos_Id(Long gameBasicInfoId);
 
 //    @Query(value = "SELECT g.* " +
 //            "FROM games g " +
@@ -57,22 +58,26 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     List<Game> findAllByIdWithPublisher(@Param("ids") List<Long> ids);
     @Query("SELECT oi FROM Order o JOIN o.customer c join c.library oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
     List<Game> findAllByOrderItemToday();
-    // 1. Đếm tổng số Game
-    // Vì 'Game' được sinh ra từ 'GameSubmission' đã duyệt, nên đếm tất cả Game là được.
-    @Query("SELECT COUNT(g) FROM Game g")
+    // 1. Đếm tổng số Game (Chỉ tính những game có trạng thái APPROVED)
+    // Cần JOIN với GameSubmission thông qua GameBasicInfos để check status
+    @Query("SELECT COUNT(DISTINCT g) FROM Game g " +
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
+            "WHERE gs.status = fit.iuh.models.enums.SubmissionStatus.APPROVED")
     long countTotalGames();
 
-    // 2. Tính tổng lượt tải
-    // Dựa trên Class Diagram: Không có trường 'downloads' trong Game.
-    // Lượt tải = Số lượng OrderItem đã bán ra (Mỗi OrderItem tương ứng 1 game được mua/tải)
-    // Lưu ý: Query trực tiếp entity OrderItem (Dù đang ở trong GameRepository vẫn query được nếu cùng context)
-    @Query("SELECT COUNT(oi) FROM OrderItem oi")
+    // 2. Tính tổng lượt tải (Chỉ tính lượt tải của những game APPROVED)
+    // OrderItem -> Game -> GameSubmission -> Check Status
+    @Query("SELECT COUNT(oi) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
+            "WHERE gs.status = fit.iuh.models.enums.SubmissionStatus.APPROVED")
     long countTotalDownloads();
 
-    // 3. Tính tổng doanh thu
-    // Doanh thu = Tổng giá trị (price) của tất cả OrderItem
-    // Sử dụng COALESCE để trả về 0 nếu chưa có đơn hàng nào (tránh lỗi null)
-    @Query("SELECT COALESCE(SUM(oi.total), 0) FROM OrderItem oi")
+    // 3. Tính tổng doanh thu (Chỉ tính doanh thu từ game APPROVED - Tùy chọn nếu cần)
+    @Query("SELECT COALESCE(SUM(oi.total), 0) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
+            "WHERE gs.status = fit.iuh.models.enums.SubmissionStatus.APPROVED")
     double sumTotalRevenue();
 
     @Query("SELECT new fit.iuh.dtos.GameSearchResponseDto(" +

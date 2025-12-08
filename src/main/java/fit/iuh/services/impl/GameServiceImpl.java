@@ -297,19 +297,22 @@ public class GameServiceImpl implements GameService {
     @Override
     @Transactional
     public GameDetailDto approveGame(Long submissionId) {
+        // 1. Tìm yêu cầu duyệt (Submission)
         GameSubmission submission = gameSubmissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu duyệt"));
 
+        // 2. Validate trạng thái
         if (submission.getStatus() != SubmissionStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể duyệt game đang PENDING");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể duyệt game đang ở trạng thái PENDING");
         }
 
-        // Cập nhật trạng thái
-        Account admin = new Account(); admin.setUsername("admin"); // TODO: Lấy ID thật từ SecurityContext
+        // 3. Cập nhật trạng thái Submission -> APPROVED
+        Account admin = new Account();
+        admin.setUsername("admin"); // TODO: Lấy admin thực tế từ SecurityContext nếu cần
+
         submission.setStatus(SubmissionStatus.APPROVED);
         submission.setReviewerUsername(admin);
         submission.setReviewedAt(LocalDate.now());
-        GameSubmission savedSubmission = gameSubmissionRepository.save(submission);
 
         // Tạo Game Mới
         Game newGame = new Game();
