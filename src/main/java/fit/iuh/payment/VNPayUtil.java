@@ -1,4 +1,4 @@
-package fit.iuh.vnpay;
+package fit.iuh.payment;
 
 import jakarta.servlet.http.HttpServletRequest;
 

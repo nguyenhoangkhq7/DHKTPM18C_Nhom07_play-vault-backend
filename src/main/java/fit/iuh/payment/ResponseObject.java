@@ -1,4 +1,4 @@
-package fit.iuh.vnpay;
+package fit.iuh.payment;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
