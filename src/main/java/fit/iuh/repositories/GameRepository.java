@@ -145,6 +145,58 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
             "WHERE oi.game.id IN :ids " +
             "GROUP BY oi.game.id")
     List<Object[]> findStatsForGameIds(@Param("ids") List<Long> ids);
+
+
     @Query("SELECT oi FROM Order o JOIN o.customer ci join ci.library oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
     List<Game> findAllByGameToday();
+
+
+//    // 1) Tìm theo tên (có thể nhập không đầy đủ)
+//    @Query("""
+//        SELECT g FROM Game g WHERE LOWER(g.gameBasicInfos.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+//    """)
+//    List<Game> searchByName(String keyword);
+
+//
+//    // 2) Tìm theo cấu hình máy
+//    @Query("""
+//        SELECT g FROM Game g
+//        WHERE
+//            (:os IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.os) LIKE LOWER(CONCAT('%', :os, '%')))
+//        AND (:cpu IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.cpu) LIKE LOWER(CONCAT('%', :cpu, '%')))
+//        AND (:gpu IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.gpu) LIKE LOWER(CONCAT('%', :gpu, '%')))
+//        AND (:ram IS NULL OR g.gameBasicInfos.systemRequirement.ram <= :ram)
+//        AND (:storage IS NULL OR g.gameBasicInfos.systemRequirement.storage <= :storage)
+//    """)
+//    List<Game> findBySystem(String os, String cpu, String gpu, Integer ram, Integer storage);
+
+
+    // 3) Tìm nâng cao
+    @Query("""
+    SELECT g FROM Game g
+    WHERE
+        (:os IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.os) LIKE LOWER(CONCAT('%', :os, '%')))
+    AND (:cpu IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.cpu) LIKE LOWER(CONCAT('%', :cpu, '%')))
+    AND (:gpu IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.gpu) LIKE LOWER(CONCAT('%', :gpu, '%')))
+    AND (:ram IS NULL OR g.gameBasicInfos.systemRequirement.ram <= :ram)
+    AND (:storage IS NULL OR g.gameBasicInfos.systemRequirement.storage <= :storage)
+    AND (:keyword IS NULL OR LOWER(g.gameBasicInfos.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+    AND (:categoryId IS NULL OR g.gameBasicInfos.category.id = :categoryId)
+    AND (
+         :minRating IS NULL OR
+         (SELECT AVG(r.rating) FROM Review r WHERE r.game.id = g.id) >= :minRating
+    )
+    AND (:maxPrice IS NULL OR g.gameBasicInfos.price <= :maxPrice)
+""")
+    List<Game> searchAdvanced(
+            String os,
+            String cpu,
+            String gpu,
+            Integer ram,
+            Integer storage,
+            String keyword,
+            Long categoryId,
+            Double minRating,
+            Double maxPrice
+    );
 }

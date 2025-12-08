@@ -61,6 +61,7 @@ public class SecurityConfig {
                       .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                       .requestMatchers(HttpMethod.POST, "/api/drive/upload").permitAll()
                       .requestMatchers(HttpMethod.POST, "/api/games").authenticated()
+                      .requestMatchers(HttpMethod.GET, "/api/chat/**").permitAll()
                       .requestMatchers("/api/drive/auth", "/api/drive/oauth2callback").permitAll()
                       .requestMatchers("/images/**").permitAll()
                       .requestMatchers(HttpMethod.POST, "/api/system-config/quick-check/**").permitAll()
