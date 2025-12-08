@@ -4,17 +4,24 @@ server:
 spring:
   application:
     name: play-vault-backend
-
+    api-prefix: /api
   datasource:
     url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
     username: root
-    password: root
+    password: 22718451
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   servlet:
     multipart:
       max-file-size: 100GB
       max-request-size: 100GB
+  ai:
+    ollama:
+      base-url: http://localhost:11434  # URL mặc định của Ollama
+      embedding:
+        model: nomic-embed-text       # Tên model bạn đã pull về
+      chat:
+        enabled: false
 
   jpa:
     hibernate:
@@ -81,3 +88,12 @@ logging:
   level:
     # Bật DEBUG log để hiển thị chi tiết JSON Payload và HTTP Request gửi tới Ollama
     org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+payment:
+  vnPay:
+    url: ${PAY_URL}
+    tmnCode: ${TMN_CODE}
+    secretKey: ${SECRET_KEY}
+    returnUrl: ${RETURN_URL}
+    version: ${VERSION}
+    command: ${COMMAND}
+    orderType: ${ORDER_TYPE}

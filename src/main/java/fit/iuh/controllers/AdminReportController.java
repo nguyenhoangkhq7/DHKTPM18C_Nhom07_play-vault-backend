@@ -29,10 +29,21 @@ public class AdminReportController {
     @GetMapping
     public ResponseEntity<Page<AdminReportResponse>> getReports(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(required = false) Integer size) { // 1. Đổi thành Integer và bỏ defaultValue
 
         // Sắp xếp mặc định: Mới nhất lên đầu
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Sort sort = Sort.by("createdAt").descending();
+        Pageable pageable;
+
+        if (size == null) {
+            // 2. Nếu không truyền size -> Lấy tất cả (dùng MAX_VALUE)
+            // Luôn lấy trang 0 khi lấy tất cả
+            pageable = PageRequest.of(0, Integer.MAX_VALUE, sort);
+        } else {
+            // 3. Nếu có size -> Phân trang bình thường
+            pageable = PageRequest.of(page, size, sort);
+        }
+
         return ResponseEntity.ok(reportService.getReportsForAdmin(pageable));
     }
 
