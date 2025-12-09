@@ -177,12 +177,12 @@ public class GameController {
      */
     @GetMapping("/search-ai")
     public ResponseEntity<List<GameSearchResponseDto>> searchSemantic(
-            @RequestParam String query,
+            @RequestParam String keyword,
             @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "0.1") double threshold) { // Cho phép chỉnh ngưỡng từ API
+            @RequestParam(defaultValue = "0.5") double threshold) { // Cho phép chỉnh ngưỡng từ API
 
         // 1. Lấy danh sách ID đã được AI sắp xếp theo độ giống
-        List<Long> aiSortedIds = gameVectorService.searchGameIds(query, limit, threshold);
+        List<Long> aiSortedIds = gameVectorService.searchGameIds(keyword, limit, threshold);
 
         if (aiSortedIds.isEmpty()) {
             return ResponseEntity.ok(List.of());
