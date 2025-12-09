@@ -1,13 +1,17 @@
 package fit.iuh.controllers;
 
 import fit.iuh.dtos.*;
+import fit.iuh.models.Game;
 import fit.iuh.models.GameBasicInfo;
+import fit.iuh.models.enums.SubmissionStatus;
+import fit.iuh.repositories.GameRepository;
 import fit.iuh.services.GameBasicInfoService;
 import fit.iuh.dtos.GameDto;
 import fit.iuh.dtos.GameSearchResponseDto;
 import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.dtos.ReviewDto;
 import fit.iuh.services.GameService;
+import fit.iuh.services.GameVectorService;
 import fit.iuh.services.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,8 +28,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/games")
@@ -34,6 +42,8 @@ public class GameController {
 
     private final GameService gameService;
     private final ReviewService reviewService;
+    private final GameVectorService gameVectorService; // Inject service mới
+    private final GameRepository gameRepository;
 
     @GetMapping
     public ResponseEntity<List<GameDto>> getGames(
@@ -56,12 +66,28 @@ public class GameController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) SubmissionStatus status,
             @PageableDefault(size = 12) Pageable pageable // Mặc định 12 game/trang
     ) {
+        if (status == null) {
+            status = SubmissionStatus.APPROVED;
+        }
+
         Page<GameSearchResponseDto> games = gameService.searchAndFilterGames(
-                keyword, categoryId, minPrice, maxPrice, pageable);
+                keyword, categoryId, minPrice, maxPrice, status, pageable);
 
         return ResponseEntity.ok(games);
+    }
+
+    @GetMapping("/search-for")
+    public ResponseEntity<Page<GameSearchResponseDto>> searchGames(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 12) Pageable pageable
+    ) {
+        // Gọi Service xử lý logic tìm kiếm chuẩn
+        Page<GameSearchResponseDto> result = gameService.searchGamesSimple(keyword, pageable);
+
+        return ResponseEntity.ok(result);
     }
 
     // ========================================================================
@@ -129,6 +155,56 @@ public class GameController {
         return ResponseEntity.ok(gameDto);
     }
 
+    /**
+     * API 1: Chạy 1 lần để đồng bộ toàn bộ dữ liệu vào Vector Store
+     * URL: POST http://localhost:8080/api/games/sync-vector
+     */
+    @PostMapping("/sync-vector")
+    public ResponseEntity<String> syncVector() {
+        List<fit.iuh.models.Game> allGames = gameRepository.findAllExcludingPendingSubmissions();
+
+        if (allGames.isEmpty()) {
+            return ResponseEntity.ok("Không có game nào để đồng bộ.");
+        }
+
+        gameVectorService.addGames(allGames);
+        return ResponseEntity.ok("Đã đồng bộ thành công " + allGames.size() + " game vào AI Vector Store!");
+    }
+
+    /**
+     * API 2: Tìm kiếm thông minh bằng AI
+     * URL: GET http://localhost:8080/api/games/search-ai?query=game bắn súng hay
+     */
+    @GetMapping("/search-ai")
+    public ResponseEntity<List<GameSearchResponseDto>> searchSemantic(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "0.1") double threshold) { // Cho phép chỉnh ngưỡng từ API
+
+        // 1. Lấy danh sách ID đã được AI sắp xếp theo độ giống
+        List<Long> aiSortedIds = gameVectorService.searchGameIds(query, limit, threshold);
+
+        if (aiSortedIds.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        // 2. Lấy dữ liệu từ DB (kết quả trả về của MySQL thường không theo thứ tự ID mình đưa vào)
+        List<Game> gamesFromDb = gameRepository.findAllById(aiSortedIds);
+
+        // 3. Tối ưu: Map ID sang Game Object để truy xuất nhanh (O(1)) thay vì Loop lồng nhau (O(n^2))
+        Map<Long, Game> gameMap = gamesFromDb.stream()
+                .collect(Collectors.toMap(Game::getId, Function.identity()));
+
+        // 4. Sắp xếp lại danh sách kết quả theo đúng thứ tự của AI trả về
+        List<GameSearchResponseDto> result = aiSortedIds.stream()
+                .filter(gameMap::containsKey) // Đảm bảo ID có trong DB
+                .map(gameMap::get)            // Lấy Game từ Map
+                .map(GameSearchResponseDto::fromEntity) // Convert sang DTO
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
+
     @PostMapping
     public ResponseEntity<GameDto> createGame(@RequestBody GameCreateRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -150,4 +226,49 @@ public class GameController {
         List<GameDto> list = gameService.findByStatus("PENDING");
         return ResponseEntity.ok(list);
     }
+
+    @GetMapping("/search-combined")
+    public ResponseEntity<List<GameSearchResponseDto>> searchCombined(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "0.1") double threshold,
+            @PageableDefault(size = 12) Pageable pageable) {
+
+        // 1. Kết quả từ DB (search-for)
+        Page<GameSearchResponseDto> dbResultsPage = gameService.searchGamesSimple(keyword, pageable);
+        List<GameSearchResponseDto> dbResults = dbResultsPage.getContent();
+
+        // Lấy ID của các game đã có trong DB
+        List<Long> dbGameIds = dbResults.stream()
+                .map(GameSearchResponseDto::getId)
+                .toList();
+
+        // 2. Kết quả từ AI (search-ai)
+        List<Long> aiSortedIds = gameVectorService.searchGameIds(keyword, limit, threshold);
+
+        // Loại bỏ các ID đã có trong dbResults
+        List<Long> aiFilteredIds = aiSortedIds.stream()
+                .filter(id -> !dbGameIds.contains(id))
+                .toList();
+
+        // Lấy dữ liệu từ DB cho các game AI còn lại
+        List<Game> aiGamesFromDb = gameRepository.findAllById(aiFilteredIds);
+
+        Map<Long, Game> gameMap = aiGamesFromDb.stream()
+                .collect(Collectors.toMap(Game::getId, Function.identity()));
+
+        List<GameSearchResponseDto> aiResults = aiFilteredIds.stream()
+                .filter(gameMap::containsKey)
+                .map(gameMap::get)
+                .map(GameSearchResponseDto::fromEntity)
+                .toList();
+
+        // 3. Gộp kết quả: ưu tiên DB search trước, AI search bổ sung
+        List<GameSearchResponseDto> combinedResults = new ArrayList<>();
+        combinedResults.addAll(dbResults);
+        combinedResults.addAll(aiResults);
+
+        return ResponseEntity.ok(combinedResults);
+    }
+
 }

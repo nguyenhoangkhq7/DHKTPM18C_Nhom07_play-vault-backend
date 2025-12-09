@@ -26,4 +26,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     boolean existsByAccount_UsernameAndOwnedGames_Id(String username, Long gameId);
 
+
+
 }

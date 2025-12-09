@@ -7,6 +7,7 @@ import fit.iuh.dtos.*;
 import fit.iuh.models.Game;
 import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.models.GameSubmission;
+import fit.iuh.models.enums.SubmissionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ public interface GameService {
             Long categoryId,
             Double minPrice,
             Double maxPrice,
+            SubmissionStatus status,
             Pageable pageable);
 
     GameWithRatingDto getGameWithRatingById(Long id);
@@ -79,4 +81,24 @@ public interface GameService {
     Optional<GameSubmission> getLatestSubmissionByGameId(Long gameId);
 
     List<GameDto> getAllByGameToday();
+
+    // 👇 THÊM DÒNG NÀY: Để lấy tên file game (ví dụ: game_setup.rar) từ DB
+    String getGameFileName(Long gameId);
+//    List<Game> searchByName(String keyword);
+
+//    List<Game> findBySystem(String os, String cpu, String gpu, Integer ram, Integer storage);
+
+//    List<Game> searchAdvanced(
+//            String os,
+//            String cpu,
+//            String gpu,
+//            Integer ram,
+//            Integer storage,
+//            String keyword,
+//            Long categoryId,
+//            Double minRating,
+//            Double maxPrice
+//    );
+
+    Page<GameSearchResponseDto> searchGamesSimple(String keyword, Pageable pageable);
 }

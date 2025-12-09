@@ -25,33 +25,53 @@ public class DriveConfig {
     String tokensFile;
 
     @Bean
-    @Lazy  // tránh crash khi chưa cấp quyền
-    public Drive googleDrive() throws Exception {
-        // Đọc JSON token từ file (file bạn vừa gửi nội dung)
-        String json = Files.readString(Path.of(tokensFile));
-        var obj = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
-
-        if (!obj.has("refresh_token")) {
-            throw new IllegalStateException("Token file không có refresh_token. Hãy /api/drive/auth lại (offline + prompt=consent).");
-        }
-        String refreshToken = obj.get("refresh_token").getAsString();
-
+    @Lazy
+    public Drive googleDrive() {
         var http = new NetHttpTransport();
-        var jf   = GsonFactory.getDefaultInstance();
+        var jf = GsonFactory.getDefaultInstance();
+        String refreshToken = null;
 
-        // Dùng GoogleCredential với refresh_token (tự refresh access token khi cần)
-        var cred = new GoogleCredential.Builder()
+        // --- ĐOẠN SỬA QUAN TRỌNG: Kiểm tra file tồn tại trước khi đọc ---
+        try {
+            Path path = Path.of(tokensFile);
+            // Chỉ đọc nếu file thực sự tồn tại
+            if (Files.exists(path)) {
+                String json = Files.readString(path);
+                var obj = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+                if (obj.has("refresh_token")) {
+                    refreshToken = obj.get("refresh_token").getAsString();
+                }
+            }
+        } catch (Exception e) {
+            // Nếu lỗi đọc file, chỉ in ra console chứ KHÔNG làm sập app
+            System.err.println("⚠️ Cảnh báo: Không đọc được file token cũ (" + e.getMessage() + ")");
+        }
+
+        // Tạo đối tượng Credential
+        GoogleCredential.Builder credBuilder = new GoogleCredential.Builder()
                 .setTransport(http)
                 .setJsonFactory(jf)
-                .setClientSecrets(clientId, clientSecret)
-                .build()
-                .setRefreshToken(refreshToken);
+                .setClientSecrets(clientId, clientSecret);
 
-        // Thử refresh ngay để kiểm tra refresh_token (nếu fail -> invalid_grant)
-        if (!cred.refreshToken()) {
-            throw new IllegalStateException("refresh_token không hợp lệ hoặc hết hạn. Hãy revoke & /api/drive/auth lại.");
+        GoogleCredential cred = credBuilder.build();
+
+        // Nếu tìm thấy token cũ thì set vào, nếu không thì thôi (vẫn chạy tiếp)
+        if (refreshToken != null) {
+            cred.setRefreshToken(refreshToken);
+            try {
+                if (!cred.refreshToken()) {
+                    System.err.println("⚠️ Token cũ đã hết hạn. Hãy đăng nhập lại.");
+                } else {
+                    System.out.println("✅ Google Drive kết nối thành công!");
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ Lỗi kiểm tra token: " + e.getMessage());
+            }
+        } else {
+            System.out.println("ℹ️ Chưa có Token. Ứng dụng sẽ khởi động ở chế độ chờ đăng nhập.");
         }
 
+        // Luôn trả về Bean Drive để Spring Boot khởi động thành công
         return new Drive.Builder(http, jf, cred)
                 .setApplicationName("play-vault-backend")
                 .build();

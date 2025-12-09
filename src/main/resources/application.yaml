@@ -4,15 +4,29 @@ server:
 spring:
   application:
     name: play-vault-backend
+    api-prefix: /api
   datasource:
-    url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true
     username: root
-    password: 123456
+    password: 20112004
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   servlet:
     multipart:
       max-file-size: 100GB
       max-request-size: 100GB
+  ai:
+    ollama:
+      base-url: http://localhost:11434  # URL mặc định của Ollama
+      embedding:
+        model:  bge-m3:latest       # Tên model bạn đã pull về
+      chat:
+        options:
+          model:  gpt-oss:120b-cloud  # Hoặc "llama3.2:3b" hoặc "qwen2.5:1.5b"
+          temperature: 0.5     # Để thấp (0.3 - 0.5) giúp model tập trung dùng tool chính xác hơn
+          keep_alive: "60m"
+          num-ctx: 2048
+          
 
   jpa:
     hibernate:
@@ -25,8 +39,9 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 30000 # 5min
-    refreshTokenExpiration: 604800 # 7 days
+    accessTokenExpiration: 30000
+    refreshTokenExpiration: 604800
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -41,6 +56,9 @@ spring:
           from: phucvinh20112004@gmail.com
     default-encoding: UTF-8
     test-connection: true
+
+
+
 gdrive:
   oauth:
     client-id: ${GOOGLE_CLIENT_ID}
@@ -48,3 +66,30 @@ gdrive:
     redirect-uri: http://localhost:8080/api/drive/oauth2callback
     tokens-file: ./gdrive-oauth-tokens.json
   parent-folder-id: "1R1qSJPn2ktOyJQXz0BfEErPx7TdZYZrA"
+
+logging:
+  level:
+    # Bật DEBUG log để hiển thị chi tiết JSON Payload và HTTP Request gửi tới Ollama
+    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+payment:
+  vnPay:
+    url: ${PAY_URL}
+    tmnCode: ${TMN_CODE}
+    secretKey: ${SECRET_KEY}
+    returnUrl: ${RETURN_URL}
+    version: ${VERSION}
+    command: ${COMMAND}
+    orderType: ${ORDER_TYPE}
+
+cloudflare:
+  r2:
+    account-id: cec0ce0e12db70d665615052939de2f5
+    access-key: 92a3c2230197e43eac57aabf10484f08
+    secret-key: 82da5cc238b4a7f89ce26e5ae74c8e21647f604981cbbf463f29b0c3d0eae58d
+    bucket: play-vault
+    endpoint: https://cec0ce0e12db70d665615052939de2f5.r2.cloudflarestorage.com
+    region: auto
+aws:
+  s3:
+    path-style-access: true
+    chunked-encoding-disabled: true

@@ -7,6 +7,7 @@ import fit.iuh.models.Account;
 import fit.iuh.models.Publisher;
 import fit.iuh.models.enums.OrderStatus;
 import fit.iuh.repositories.PublisherRepository;
+import fit.iuh.services.GameVectorService;
 import jakarta.transaction.Transactional;
 import fit.iuh.models.*;
 import fit.iuh.models.enums.AccountStatus;
@@ -42,6 +43,7 @@ public class PublisherServiceImpl implements fit.iuh.services.PublisherService {
     private final ReviewRepository reviewRepository;
     private final CategoryRepository categoryRepository;
     private final GameMapper gameMapper; // Mapper tự viết hoặc dùng MapStruct
+    private final GameVectorService gameVectorService;
     @Override
     public List<PublisherDto> findAll() {
         return publisherMapper.toPublisherDTOs(publisherRepository.findAll());
@@ -243,6 +245,7 @@ public class PublisherServiceImpl implements fit.iuh.services.PublisherService {
         // Lưu thay đổi
         // Vì info gắn liền với game (Cascade), lưu game là lưu cả info
         Game savedGame = gameRepository.save(game);
+        gameVectorService.addGames(List.of(savedGame));
 
         return gameMapper.toDTO(savedGame);
     }

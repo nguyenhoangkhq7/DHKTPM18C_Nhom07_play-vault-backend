@@ -3,6 +3,7 @@ package fit.iuh.repositories;
 import fit.iuh.dtos.GameSearchResponseDto;
 import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.models.Game;
+import fit.iuh.models.enums.SubmissionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,7 @@ import java.util.List;
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificationExecutor<Game> {
     List<Game> findByGameBasicInfos_Category_Name(String categoryName);
+    Game findByGameBasicInfos_Id(Long gameBasicInfoId);
 
 //    @Query(value = "SELECT g.* " +
 //            "FROM games g " +
@@ -56,22 +58,26 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     List<Game> findAllByIdWithPublisher(@Param("ids") List<Long> ids);
     @Query("SELECT oi FROM Order o JOIN o.customer c join c.library oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
     List<Game> findAllByOrderItemToday();
-    // 1. Đếm tổng số Game
-    // Vì 'Game' được sinh ra từ 'GameSubmission' đã duyệt, nên đếm tất cả Game là được.
-    @Query("SELECT COUNT(g) FROM Game g")
+    // 1. Đếm tổng số Game (Chỉ tính những game có trạng thái APPROVED)
+    // Cần JOIN với GameSubmission thông qua GameBasicInfos để check status
+    @Query("SELECT COUNT(DISTINCT g) FROM Game g " +
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
+            "WHERE gs.status = fit.iuh.models.enums.SubmissionStatus.APPROVED")
     long countTotalGames();
 
-    // 2. Tính tổng lượt tải
-    // Dựa trên Class Diagram: Không có trường 'downloads' trong Game.
-    // Lượt tải = Số lượng OrderItem đã bán ra (Mỗi OrderItem tương ứng 1 game được mua/tải)
-    // Lưu ý: Query trực tiếp entity OrderItem (Dù đang ở trong GameRepository vẫn query được nếu cùng context)
-    @Query("SELECT COUNT(oi) FROM OrderItem oi")
+    // 2. Tính tổng lượt tải (Chỉ tính lượt tải của những game APPROVED)
+    // OrderItem -> Game -> GameSubmission -> Check Status
+    @Query("SELECT COUNT(oi) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
+            "WHERE gs.status = fit.iuh.models.enums.SubmissionStatus.APPROVED")
     long countTotalDownloads();
 
-    // 3. Tính tổng doanh thu
-    // Doanh thu = Tổng giá trị (price) của tất cả OrderItem
-    // Sử dụng COALESCE để trả về 0 nếu chưa có đơn hàng nào (tránh lỗi null)
-    @Query("SELECT COALESCE(SUM(oi.total), 0) FROM OrderItem oi")
+    // 3. Tính tổng doanh thu (Chỉ tính doanh thu từ game APPROVED - Tùy chọn nếu cần)
+    @Query("SELECT COALESCE(SUM(oi.total), 0) FROM OrderItem oi " +
+            "JOIN oi.game g " +
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
+            "WHERE gs.status = fit.iuh.models.enums.SubmissionStatus.APPROVED")
     double sumTotalRevenue();
 
     @Query("SELECT new fit.iuh.dtos.GameSearchResponseDto(" +
@@ -84,19 +90,23 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
             "g.gameBasicInfos.category.name, " +
             "COUNT(oi), " +
             "cast(COALESCE(SUM(oi.total), 0) as BigDecimal), " +
-            // Subquery lấy ngày duyệt từ GameSubmission
             "(SELECT MAX(gs.reviewedAt) FROM GameSubmission gs WHERE gs.gameBasicInfos.id = g.gameBasicInfos.id) ) " +
             "FROM Game g " +
             "LEFT JOIN OrderItem oi ON g.id = oi.game.id " +
+            // --- THÊM DÒNG JOIN NÀY ---
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
             "WHERE (:search IS NULL OR LOWER(g.gameBasicInfos.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:category = 'all' OR g.gameBasicInfos.category.name = :category) " +
+            // --- SỬA ĐIỀU KIỆN NÀY: Check gs.status thay vì g.status ---
+            "AND gs.status = :status " +
             "GROUP BY g.id, g.gameBasicInfos.name, g.gameBasicInfos.thumbnail, g.gameBasicInfos.publisher.studioName, g.gameBasicInfos.price, g.releaseDate, g.gameBasicInfos.category.name " +
             "ORDER BY SUM(oi.total) DESC")
     Page<GameSearchResponseDto> findGamesSortedByRevenue(@Param("search") String search,
                                                          @Param("category") String category,
+                                                         @Param("status") SubmissionStatus status, // Dùng SubmissionStatus
                                                          Pageable pageable);
 
-    // 2. Sắp xếp theo Lượt tải (Downloads)
+    // ==========================================================
     @Query("SELECT new fit.iuh.dtos.GameSearchResponseDto(" +
             "g.id, " +
             "g.gameBasicInfos.name, " +
@@ -107,16 +117,20 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
             "g.gameBasicInfos.category.name, " +
             "COUNT(oi), " +
             "cast(COALESCE(SUM(oi.total), 0) as BigDecimal), " +
-            // Subquery lấy ngày duyệt
             "(SELECT MAX(gs.reviewedAt) FROM GameSubmission gs WHERE gs.gameBasicInfos.id = g.gameBasicInfos.id) ) " +
             "FROM Game g " +
             "LEFT JOIN OrderItem oi ON g.id = oi.game.id " +
+            // --- THÊM DÒNG JOIN NÀY ---
+            "JOIN GameSubmission gs ON gs.gameBasicInfos.id = g.gameBasicInfos.id " +
             "WHERE (:search IS NULL OR LOWER(g.gameBasicInfos.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:category = 'all' OR g.gameBasicInfos.category.name = :category) " +
+            // --- SỬA ĐIỀU KIỆN NÀY ---
+            "AND gs.status = :status " +
             "GROUP BY g.id, g.gameBasicInfos.name, g.gameBasicInfos.thumbnail, g.gameBasicInfos.publisher.studioName, g.gameBasicInfos.price, g.releaseDate, g.gameBasicInfos.category.name " +
             "ORDER BY COUNT(oi) DESC")
     Page<GameSearchResponseDto> findGamesSortedByDownloads(@Param("search") String search,
                                                            @Param("category") String category,
+                                                           @Param("status") SubmissionStatus status,
                                                            Pageable pageable);
 
     // ... các query cũ giữ nguyên ...
@@ -131,6 +145,85 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
             "WHERE oi.game.id IN :ids " +
             "GROUP BY oi.game.id")
     List<Object[]> findStatsForGameIds(@Param("ids") List<Long> ids);
+
+
     @Query("SELECT oi FROM Order o JOIN o.customer ci join ci.library oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
     List<Game> findAllByGameToday();
+
+
+//    // 1) Tìm theo tên (có thể nhập không đầy đủ)
+//    @Query("""
+//        SELECT g FROM Game g WHERE LOWER(g.gameBasicInfos.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+//    """)
+//    List<Game> searchByName(String keyword);
+
+//
+//    // 2) Tìm theo cấu hình máy
+//    @Query("""
+//        SELECT g FROM Game g
+//        WHERE
+//            (:os IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.os) LIKE LOWER(CONCAT('%', :os, '%')))
+//        AND (:cpu IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.cpu) LIKE LOWER(CONCAT('%', :cpu, '%')))
+//        AND (:gpu IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.gpu) LIKE LOWER(CONCAT('%', :gpu, '%')))
+//        AND (:ram IS NULL OR g.gameBasicInfos.systemRequirement.ram <= :ram)
+//        AND (:storage IS NULL OR g.gameBasicInfos.systemRequirement.storage <= :storage)
+//    """)
+//    List<Game> findBySystem(String os, String cpu, String gpu, Integer ram, Integer storage);
+
+
+    // 3) Tìm nâng cao
+    @Query("""
+    SELECT g FROM Game g
+    WHERE
+        (:os IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.os) LIKE LOWER(CONCAT('%', :os, '%')))
+    AND (:cpu IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.cpu) LIKE LOWER(CONCAT('%', :cpu, '%')))
+    AND (:gpu IS NULL OR LOWER(g.gameBasicInfos.systemRequirement.gpu) LIKE LOWER(CONCAT('%', :gpu, '%')))
+    AND (:ram IS NULL OR g.gameBasicInfos.systemRequirement.ram <= :ram)
+    AND (:storage IS NULL OR g.gameBasicInfos.systemRequirement.storage <= :storage)
+    AND (:keyword IS NULL OR LOWER(g.gameBasicInfos.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+    AND (:categoryId IS NULL OR g.gameBasicInfos.category.id = :categoryId)
+    AND (
+         :minRating IS NULL OR
+         (SELECT AVG(r.rating) FROM Review r WHERE r.game.id = g.id) >= :minRating
+    )
+    AND (:maxPrice IS NULL OR g.gameBasicInfos.price <= :maxPrice)
+""")
+    List<Game> searchAdvanced(
+            String os,
+            String cpu,
+            String gpu,
+            Integer ram,
+            Integer storage,
+            String keyword,
+            Long categoryId,
+            Double minRating,
+            Double maxPrice
+    );
+
+//    @Query("SELECT g FROM Game g " +
+//            "LEFT JOIN g.gameBasicInfos info " +
+//            "LEFT JOIN info.category cat " +
+//            "WHERE (:keyword IS NULL OR :keyword = '' OR " +
+//            "LOWER(info.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " + // Tên chứa keyword
+//            "OR LOWER(cat.name) = LOWER(:keyword))")                     // Hoặc Thể loại BẰNG keyword
+@Query("SELECT g FROM Game g " +
+        "LEFT JOIN g.gameBasicInfos info " +
+        "LEFT JOIN info.category cat " +
+        // THÊM: LEFT JOIN với GameSubmission (s)
+        "LEFT JOIN info.submission s " +
+        "WHERE (:keyword IS NULL OR :keyword = '' OR " +
+        "LOWER(info.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+        "OR LOWER(cat.name) = LOWER(:keyword)) " +
+        // THÊM ĐIỀU KIỆN LOẠI TRỪ:
+        // 1. Game không có submission nào (s is NULL) thì vẫn hiển thị.
+        // 2. Hoặc trạng thái submission (s.status) KHÔNG phải là PENDING.
+        "AND (s IS NULL OR s.status <> fit.iuh.models.enums.SubmissionStatus.PENDING)")
+    Page<Game> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+
+    @Query("SELECT g FROM Game g " +
+            // LEFT JOIN qua GameBasicInfo (info) -> GameSubmission (s)
+            "LEFT JOIN g.gameBasicInfos.submission s " +
+            "WHERE s IS NULL OR s.status <> fit.iuh.models.enums.SubmissionStatus.PENDING")
+    List<Game> findAllExcludingPendingSubmissions();
 }

@@ -9,6 +9,9 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface GameMapper {
 
+    // ============================
+    // BASIC INFO
+    // ============================
     @Named("toBasicInfoDto")
     @Mapping(source = "gameBasicInfos.name", target = "name")
     @Mapping(source = "gameBasicInfos.shortDescription", target = "shortDescription")
@@ -20,15 +23,31 @@ public interface GameMapper {
     @Mapping(source = "gameBasicInfos.isSupportController", target = "isSupportController")
     @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
     @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisherName")
-    GameBasicInfoDto toBasicInfoDto(Game game); // Input là Game
+    GameBasicInfoDto toBasicInfoDto(Game game);
 
+    // ⭐ Thêm hàm List (bạn đang thiếu)
+    List<GameBasicInfoDto> toBasicInfoDtoList(List<Game> games);
+
+    // Cái này của bạn - giữ lại (nhưng lưu ý input khác type)
     List<GameBasicInfoDto> toDtoList(List<GameBasicInfo> games);
 
+
+    // ============================
+    // GAME CARD DTO
+    // ============================
     @Mapping(source = "gameBasicInfos.name", target = "name")
     @Mapping(source = "gameBasicInfos.thumbnail", target = "thumbnail")
     @Mapping(source = "gameBasicInfos.price", target = "price")
+    @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
     GameCardDto toCardDto(Game game);
 
+    // ⭐ Thêm hàm List cho CardDto
+    List<GameCardDto> toCardDtoList(List<Game> games);
+
+
+    // ============================
+    // BASIC DTO WITH STATUS
+    // ============================
     @Mapping(target = "status",
             expression = "java(game.getGameBasicInfos()!=null && " +
                     "game.getGameBasicInfos().getSubmission()!=null && " +
@@ -39,6 +58,10 @@ public interface GameMapper {
     @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisherName")
     GameDto toDTO(Game game);
 
+
+    // ============================
+    // GAME WITH RATING
+    // ============================
     @Mapping(source = "gameBasicInfos", target = "gameBasicInfos")
     @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
     @Mapping(source = "gameBasicInfos.publisher.id", target = "publisherId")
@@ -53,6 +76,10 @@ public interface GameMapper {
 
     List<GameWithRatingDto> toGameWithRatingDtoList(List<Game> games);
 
+
+    // ============================
+    // NAMED METHODS
+    // ============================
     @Named("calculateAvgRating")
     default Double calculateAvgRating(List<Review> reviews) {
         if (reviews == null || reviews.isEmpty()) return 0.0;

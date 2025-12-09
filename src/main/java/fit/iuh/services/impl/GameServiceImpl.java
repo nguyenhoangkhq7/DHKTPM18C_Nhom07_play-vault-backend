@@ -21,6 +21,7 @@ import fit.iuh.repositories.GameRepository;
 import fit.iuh.repositories.GameSubmissionRepository;
 import fit.iuh.services.DriveService;
 import fit.iuh.services.GameService;
+import fit.iuh.services.GameVectorService;
 import fit.iuh.specifications.GameSpecification;
 import fit.iuh.specifications.GameSubmissionSpecification;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +69,10 @@ public class GameServiceImpl implements GameService {
     private final GameBasicInfoRepository gameBasicInfoRepository;
     private final DriveService driveUploader;
     private final PreviewImageRepository previewImageRepository;
+
+    private final GameVectorService gameVectorService;
+    private final OrderRepository orderRepository;
+
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
@@ -78,12 +83,13 @@ public class GameServiceImpl implements GameService {
             Long categoryId,
             Double minPrice,
             Double maxPrice,
+            SubmissionStatus status,
             Pageable pageable) {
 
         BigDecimal minPriceBd = minPrice != null ? BigDecimal.valueOf(minPrice) : null;
         BigDecimal maxPriceBd = maxPrice != null ? BigDecimal.valueOf(maxPrice) : null;
 
-        Specification<Game> spec = GameSpecification.filterBy(keyword, categoryId, minPriceBd, maxPriceBd);
+        Specification<Game> spec = GameSpecification.filterBy(keyword, categoryId, minPriceBd, maxPriceBd, status);
 
         // Lấy danh sách Game từ DB
         Page<Game> gamePage = gameRepository.findAll(spec, pageable);
@@ -246,10 +252,10 @@ public class GameServiceImpl implements GameService {
         String search = (searchQuery == null || searchQuery.isBlank()) ? null : searchQuery;
 
         if ("revenue_desc".equalsIgnoreCase(sortBy)) {
-            return gameRepository.findGamesSortedByRevenue(search, category, pageable);
+            return gameRepository.findGamesSortedByRevenue(search, category, SubmissionStatus.APPROVED, pageable);
         }
         if ("downloads_desc".equalsIgnoreCase(sortBy)) {
-            return gameRepository.findGamesSortedByDownloads(search, category, pageable);
+            return gameRepository.findGamesSortedByDownloads(search, category, SubmissionStatus.APPROVED, pageable);
         }
 
         Specification<Game> spec = GameSpecification.filterApprovedGames(searchQuery, categoryFilter);
@@ -294,27 +300,48 @@ public class GameServiceImpl implements GameService {
     @Override
     @Transactional
     public GameDetailDto approveGame(Long submissionId) {
+        // 1. Tìm yêu cầu duyệt (Submission)
         GameSubmission submission = gameSubmissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu duyệt"));
 
+        // 2. Validate trạng thái
         if (submission.getStatus() != SubmissionStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể duyệt game đang PENDING");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể duyệt game đang ở trạng thái PENDING");
         }
 
-        // Cập nhật trạng thái
-        Account admin = new Account(); admin.setUsername("admin"); // TODO: Lấy ID thật từ SecurityContext
+        // 3. Cập nhật trạng thái Submission -> APPROVED
+        Account admin = new Account();
+        admin.setUsername("admin"); // TODO: Lấy admin thực tế từ SecurityContext nếu cần
+
         submission.setStatus(SubmissionStatus.APPROVED);
         submission.setReviewerUsername(admin);
         submission.setReviewedAt(LocalDate.now());
-        GameSubmission savedSubmission = gameSubmissionRepository.save(submission);
 
-        // Tạo Game Mới
-        Game newGame = new Game();
-        newGame.setReleaseDate(LocalDate.now());
-        newGame.setGameBasicInfos(savedSubmission.getGameBasicInfos());
-        // Map thêm các field cần thiết nếu có
+        // Lưu thay đổi vào bảng game_submissions
+        gameSubmissionRepository.save(submission);
 
-        return GameDetailDto.fromEntity(gameRepository.save(newGame));
+        // 4. Lấy thông tin Game đã tồn tại (KHÔNG TẠO MỚI)
+        // Vì lúc createPending đã tạo Game rồi, giờ ta chỉ cần tìm lại nó.
+        Long basicInfoId = submission.getGameBasicInfos().getId();
+
+        // Tìm game dựa trên GameBasicInfo ID
+        // Lưu ý: Bạn cần đảm bảo GameRepository có hàm findByGameBasicInfos_Id
+        // Hoặc nếu bảng Games dùng chung ID với BasicInfo thì dùng findById(basicInfoId)
+        Game existingGame = gameRepository.findByGameBasicInfos_Id(basicInfoId);
+
+        if (existingGame == null) {
+            // Fallback: Thử tìm bằng ID nếu cấu hình OneToOne @MapsId
+            existingGame = gameRepository.findById(basicInfoId)
+                    .orElseThrow(() -> new RuntimeException("Lỗi dữ liệu: Không tìm thấy Game gốc trong database"));
+        }
+
+        // (Tuỳ chọn) Cập nhật ngày phát hành chính thức là ngày duyệt
+        existingGame.setReleaseDate(LocalDate.now());
+
+        gameVectorService.addGames(List.of(existingGame));
+
+        // Lưu cập nhật Game (nếu có thay đổi) và trả về DTO
+        return GameDetailDto.fromEntity(gameRepository.save(existingGame));
     }
 
     @Override
@@ -366,21 +393,31 @@ public class GameServiceImpl implements GameService {
     @Override
     @Transactional(readOnly = true)
     public GameDetailDto getGameForAdmin(Long id) {
-        // TRƯỜNG HỢP 1: Tìm trong bảng Game (Game ĐÃ DUYỆT/ĐANG BÁN)
+        // 1. Tìm trong bảng Game trước
         Optional<Game> gameOpt = gameRepository.findById(id);
+
         if (gameOpt.isPresent()) {
             Game game = gameOpt.get();
             GameDetailDto dto = GameDetailDto.fromEntity(game);
 
-            // --- LOGIC MỚI: Truy ngược lại ngày gửi (SubmittedAt) ---
+            // --- QUAN TRỌNG: Lấy status thực sự từ bảng GameSubmission ---
             if (game.getGameBasicInfos() != null) {
-                // Tìm submission tương ứng với info của game này
-                Optional<GameSubmission> originSubmission = gameSubmissionRepository
+                // Tìm submission mới nhất của game này
+                Optional<GameSubmission> submissionOpt = gameSubmissionRepository
                         .findFirstByGameBasicInfos_IdOrderBySubmittedAtDesc(game.getGameBasicInfos().getId());
 
-                if (originSubmission.isPresent()) {
-                    // Nếu tìm thấy, set ngày gửi thật sự
-                    dto.setSubmittedDate(originSubmission.get().getSubmittedAt().toString());
+                if (submissionOpt.isPresent()) {
+                    GameSubmission sub = submissionOpt.get();
+
+                    // Đè status của Game bằng status của Submission (PENDING/REJECTED/APPROVED)
+                    dto.setStatus(sub.getStatus().name());
+
+                    // Map thêm thông tin khác
+                    dto.setSubmittedDate(sub.getSubmittedAt() != null ? sub.getSubmittedAt().toString() : "N/A");
+                    if (sub.getStatus() == SubmissionStatus.REJECTED) {
+                        // Nếu DTO có trường rejectReason thì set vào, nếu không thì bỏ qua
+                        // dto.setRejectReason(sub.getRejectReason());
+                    }
                 } else {
                     dto.setSubmittedDate("N/A");
                 }
@@ -388,13 +425,12 @@ public class GameServiceImpl implements GameService {
             return dto;
         }
 
-        // TRƯỜNG HỢP 2: Tìm trong bảng GameSubmission (Game CHỜ DUYỆT/TỪ CHỐI)
+        // 2. Nếu không có trong bảng Game, tìm trực tiếp trong GameSubmission (trường hợp data cũ hoặc lỗi)
         Optional<GameSubmission> submissionOpt = gameSubmissionRepository.findById(id);
         if (submissionOpt.isPresent()) {
             return GameDetailDto.fromSubmissionEntity(submissionOpt.get());
         }
 
-        // Không tìm thấy
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin game ID: " + id);
     }
 
@@ -664,6 +700,21 @@ public class GameServiceImpl implements GameService {
         return gameMapper.toGameDto(items);
     }
 
+//    @Override
+//    public List<Game> searchByName(String keyword) {
+//        return gameRepository.searchByName(keyword);
+//    }
+
+//    @Override
+//    public List<Game> findBySystem(String os, String cpu, String gpu, Integer ram, Integer storage) {
+//        return gameRepository.findBySystem(os, cpu, gpu, ram, storage);
+//    }
+
+//    @Override
+//    public List<Game> searchAdvanced(String os, String cpu, String gpu, Integer ram, Integer storage, String keyword, Long categoryId, Double minRating, Double maxPrice) {
+//        return gameRepository.searchAdvanced(os, cpu, gpu, ram, storage, keyword, categoryId, minRating, maxPrice);
+//    }
+
     // GameServiceImpl
     @Override
     @Transactional(readOnly = true)
@@ -671,5 +722,35 @@ public class GameServiceImpl implements GameService {
         return submissionRepository.findFirstByGameBasicInfos_IdOrderBySubmittedAtDesc(gameId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public String getGameFileName(Long gameId) {
+        // 1. Tìm Game theo ID
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("Game không tồn tại với ID: " + gameId));
+
+        // 2. Lấy thông tin cơ bản
+        if (game.getGameBasicInfos() == null) {
+            throw new RuntimeException("Dữ liệu game bị lỗi (thiếu Basic Info)");
+        }
+
+        // 3. Lấy đường dẫn file (FilePath) đã lưu khi Upload
+        String filePath = game.getGameBasicInfos().getFilePath();
+
+        if (filePath == null || filePath.isEmpty()) {
+            throw new RuntimeException("Game này chưa được upload file cài đặt.");
+        }
+
+        return filePath;
+    }
+
+    @Override
+    public Page<GameSearchResponseDto> searchGamesSimple(String keyword, Pageable pageable) {
+        // Gọi repository
+        Page<Game> gamePage = gameRepository.searchByKeyword(keyword, pageable);
+
+        // Convert Entity sang DTO
+        return gamePage.map(GameSearchResponseDto::fromEntity);
+    }
 
 }
