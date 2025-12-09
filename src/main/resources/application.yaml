@@ -21,7 +21,20 @@ spring:
       embedding:
         model: nomic-embed-text       # Tên model bạn đã pull về
       chat:
-        enabled: false
+        options:
+          model: qwen2.5:3b   # Hoặc "llama3.2:3b" hoặc "qwen2.5:1.5b"
+          temperature: 0.3     # Để thấp (0.3 - 0.5) giúp model tập trung dùng tool chính xác hơn
+          keep_alive: "60m"
+          num-ctx: 2048
+
+#    vectorstore:
+#      qdrant:
+#        initialize-schema: true
+#        collection-name: playvault_collection
+#        vector-dimension: 768
+#        host: localhost
+#        port: 6334
+#        use-tls: false
 
   jpa:
     hibernate:
@@ -52,29 +65,7 @@ spring:
     default-encoding: UTF-8
     test-connection: true
 
-  ai:
-    vectorstore:
-      qdrant:
-        initialize-schema: true
-        collection-name: playvault_collection
-        vector-dimension: 768
-        host: localhost
-        port: 6334
-        use-tls: false
 
-    ollama:
-      base-url: http://localhost:11434
-
-      # CHỈ DÙNG EMBEDDING – KHÔNG CẦN CHAT
-      embedding:
-        options:
-          model: nomic-embed-text:latest   # SIÊU NHẸ + SIÊU CHUẨN
-      chat:
-        options:
-          model: qwen2.5:3b   # Hoặc "llama3.2:3b" hoặc "qwen2.5:1.5b"
-          temperature: 0.3     # Để thấp (0.3 - 0.5) giúp model tập trung dùng tool chính xác hơn
-          keep_alive: "60m"
-          num-ctx: 2048
 
 gdrive:
   oauth:
@@ -97,3 +88,16 @@ payment:
     version: ${VERSION}
     command: ${COMMAND}
     orderType: ${ORDER_TYPE}
+
+cloudflare:
+  r2:
+    account-id: cec0ce0e12db70d665615052939de2f5
+    access-key: 92a3c2230197e43eac57aabf10484f08
+    secret-key: 82da5cc238b4a7f89ce26e5ae74c8e21647f604981cbbf463f29b0c3d0eae58d
+    bucket: play-vault
+    endpoint: https://cec0ce0e12db70d665615052939de2f5.r2.cloudflarestorage.com
+    region: auto
+aws:
+  s3:
+    path-style-access: true
+    chunked-encoding-disabled: true

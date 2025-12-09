@@ -14,6 +14,7 @@ public class GameCardDto {
     private String name;
     private String thumbnail; // Đường dẫn tới ảnh bìa
     private BigDecimal price; // Giá của game (từ GameBasicInfo)
+    private String categoryName;
 }
 
 

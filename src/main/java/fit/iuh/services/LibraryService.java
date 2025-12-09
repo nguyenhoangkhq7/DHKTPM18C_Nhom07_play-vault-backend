@@ -31,9 +31,9 @@ public class LibraryService {
 
         // 1. Lấy các giá trị lọc từ DTO
         String gameName = filterDto.getName();
-        String categoryName = filterDto.getCategory();
         BigDecimal minPrice = filterDto.getMinPrice();
         BigDecimal maxPrice = filterDto.getMaxPrice();
+        String categoryName = filterDto.getCategoryName();
 
         // 2. Kiểm tra logic giá
         if (!filterDto.isPriceRangeValid()) {
@@ -65,12 +65,13 @@ public class LibraryService {
 
         // 6. Lọc theo Tên Loại Game
         if (categoryName != null && !categoryName.isBlank()) {
+            String cat = categoryName.trim().toLowerCase();
             gameStream = gameStream.filter(game ->
-                    game.getGameBasicInfos() != null &&
-                            game.getGameBasicInfos().getCategory() != null &&
-                            game.getGameBasicInfos().getCategory().getName() != null &&
-                            game.getGameBasicInfos().getCategory().getName().toLowerCase()
-                                    .contains(categoryName.toLowerCase())
+                            game.getGameBasicInfos() != null &&
+                                    game.getGameBasicInfos().getCategory() != null &&
+                                    game.getGameBasicInfos().getCategory().getName() != null &&
+                                    game.getGameBasicInfos().getCategory().getName().toLowerCase().equals(cat)
+                    // Dùng .equals() thay .contains() → chính xác hơn (Action ≠ Action-Adventure)
             );
         }
 

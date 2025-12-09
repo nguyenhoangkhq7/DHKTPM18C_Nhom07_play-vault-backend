@@ -82,6 +82,8 @@ public interface GameService {
 
     List<GameDto> getAllByGameToday();
 
+    // 👇 THÊM DÒNG NÀY: Để lấy tên file game (ví dụ: game_setup.rar) từ DB
+    String getGameFileName(Long gameId);
 //    List<Game> searchByName(String keyword);
 
 //    List<Game> findBySystem(String os, String cpu, String gpu, Integer ram, Integer storage);

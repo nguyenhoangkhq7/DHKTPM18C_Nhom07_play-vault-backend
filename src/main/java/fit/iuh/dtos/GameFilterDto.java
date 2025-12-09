@@ -12,12 +12,6 @@ public class GameFilterDto {
      * Lọc theo tên game (tìm kiếm chứa, không phân biệt hoa thường)
      */
     private String name;
-
-    /**
-     * Lọc theo tên thể loại (tìm kiếm chứa, không phân biệt hoa thường)
-     */
-    private String category;
-
     /**
      * Lọc theo giá sàn
      */
@@ -30,6 +24,8 @@ public class GameFilterDto {
     @DecimalMin(value = "0.0", message = "maxPrice phải >= 0", inclusive = true)
     private BigDecimal maxPrice;
 
+
+    private String categoryName;
     /**
      * Kiểm tra logic minPrice <= maxPrice
      */

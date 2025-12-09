@@ -71,6 +71,8 @@ public class GameServiceImpl implements GameService {
     private final PreviewImageRepository previewImageRepository;
 
     private final GameVectorService gameVectorService;
+    private final OrderRepository orderRepository;
+
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
@@ -720,5 +722,26 @@ public class GameServiceImpl implements GameService {
         return submissionRepository.findFirstByGameBasicInfos_IdOrderBySubmittedAtDesc(gameId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public String getGameFileName(Long gameId) {
+        // 1. Tìm Game theo ID
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("Game không tồn tại với ID: " + gameId));
+
+        // 2. Lấy thông tin cơ bản
+        if (game.getGameBasicInfos() == null) {
+            throw new RuntimeException("Dữ liệu game bị lỗi (thiếu Basic Info)");
+        }
+
+        // 3. Lấy đường dẫn file (FilePath) đã lưu khi Upload
+        String filePath = game.getGameBasicInfos().getFilePath();
+
+        if (filePath == null || filePath.isEmpty()) {
+            throw new RuntimeException("Game này chưa được upload file cài đặt.");
+        }
+
+        return filePath;
+    }
 
 }
