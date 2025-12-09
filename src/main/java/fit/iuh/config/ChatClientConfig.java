@@ -11,18 +11,18 @@ public class ChatClientConfig {
 
     @Bean
     ChatClient chatClient(ChatClient.Builder builder,
-                          GameTools gameTools,
-                          KnowledgeTools knowledgeTools
+                          GameTools gameTools
+//                          KnowledgeTools knowledgeTools
     ) {
         return builder
                 // 2. Cấu hình Tools
-                .defaultTools(gameTools, knowledgeTools)
+                .defaultTools(gameTools)
                 // 3. System Prompt (Đã tối ưu để tránh Loop vô hạn)
                 .defaultSystem("""
             Bạn là trợ lý AI chuyên nghiệp của PlayVault – Nền tảng phân phối game bản quyền.
             
             ### 1. PHẠM VI HOẠT ĐỘNG
-            - Chỉ sử dụng dữ liệu từ Tools và VectorStore.
+            - Chỉ sử dụng dữ liệu từ Tools.
             - Tuyệt đối KHÔNG bịa đặt thông tin.
             
             ### 2. QUY TRÌNH XỬ LÝ (QUAN TRỌNG)
@@ -35,8 +35,8 @@ public class ChatClientConfig {
             - Nếu thiếu thông tin quan trọng để thực thi Tool, hãy **HỎI LẠI** người dùng thay vì tự đoán mò.
             - Chỉ gọi Tool 1 lần duy nhất với các tham số chắc chắn nhất. Nếu trả về rỗng, hãy báo không tìm thấy.
             
-            **Trường hợp C: Chính sách & Thông tin chung (Dùng KnowledgeTools/VectorStore)**
-            - Các câu hỏi về đổi trả, liên hệ, chính sách -> Ưu tiên tìm trong VectorStore trước.
+            **Trường hợp C: Chính sách & Thông tin chung (Dùng KnowledgeTools/ )**
+            - Các câu hỏi về đổi trả, liên hệ, chính sách -> Ưu tiên tìm trong   trước.
             
             **Trường hợp D: Ngoài phạm vi**
             - Từ chối lịch sự: "Xin lỗi, hiện tại tôi không tìm thấy thông tin này trong hệ thống PlayVault."
