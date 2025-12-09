@@ -155,7 +155,7 @@ public class GameController {
      */
     @PostMapping("/sync-vector")
     public ResponseEntity<String> syncVector() {
-        List<fit.iuh.models.Game> allGames = gameRepository.findAll();
+        List<fit.iuh.models.Game> allGames = gameRepository.findAllExcludingPendingSubmissions();
 
         if (allGames.isEmpty()) {
             return ResponseEntity.ok("Không có game nào để đồng bộ.");
@@ -220,4 +220,49 @@ public class GameController {
         List<GameDto> list = gameService.findByStatus("PENDING");
         return ResponseEntity.ok(list);
     }
+
+    @GetMapping("/search-combined")
+    public ResponseEntity<List<GameSearchResponseDto>> searchCombined(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "0.1") double threshold,
+            @PageableDefault(size = 12) Pageable pageable) {
+
+        // 1. Kết quả từ DB (search-for)
+        Page<GameSearchResponseDto> dbResultsPage = gameService.searchGamesSimple(keyword, pageable);
+        List<GameSearchResponseDto> dbResults = dbResultsPage.getContent();
+
+        // Lấy ID của các game đã có trong DB
+        List<Long> dbGameIds = dbResults.stream()
+                .map(GameSearchResponseDto::getId)
+                .toList();
+
+        // 2. Kết quả từ AI (search-ai)
+        List<Long> aiSortedIds = gameVectorService.searchGameIds(keyword, limit, threshold);
+
+        // Loại bỏ các ID đã có trong dbResults
+        List<Long> aiFilteredIds = aiSortedIds.stream()
+                .filter(id -> !dbGameIds.contains(id))
+                .toList();
+
+        // Lấy dữ liệu từ DB cho các game AI còn lại
+        List<Game> aiGamesFromDb = gameRepository.findAllById(aiFilteredIds);
+
+        Map<Long, Game> gameMap = aiGamesFromDb.stream()
+                .collect(Collectors.toMap(Game::getId, Function.identity()));
+
+        List<GameSearchResponseDto> aiResults = aiFilteredIds.stream()
+                .filter(gameMap::containsKey)
+                .map(gameMap::get)
+                .map(GameSearchResponseDto::fromEntity)
+                .toList();
+
+        // 3. Gộp kết quả: ưu tiên DB search trước, AI search bổ sung
+        List<GameSearchResponseDto> combinedResults = new ArrayList<>();
+        combinedResults.addAll(dbResults);
+        combinedResults.addAll(aiResults);
+
+        return ResponseEntity.ok(combinedResults);
+    }
+
 }

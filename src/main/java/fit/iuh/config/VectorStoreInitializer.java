@@ -36,7 +36,7 @@ public class VectorStoreInitializer {
                 // 3. Bọc logic trong transactionTemplate.execute(...)
                 // Điều này đảm bảo Session vẫn mở khi truy cập vào các thuộc tính Lazy (như description)
                 transactionTemplate.execute(status -> {
-                    List<Game> allGames = gameRepository.findAll();
+                    List<Game> allGames = gameRepository.findAllExcludingPendingSubmissions();
 
                     if (allGames.isEmpty()) {
                         log.warn("⚠️ Database chưa có game nào để đồng bộ.");

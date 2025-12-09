@@ -1,17 +1,28 @@
 package fit.iuh.dtos;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import fit.iuh.models.enums.Os;
 
 public record SystemSpecs(
-    @JsonPropertyDescription("Hệ điều hành của máy. Ví dụ: Windows, MacOS,Linux.")
-    Os os,
-    @JsonPropertyDescription("Tên CPU của máy.")
-    String cpu,
-    @JsonPropertyDescription("Tên GPU của máy.")
-    String gpu,
-    @JsonPropertyDescription("Dung lượng RAM theo GB (Nếu không biết, để null).")
-    Integer ramGB,
-    @JsonPropertyDescription("Bộ nhớ trống theo GB (Nếu không biết, để null).")
-    Integer storageGB
+
+        @JsonPropertyDescription("""
+                Hệ điều hành máy (AI có thể nhập tự do).
+                Ví dụ hợp lệ: Windows, Win 11, macOS, OSX, Linux, Ubuntu...
+                """)
+        String os,
+
+        @JsonPropertyDescription("Tên CPU của máy (ví dụ: Intel i5-10400, Ryzen 5 3600).")
+        String cpu,
+
+        @JsonPropertyDescription("Tên GPU của máy (ví dụ: GTX 1060, RTX 3060, RX 580).")
+        String gpu,
+
+        @JsonPropertyDescription("""
+                Dung lượng RAM (GB). Nếu không rõ, để null.
+                """)
+        Integer ramGB,
+
+        @JsonPropertyDescription("""
+                Bộ nhớ trống (GB). Nếu không rõ, để null.
+                """)
+        Integer storageGB
 ) {}
