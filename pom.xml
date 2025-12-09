@@ -147,11 +147,11 @@
         </dependency>
 
         <!-- Google Auth Library (xác thực bằng Service Account JSON) -->
-        <dependency>
-            <groupId>com.google.auth</groupId>
-            <artifactId>google-auth-library-oauth2-http</artifactId>
-            <version>1.33.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.google.auth</groupId>-->
+<!--            <artifactId>google-auth-library-oauth2-http</artifactId>-->
+<!--            <version>1.33.0</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.google.auth</groupId>
@@ -199,10 +199,10 @@
         </dependency>
 
         <!-- Vectorstore Qdrant -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-vector-store-qdrant</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.ai</groupId>-->
+<!--            <artifactId>spring-ai-starter-vector-store-qdrant</artifactId>-->
+<!--        </dependency>-->
 
         <!-- Advisors -->
         <dependency>
@@ -247,7 +247,7 @@
                 <configuration>
                     <url>jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true</url>
                     <user>root</user>
-                    <password>22718451</password>
+                    <password>20112004</password>
                     <cleanDisabled>false</cleanDisabled>
                 </configuration>
             </plugin>
