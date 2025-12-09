@@ -744,4 +744,13 @@ public class GameServiceImpl implements GameService {
         return filePath;
     }
 
+    @Override
+    public Page<GameSearchResponseDto> searchGamesSimple(String keyword, Pageable pageable) {
+        // Gọi repository
+        Page<Game> gamePage = gameRepository.searchByKeyword(keyword, pageable);
+
+        // Convert Entity sang DTO
+        return gamePage.map(GameSearchResponseDto::fromEntity);
+    }
+
 }

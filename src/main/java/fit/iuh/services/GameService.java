@@ -99,4 +99,6 @@ public interface GameService {
 //            Double minRating,
 //            Double maxPrice
 //    );
+
+    Page<GameSearchResponseDto> searchGamesSimple(String keyword, Pageable pageable);
 }

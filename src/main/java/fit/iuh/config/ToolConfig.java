@@ -15,8 +15,8 @@ public class ToolConfig {
         return new GameTools(gameBasicInfoService);
     }
 
-    @Bean
-    public KnowledgeTools knowledgeTools(VectorStore vectorStore) {
-        return new KnowledgeTools(vectorStore);
-    }
+//    @Bean
+//    public KnowledgeTools knowledgeTools(VectorStore vectorStore) {
+//        return new KnowledgeTools(vectorStore);
+//    }
 }
