@@ -297,24 +297,27 @@ public class GameServiceImpl implements GameService {
     @Override
     @Transactional
     public GameDetailDto approveGame(Long submissionId) {
+        // 1. Tìm yêu cầu duyệt (Submission)
         GameSubmission submission = gameSubmissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu duyệt"));
 
+        // 2. Validate trạng thái
         if (submission.getStatus() != SubmissionStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể duyệt game đang PENDING");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể duyệt game đang ở trạng thái PENDING");
         }
 
-        // Cập nhật trạng thái
-        Account admin = new Account(); admin.setUsername("admin"); // TODO: Lấy ID thật từ SecurityContext
+        // 3. Cập nhật trạng thái Submission -> APPROVED
+        Account admin = new Account();
+        admin.setUsername("admin"); // TODO: Lấy admin thực tế từ SecurityContext nếu cần
+
         submission.setStatus(SubmissionStatus.APPROVED);
         submission.setReviewerUsername(admin);
         submission.setReviewedAt(LocalDate.now());
-        GameSubmission savedSubmission = gameSubmissionRepository.save(submission);
 
         // Tạo Game Mới
         Game newGame = new Game();
         newGame.setReleaseDate(LocalDate.now());
-        newGame.setGameBasicInfos(savedSubmission.getGameBasicInfos());
+        newGame.setGameBasicInfos(submission.getGameBasicInfos());
         // Map thêm các field cần thiết nếu có
         Game savedGame = gameRepository.save(newGame);
         gameVectorService.addGames(List.of(savedGame));
@@ -677,6 +680,21 @@ public class GameServiceImpl implements GameService {
         List<Game> items = gameRepository.findAllByGameToday();
         return gameMapper.toGameDto(items);
     }
+
+//    @Override
+//    public List<Game> searchByName(String keyword) {
+//        return gameRepository.searchByName(keyword);
+//    }
+
+//    @Override
+//    public List<Game> findBySystem(String os, String cpu, String gpu, Integer ram, Integer storage) {
+//        return gameRepository.findBySystem(os, cpu, gpu, ram, storage);
+//    }
+
+//    @Override
+//    public List<Game> searchAdvanced(String os, String cpu, String gpu, Integer ram, Integer storage, String keyword, Long categoryId, Double minRating, Double maxPrice) {
+//        return gameRepository.searchAdvanced(os, cpu, gpu, ram, storage, keyword, categoryId, minRating, maxPrice);
+//    }
 
     // GameServiceImpl
     @Override

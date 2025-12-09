@@ -80,5 +80,21 @@ public interface GameService {
 
     List<GameDto> getAllByGameToday();
 
+//    List<Game> searchByName(String keyword);
+
+//    List<Game> findBySystem(String os, String cpu, String gpu, Integer ram, Integer storage);
+
+//    List<Game> searchAdvanced(
+//            String os,
+//            String cpu,
+//            String gpu,
+//            Integer ram,
+//            Integer storage,
+//            String keyword,
+//            Long categoryId,
+//            Double minRating,
+//            Double maxPrice
+//    );
+
     Page<GameSearchResponseDto> searchGamesSimple(String keyword, Pageable pageable);
 }

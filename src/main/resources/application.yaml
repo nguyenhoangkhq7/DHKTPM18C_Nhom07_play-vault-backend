@@ -6,21 +6,22 @@ spring:
     name: play-vault-backend
     api-prefix: /api
   datasource:
-    url: jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/playvaultdb?createDatabaseIfNotExist=true
     username: root
-    password: 20112004
+    password: 22718451
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   servlet:
     multipart:
       max-file-size: 100GB
       max-request-size: 100GB
-  ai:
-    ollama:
-      base-url: http://localhost:11434  # URL mặc định của Ollama
-      embedding:
-        model: bge-m3:latest       # Tên model bạn đã pull về
-      chat:
-        enabled: false
+#  ai:
+#    ollama:
+#      base-url: http://localhost:11434  # URL mặc định của Ollama
+#      embedding:
+#        model: nomic-embed-text       # Tên model bạn đã pull về
+#      chat:
+#        enabled: false
 
   jpa:
     hibernate:
@@ -33,8 +34,9 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 30000 # 5min
-    refreshTokenExpiration: 604800 # 7 days
+    accessTokenExpiration: 30000
+    refreshTokenExpiration: 604800
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -50,6 +52,30 @@ spring:
     default-encoding: UTF-8
     test-connection: true
 
+  ai:
+    vectorstore:
+      qdrant:
+        initialize-schema: true
+        collection-name: playvault_collection
+        vector-dimension: 768
+        host: localhost
+        port: 6334
+        use-tls: false
+
+    ollama:
+      base-url: http://localhost:11434
+
+      # CHỈ DÙNG EMBEDDING – KHÔNG CẦN CHAT
+      embedding:
+        options:
+          model: bge-m3:latest   # SIÊU NHẸ + SIÊU CHUẨN
+      chat:
+        options:
+          model: qwen2.5:3b   # Hoặc "llama3.2:3b" hoặc "qwen2.5:1.5b"
+          temperature: 0.3     # Để thấp (0.3 - 0.5) giúp model tập trung dùng tool chính xác hơn
+          keep_alive: "60m"
+          num-ctx: 2048
+
 gdrive:
   oauth:
     client-id: ${GOOGLE_CLIENT_ID}
@@ -58,21 +84,16 @@ gdrive:
     tokens-file: ./gdrive-oauth-tokens.json
   parent-folder-id: "1R1qSJPn2ktOyJQXz0BfEErPx7TdZYZrA"
 
+logging:
+  level:
+    # Bật DEBUG log để hiển thị chi tiết JSON Payload và HTTP Request gửi tới Ollama
+    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
 payment:
   vnPay:
-#    url: ${PAY_URL}
-#    tmnCode: ${TMN_CODE}
-#    secretKey: ${SECRET_KEY}
-#    returnUrl: ${RETURN_URL}
-#    version: ${VERSION}
-#    command: ${COMMAND}
-#    orderType: ${ORDER_TYPE}
-
-    # Các giá trị này khớp với @Value("${payment.vnPay...}") trong VNPAYConfig.java
-    url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-    returnUrl: http://localhost:8080/api/v1/payment/vn-pay-callback
-    tmnCode: 58X4B4HP
-    secretKey: VRLDWNVWDNPCOEPBZUTWSEDQAGXJCNGZ
-    version: 2.1.0
-    command: pay
-    orderType: other
+    url: ${PAY_URL}
+    tmnCode: ${TMN_CODE}
+    secretKey: ${SECRET_KEY}
+    returnUrl: ${RETURN_URL}
+    version: ${VERSION}
+    command: ${COMMAND}
+    orderType: ${ORDER_TYPE}
