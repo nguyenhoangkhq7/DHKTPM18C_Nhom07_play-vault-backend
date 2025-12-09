@@ -29,6 +29,4 @@ public class AdminInvoiceController {
         Page<InvoiceTableDto> result = invoiceService.getInvoicesForAdmin(keyword, status,pageable);
         return ResponseEntity.ok(result);
     }
-
-
 }
