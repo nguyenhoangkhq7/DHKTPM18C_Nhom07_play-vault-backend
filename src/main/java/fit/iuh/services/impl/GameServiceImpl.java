@@ -314,15 +314,31 @@ public class GameServiceImpl implements GameService {
         submission.setReviewerUsername(admin);
         submission.setReviewedAt(LocalDate.now());
 
-        // Tạo Game Mới
-        Game newGame = new Game();
-        newGame.setReleaseDate(LocalDate.now());
-        newGame.setGameBasicInfos(savedSubmission.getGameBasicInfos());
-        // Map thêm các field cần thiết nếu có
-        Game savedGame = gameRepository.save(newGame);
-        gameVectorService.addGames(List.of(savedGame));
+        // Lưu thay đổi vào bảng game_submissions
+        gameSubmissionRepository.save(submission);
 
-        return GameDetailDto.fromEntity(savedGame);
+        // 4. Lấy thông tin Game đã tồn tại (KHÔNG TẠO MỚI)
+        // Vì lúc createPending đã tạo Game rồi, giờ ta chỉ cần tìm lại nó.
+        Long basicInfoId = submission.getGameBasicInfos().getId();
+
+        // Tìm game dựa trên GameBasicInfo ID
+        // Lưu ý: Bạn cần đảm bảo GameRepository có hàm findByGameBasicInfos_Id
+        // Hoặc nếu bảng Games dùng chung ID với BasicInfo thì dùng findById(basicInfoId)
+        Game existingGame = gameRepository.findByGameBasicInfos_Id(basicInfoId);
+
+        if (existingGame == null) {
+            // Fallback: Thử tìm bằng ID nếu cấu hình OneToOne @MapsId
+            existingGame = gameRepository.findById(basicInfoId)
+                    .orElseThrow(() -> new RuntimeException("Lỗi dữ liệu: Không tìm thấy Game gốc trong database"));
+        }
+
+        // (Tuỳ chọn) Cập nhật ngày phát hành chính thức là ngày duyệt
+        existingGame.setReleaseDate(LocalDate.now());
+
+        gameVectorService.addGames(List.of(existingGame));
+
+        // Lưu cập nhật Game (nếu có thay đổi) và trả về DTO
+        return GameDetailDto.fromEntity(gameRepository.save(existingGame));
     }
 
     @Override
