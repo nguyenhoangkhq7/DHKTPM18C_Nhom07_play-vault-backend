@@ -174,7 +174,7 @@ public class GameVectorService {
         if (info.getDescription() != null) {
             // Cắt bớt nếu mô tả quá dài (>1000 ký tự) để tiết kiệm token và tránh nhiễu
             String desc = info.getDescription();
-            if (desc.length() > 5000) desc = desc.substring(0, 5000);
+            if (desc.length() > 1000) desc = desc.substring(0, 1000);
             content.append("Description: ").append(desc).append("\n");
         }
 

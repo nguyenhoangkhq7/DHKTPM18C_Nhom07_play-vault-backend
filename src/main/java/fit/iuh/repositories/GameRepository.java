@@ -217,13 +217,12 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
         // THÊM ĐIỀU KIỆN LOẠI TRỪ:
         // 1. Game không có submission nào (s is NULL) thì vẫn hiển thị.
         // 2. Hoặc trạng thái submission (s.status) KHÔNG phải là PENDING.
-        "AND (s IS NULL OR s.status <> fit.iuh.models.enums.SubmissionStatus.PENDING)")
+        "AND (s IS NULL OR s.status = fit.iuh.models.enums.SubmissionStatus.APPROVED)")
     Page<Game> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
 
     @Query("SELECT g FROM Game g " +
-            // LEFT JOIN qua GameBasicInfo (info) -> GameSubmission (s)
             "LEFT JOIN g.gameBasicInfos.submission s " +
-            "WHERE s IS NULL OR s.status <> fit.iuh.models.enums.SubmissionStatus.PENDING")
+            "WHERE s IS NULL OR s.status = fit.iuh.models.enums.SubmissionStatus.APPROVED")
     List<Game> findAllExcludingPendingSubmissions();
 }
