@@ -33,4 +33,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // fit.iuh.repositories.OrderRepository.java
     List<Order> findByCustomer_Account_UsernameAndStatusOrderByCreatedAtDesc(
             String username, OrderStatus status);
+
+    boolean existsByCustomer_Account_UsernameAndStatusAndOrderItems_Game_Id(
+            String username,
+            OrderStatus status,
+            Long gameId
+    );
 }

@@ -3,6 +3,7 @@ package fit.iuh.controllers;
 import fit.iuh.dtos.*;
 import fit.iuh.models.Game;
 import fit.iuh.models.GameBasicInfo;
+import fit.iuh.models.enums.SubmissionStatus;
 import fit.iuh.repositories.GameRepository;
 import fit.iuh.services.GameBasicInfoService;
 import fit.iuh.dtos.GameDto;
@@ -65,10 +66,15 @@ public class GameController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) SubmissionStatus status,
             @PageableDefault(size = 12) Pageable pageable // Mặc định 12 game/trang
     ) {
+        if (status == null) {
+            status = SubmissionStatus.APPROVED;
+        }
+
         Page<GameSearchResponseDto> games = gameService.searchAndFilterGames(
-                keyword, categoryId, minPrice, maxPrice, pageable);
+                keyword, categoryId, minPrice, maxPrice, status, pageable);
 
         return ResponseEntity.ok(games);
     }

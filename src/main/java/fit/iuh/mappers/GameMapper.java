@@ -38,6 +38,7 @@ public interface GameMapper {
     @Mapping(source = "gameBasicInfos.name", target = "name")
     @Mapping(source = "gameBasicInfos.thumbnail", target = "thumbnail")
     @Mapping(source = "gameBasicInfos.price", target = "price")
+    @Mapping(source = "gameBasicInfos.category.name", target = "categoryName")
     GameCardDto toCardDto(Game game);
 
     // ⭐ Thêm hàm List cho CardDto

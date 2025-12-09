@@ -71,6 +71,8 @@ public class GameServiceImpl implements GameService {
     private final PreviewImageRepository previewImageRepository;
 
     private final GameVectorService gameVectorService;
+    private final OrderRepository orderRepository;
+
     // ========================================================================
     // 1. TÌM KIẾM & LỌC NÂNG CAO (Specification + Pagination)
     // ========================================================================
@@ -81,12 +83,13 @@ public class GameServiceImpl implements GameService {
             Long categoryId,
             Double minPrice,
             Double maxPrice,
+            SubmissionStatus status,
             Pageable pageable) {
 
         BigDecimal minPriceBd = minPrice != null ? BigDecimal.valueOf(minPrice) : null;
         BigDecimal maxPriceBd = maxPrice != null ? BigDecimal.valueOf(maxPrice) : null;
 
-        Specification<Game> spec = GameSpecification.filterBy(keyword, categoryId, minPriceBd, maxPriceBd);
+        Specification<Game> spec = GameSpecification.filterBy(keyword, categoryId, minPriceBd, maxPriceBd, status);
 
         // Lấy danh sách Game từ DB
         Page<Game> gamePage = gameRepository.findAll(spec, pageable);
@@ -314,15 +317,31 @@ public class GameServiceImpl implements GameService {
         submission.setReviewerUsername(admin);
         submission.setReviewedAt(LocalDate.now());
 
-        // Tạo Game Mới
-        Game newGame = new Game();
-        newGame.setReleaseDate(LocalDate.now());
-        newGame.setGameBasicInfos(submission.getGameBasicInfos());
-        // Map thêm các field cần thiết nếu có
-        Game savedGame = gameRepository.save(newGame);
-        gameVectorService.addGames(List.of(savedGame));
+        // Lưu thay đổi vào bảng game_submissions
+        gameSubmissionRepository.save(submission);
 
-        return GameDetailDto.fromEntity(savedGame);
+        // 4. Lấy thông tin Game đã tồn tại (KHÔNG TẠO MỚI)
+        // Vì lúc createPending đã tạo Game rồi, giờ ta chỉ cần tìm lại nó.
+        Long basicInfoId = submission.getGameBasicInfos().getId();
+
+        // Tìm game dựa trên GameBasicInfo ID
+        // Lưu ý: Bạn cần đảm bảo GameRepository có hàm findByGameBasicInfos_Id
+        // Hoặc nếu bảng Games dùng chung ID với BasicInfo thì dùng findById(basicInfoId)
+        Game existingGame = gameRepository.findByGameBasicInfos_Id(basicInfoId);
+
+        if (existingGame == null) {
+            // Fallback: Thử tìm bằng ID nếu cấu hình OneToOne @MapsId
+            existingGame = gameRepository.findById(basicInfoId)
+                    .orElseThrow(() -> new RuntimeException("Lỗi dữ liệu: Không tìm thấy Game gốc trong database"));
+        }
+
+        // (Tuỳ chọn) Cập nhật ngày phát hành chính thức là ngày duyệt
+        existingGame.setReleaseDate(LocalDate.now());
+
+        gameVectorService.addGames(List.of(existingGame));
+
+        // Lưu cập nhật Game (nếu có thay đổi) và trả về DTO
+        return GameDetailDto.fromEntity(gameRepository.save(existingGame));
     }
 
     @Override
@@ -703,6 +722,27 @@ public class GameServiceImpl implements GameService {
         return submissionRepository.findFirstByGameBasicInfos_IdOrderBySubmittedAtDesc(gameId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public String getGameFileName(Long gameId) {
+        // 1. Tìm Game theo ID
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("Game không tồn tại với ID: " + gameId));
+
+        // 2. Lấy thông tin cơ bản
+        if (game.getGameBasicInfos() == null) {
+            throw new RuntimeException("Dữ liệu game bị lỗi (thiếu Basic Info)");
+        }
+
+        // 3. Lấy đường dẫn file (FilePath) đã lưu khi Upload
+        String filePath = game.getGameBasicInfos().getFilePath();
+
+        if (filePath == null || filePath.isEmpty()) {
+            throw new RuntimeException("Game này chưa được upload file cài đặt.");
+        }
+
+        return filePath;
+    }
 
     @Override
     public Page<GameSearchResponseDto> searchGamesSimple(String keyword, Pageable pageable) {

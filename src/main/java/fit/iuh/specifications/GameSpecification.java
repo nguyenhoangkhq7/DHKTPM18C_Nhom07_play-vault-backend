@@ -13,34 +13,63 @@ import java.util.List;
 public class GameSpecification {
 
     public static Specification<Game> filterBy(
-            String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice) {
+            String keyword,
+            Long categoryId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            SubmissionStatus status // 👈 Thêm tham số Status vào đây
+    ) {
 
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // *** Bước quan trọng: JOIN từ Game (root) sang GameBasicInfo ***
-            Join<Game, GameBasicInfo> basicInfoJoin = root.join("gameBasicInfos");
+            // 1. JOIN Game -> GameBasicInfo (Bắt buộc)
+            Join<Game, GameBasicInfo> basicInfoJoin = root.join("gameBasicInfos", JoinType.INNER);
 
-            // 1. Lọc theo keyword (Search)
-            // Tìm trong 'name' của GameBasicInfo
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String searchKeyword = "%" + keyword.toLowerCase() + "%";
-                Predicate nameLike = cb.like(cb.lower(basicInfoJoin.get("name")), searchKeyword);
-                // Bạn cũng có thể tìm trong description nếu muốn:
-                // Predicate descLike = cb.like(cb.lower(basicInfoJoin.get("description")), searchKeyword);
-                // predicates.add(cb.or(nameLike, descLike));
-                predicates.add(nameLike);
+            // ---------------------------------------------------------
+            // 2. Lọc theo STATUS (QUAN TRỌNG)
+            // Sử dụng Subquery như cách bạn đã làm trong filterApprovedGames
+            // ---------------------------------------------------------
+            if (status != null) {
+                Subquery<Long> subquery = query.subquery(Long.class);
+                Root<GameSubmission> subRoot = subquery.from(GameSubmission.class);
+
+                // Select ID của GameBasicInfo từ bảng Submission
+                // Giả sử GameSubmission có quan hệ với GameBasicInfos tên là "gameBasicInfos"
+                subquery.select(subRoot.get("gameBasicInfos").get("id"));
+                subquery.where(cb.equal(subRoot.get("status"), status));
+
+                // Điều kiện: ID của BasicInfo hiện tại phải nằm trong list ID trả về từ Subquery
+                predicates.add(basicInfoJoin.get("id").in(subquery));
             }
 
-            // 2. Lọc theo Thể loại (Category)
-            // Lấy 'category' từ 'basicInfoJoin'
+            // ---------------------------------------------------------
+            // 3. Lọc theo KEYWORD (Tìm theo Tên Game HOẶC Tên Studio)
+            // ---------------------------------------------------------
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchKeyword = "%" + keyword.toLowerCase().trim() + "%";
+
+                // a. Tìm theo tên Game
+                Predicate nameLike = cb.like(cb.lower(basicInfoJoin.get("name")), searchKeyword);
+
+                // b. Tìm theo tên Publisher (Studio Name)
+                Join<GameBasicInfo, Publisher> publisherJoin = basicInfoJoin.join("publisher", JoinType.LEFT);
+                Predicate publisherLike = cb.like(cb.lower(publisherJoin.get("studioName")), searchKeyword);
+
+                // Gộp lại: (Name LIKE ... OR Publisher LIKE ...)
+                predicates.add(cb.or(nameLike, publisherLike));
+            }
+
+            // ---------------------------------------------------------
+            // 4. Lọc theo Category ID
+            // ---------------------------------------------------------
             if (categoryId != null) {
-                // Tương đương JOIN GameBasicInfo -> Category
                 predicates.add(cb.equal(basicInfoJoin.get("category").get("id"), categoryId));
             }
 
-            // 3. Lọc theo Giá (Price)
-            // Lấy 'price' từ 'basicInfoJoin'
+            // ---------------------------------------------------------
+            // 5. Lọc theo Giá (Min/Max)
+            // ---------------------------------------------------------
             if (minPrice != null) {
                 predicates.add(cb.greaterThanOrEqualTo(basicInfoJoin.get("price"), minPrice));
             }
@@ -49,7 +78,7 @@ public class GameSpecification {
                 predicates.add(cb.lessThanOrEqualTo(basicInfoJoin.get("price"), maxPrice));
             }
 
-            // Cần distinct để tránh trùng lặp kết quả khi join
+            // Distinct để tránh duplicate record do JOIN
             query.distinct(true);
 
             return cb.and(predicates.toArray(new Predicate[0]));
