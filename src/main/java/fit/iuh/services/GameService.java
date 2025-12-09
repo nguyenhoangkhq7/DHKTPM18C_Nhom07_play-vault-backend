@@ -7,6 +7,7 @@ import fit.iuh.dtos.*;
 import fit.iuh.models.Game;
 import fit.iuh.dtos.GameWithRatingDto;
 import fit.iuh.models.GameSubmission;
+import fit.iuh.models.enums.SubmissionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ public interface GameService {
             Long categoryId,
             Double minPrice,
             Double maxPrice,
+            SubmissionStatus status,
             Pageable pageable);
 
     GameWithRatingDto getGameWithRatingById(Long id);

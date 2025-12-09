@@ -78,12 +78,13 @@ public class GameServiceImpl implements GameService {
             Long categoryId,
             Double minPrice,
             Double maxPrice,
+            SubmissionStatus status,
             Pageable pageable) {
 
         BigDecimal minPriceBd = minPrice != null ? BigDecimal.valueOf(minPrice) : null;
         BigDecimal maxPriceBd = maxPrice != null ? BigDecimal.valueOf(maxPrice) : null;
 
-        Specification<Game> spec = GameSpecification.filterBy(keyword, categoryId, minPriceBd, maxPriceBd);
+        Specification<Game> spec = GameSpecification.filterBy(keyword, categoryId, minPriceBd, maxPriceBd, status);
 
         // Lấy danh sách Game từ DB
         Page<Game> gamePage = gameRepository.findAll(spec, pageable);
