@@ -28,4 +28,13 @@ public interface OrderMapper {
         if (id == null) return null;
         return String.format("ORD-%03d", id);
     }
+
+    @Mapping(target = "orderCode", expression = "java(\"ORD-\" + String.format(\"%03d\", order.getId()))") // Tạo mã HD001
+    @Mapping(source = "customer.fullName", target = "customerName")
+    @Mapping(source = "customer.account.email", target = "email")
+    @Mapping(target = "gameCount", expression = "java(order.getOrderItems() != null ? order.getOrderItems().size() : 0)")
+    @Mapping(source = "total", target = "total")
+    @Mapping(source = "createdAt", target = "createdAt")
+    @Mapping(source = "status", target = "status")
+    OrderTableDto toTableDto(Order order);
 }
