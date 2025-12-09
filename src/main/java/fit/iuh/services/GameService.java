@@ -79,4 +79,6 @@ public interface GameService {
     Optional<GameSubmission> getLatestSubmissionByGameId(Long gameId);
 
     List<GameDto> getAllByGameToday();
+
+    Page<GameSearchResponseDto> searchGamesSimple(String keyword, Pageable pageable);
 }

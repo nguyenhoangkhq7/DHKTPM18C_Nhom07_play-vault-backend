@@ -87,7 +87,7 @@ public class DriveService {
         drive().files().delete(fileId).execute();
     }
 
-    private final com.google.api.services.drive.Drive drive;
+//    private final com.google.api.services.drive.Drive drive;
 
     public String uploadImageAndGetEmbeddableUrl(MultipartFile multipart) throws Exception {
         var meta = new com.google.api.services.drive.model.File()
@@ -97,12 +97,12 @@ public class DriveService {
         multipart.transferTo(temp);
 
         var media = new com.google.api.client.http.FileContent(multipart.getContentType(), temp);
-        var uploaded = drive.files().create(meta, media).setFields("id").execute();
+        var uploaded = drive().files().create(meta, media).setFields("id").execute();
         String fileId = uploaded.getId();
 
         var perm = new com.google.api.services.drive.model.Permission()
                 .setType("anyone").setRole("reader");
-        drive.permissions().create(fileId, perm).setFields("id").execute();
+        drive().permissions().create(fileId, perm).setFields("id").execute();
 
         temp.delete();
 

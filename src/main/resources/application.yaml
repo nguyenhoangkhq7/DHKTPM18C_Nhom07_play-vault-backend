@@ -18,7 +18,7 @@ spring:
     ollama:
       base-url: http://localhost:11434  # URL mặc định của Ollama
       embedding:
-        model: nomic-embed-text       # Tên model bạn đã pull về
+        model: bge-m3:latest       # Tên model bạn đã pull về
       chat:
         enabled: false
 
@@ -60,10 +60,19 @@ gdrive:
 
 payment:
   vnPay:
-    url: ${PAY_URL}
-    tmnCode: ${TMN_CODE}
-    secretKey: ${SECRET_KEY}
-    returnUrl: ${RETURN_URL}
-    version: ${VERSION}
-    command: ${COMMAND}
-    orderType: ${ORDER_TYPE}
+#    url: ${PAY_URL}
+#    tmnCode: ${TMN_CODE}
+#    secretKey: ${SECRET_KEY}
+#    returnUrl: ${RETURN_URL}
+#    version: ${VERSION}
+#    command: ${COMMAND}
+#    orderType: ${ORDER_TYPE}
+
+    # Các giá trị này khớp với @Value("${payment.vnPay...}") trong VNPAYConfig.java
+    url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    returnUrl: http://localhost:8080/api/v1/payment/vn-pay-callback
+    tmnCode: 58X4B4HP
+    secretKey: VRLDWNVWDNPCOEPBZUTWSEDQAGXJCNGZ
+    version: 2.1.0
+    command: pay
+    orderType: other

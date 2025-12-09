@@ -73,6 +73,17 @@ public class GameController {
         return ResponseEntity.ok(games);
     }
 
+    @GetMapping("/search-for")
+    public ResponseEntity<Page<GameSearchResponseDto>> searchGames(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 12) Pageable pageable
+    ) {
+        // Gọi Service xử lý logic tìm kiếm chuẩn
+        Page<GameSearchResponseDto> result = gameService.searchGamesSimple(keyword, pageable);
+
+        return ResponseEntity.ok(result);
+    }
+
     // ========================================================================
     // SỬA: Lấy chi tiết Game, kiểm tra quyền sở hữu (Buy & Download Logic)
     // ========================================================================
@@ -162,7 +173,7 @@ public class GameController {
     public ResponseEntity<List<GameSearchResponseDto>> searchSemantic(
             @RequestParam String query,
             @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "0.6") double threshold) { // Cho phép chỉnh ngưỡng từ API
+            @RequestParam(defaultValue = "0.1") double threshold) { // Cho phép chỉnh ngưỡng từ API
 
         // 1. Lấy danh sách ID đã được AI sắp xếp theo độ giống
         List<Long> aiSortedIds = gameVectorService.searchGameIds(query, limit, threshold);

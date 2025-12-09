@@ -142,4 +142,12 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     List<Object[]> findStatsForGameIds(@Param("ids") List<Long> ids);
     @Query("SELECT oi FROM Order o JOIN o.customer ci join ci.library oi WHERE o.createdAt = current_date() AND o.status = 'COMPLETED'")  // Tinh chỉnh: uppercase SELECT, thêm () cho current_date
     List<Game> findAllByGameToday();
+
+    @Query("SELECT g FROM Game g " +
+            "LEFT JOIN g.gameBasicInfos info " +
+            "LEFT JOIN info.category cat " +
+            "WHERE (:keyword IS NULL OR :keyword = '' OR " +
+            "LOWER(info.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " + // Tên chứa keyword
+            "OR LOWER(cat.name) = LOWER(:keyword))")                     // Hoặc Thể loại BẰNG keyword
+    Page<Game> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }
