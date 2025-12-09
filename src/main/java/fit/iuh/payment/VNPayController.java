@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("${spring.application.api-prefix}/payment")
+@RequestMapping("api/payment")
 @RequiredArgsConstructor
 public class VNPayController {
     private final VNPayService paymentService;
