@@ -195,4 +195,16 @@ public class GameVectorService {
                 && !g.getGameBasicInfos().getDescription().isEmpty();
     }
 
+    public List<Long> getAllVectorIds() {
+        return vectorStore.similaritySearch(
+                        SearchRequest.builder()
+                                .query("")      // query rỗng để lấy toàn bộ
+                                .topK(9999)     // lấy tối đa tất cả
+                                .similarityThreshold(0.0) // không lọc
+                                .build()
+                ).stream()
+                .map(doc -> Long.parseLong(doc.getMetadata().get("gameId").toString()))
+                .collect(Collectors.toList());
+    }
+
 }

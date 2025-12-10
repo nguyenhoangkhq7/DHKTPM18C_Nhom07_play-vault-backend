@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -234,58 +235,75 @@ public class GameController {
     public ResponseEntity<Page<GameSearchResponseDto>> searchCombined(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0.5") double threshold,
-            @PageableDefault(size = 12) Pageable pageable
+            @PageableDefault(size = 16) Pageable pageable
     ) {
-        List<Long> finalIds;
 
-        if (keyword == null || keyword.isBlank()) {
-            // Nếu không có keyword, trả về rỗng hoặc tất cả (tùy logic của bạn)
-            return ResponseEntity.ok(Page.empty(pageable));
+        boolean emptyKeyword = (keyword == null || keyword.trim().isEmpty());
+
+        // ============================================================
+        // 1. Nếu keyword rỗng => chỉ chạy search DB + phân trang bình thường
+        // ============================================================
+        if (emptyKeyword) {
+            Page<GameSearchResponseDto> page = gameService.searchGamesSimple(null, pageable);
+            return ResponseEntity.ok(page);
         }
 
-        // 1. Lấy List ID từ DB (Tìm chính xác theo tên)
-        List<Long> dbIds = gameRepository.findIdsByNameContaining(keyword);
+        // ============================================================
+        // 2. Nếu có keyword => chạy combined search (DB + AI)
+        // ============================================================
+        // 2.1 Lấy ID từ DB
+        Page<GameSearchResponseDto> dbResult =
+                gameService.searchGamesSimple(keyword, Pageable.unpaged());
 
-        // 2. Lấy List ID từ AI (Tìm theo ngữ nghĩa - lấy rộng hơn page size để bù đắp)
-        // Lấy khoảng 50-100 kết quả AI để đảm bảo phong phú
+        List<Long> dbIds = dbResult.getContent()
+                .stream()
+                .map(GameSearchResponseDto::getId)
+                .toList();
+
+        // 2.2 Lấy ID từ AI
         int aiLimit = 60;
-        List<Long> aiIds = gameVectorService.searchGameIds(keyword, aiLimit, threshold);
+        List<Long> aiIds = gameVectorService.searchGameIds(
+                keyword,
+                aiLimit,
+                threshold
+        );
 
-        // 3. Gộp ID (Dùng LinkedHashSet để giữ thứ tự và loại bỏ trùng lặp)
-        // Logic: Ưu tiên kết quả khớp tên (DB) trước, sau đó đến kết quả AI gợi ý
-        java.util.Set<Long> combinedSet = new java.util.LinkedHashSet<>(dbIds);
-        combinedSet.addAll(aiIds);
+        // 2.3 Gộp kết quả, ưu tiên DB trước
+        LinkedHashSet<Long> mergedIds = new LinkedHashSet<>();
+        mergedIds.addAll(dbIds);
+        mergedIds.addAll(aiIds);
 
-        // Chuyển về List để xử lý phân trang
-        List<Long> allSortedIds = new ArrayList<>(combinedSet);
+        List<Long> sortedIds = new ArrayList<>(mergedIds);
 
-        // 4. Xử lý Phân trang thủ công (In-Memory Pagination) trên danh sách ID
+        // ============================================================
+        // 3. Phân trang thủ công
+        // ============================================================
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), allSortedIds.size());
+        int end = Math.min(start + pageable.getPageSize(), sortedIds.size());
 
-        // Nếu trang yêu cầu vượt quá số lượng kết quả
-        if (start >= allSortedIds.size()) {
-            return ResponseEntity.ok(new PageImpl<>(List.of(), pageable, allSortedIds.size()));
+        if (start >= sortedIds.size()) {
+            return ResponseEntity.ok(new PageImpl<>(List.of(), pageable, sortedIds.size()));
         }
 
-        // Cắt lấy danh sách ID của trang hiện tại
-        List<Long> pageIds = allSortedIds.subList(start, end);
+        List<Long> pageIds = sortedIds.subList(start, end);
 
-        // 5. Fetch dữ liệu chi tiết từ DB theo danh sách ID đã cắt
-        List<Game> gamesFromDb = gameRepository.findAllById(pageIds);
+        // ============================================================
+        // 4. Lấy dữ liệu chi tiết
+        // ============================================================
+        List<Game> games = gameRepository.findAllById(pageIds);
 
-        // 6. Map và Sắp xếp lại theo đúng thứ tự của pageIds
-        Map<Long, Game> gameMap = gamesFromDb.stream()
+        Map<Long, Game> map = games.stream()
                 .collect(Collectors.toMap(Game::getId, Function.identity()));
 
-        List<GameSearchResponseDto> content = pageIds.stream()
-                .filter(gameMap::containsKey)
-                .map(gameMap::get)
+        List<GameSearchResponseDto> result = pageIds.stream()
+                .filter(map::containsKey)
+                .map(map::get)
                 .map(gameMapper::toSearchResponseDto)
-                .collect(Collectors.toList());
+                .toList();
 
-        // Trả về đối tượng Page hoàn chỉnh
-        return ResponseEntity.ok(new PageImpl<>(content, pageable, allSortedIds.size()));
+        return ResponseEntity.ok(new PageImpl<>(result, pageable, sortedIds.size()));
     }
+
+
 
 }
