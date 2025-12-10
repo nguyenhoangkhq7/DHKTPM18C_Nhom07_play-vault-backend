@@ -235,7 +235,7 @@ public class GameController {
     public ResponseEntity<Page<GameSearchResponseDto>> searchCombined(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0.5") double threshold,
-            @PageableDefault(size = 16) Pageable pageable
+            @PageableDefault(size = 12) Pageable pageable
     ) {
 
         boolean emptyKeyword = (keyword == null || keyword.trim().isEmpty());
