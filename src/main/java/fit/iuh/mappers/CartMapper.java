@@ -29,6 +29,7 @@ public interface CartMapper {
     @Mapping(target = "gameName", source = "game.gameBasicInfos.name")
     @Mapping(target = "thumbnail", source = "game.gameBasicInfos.thumbnail")
     @Mapping(target = "originalPrice", source = "price")
+    @Mapping(target = "discount", source = "discount")
     @Mapping(target = "finalPrice", expression = "java(calculateFinalPrice(cartItem))")
     CartItemResponse toCartItemResponse(CartItem cartItem);
 
@@ -56,4 +57,5 @@ public interface CartMapper {
         // Đảm bảo giá cuối cùng không bao giờ bị âm
         return finalPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : finalPrice;
     }
+
 }

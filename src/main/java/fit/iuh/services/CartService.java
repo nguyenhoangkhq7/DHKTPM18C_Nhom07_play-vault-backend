@@ -98,6 +98,41 @@ public class CartService {
 
         return cartMapper.toCartResponse(cart);
     }
+    @Transactional
+    public void addToCart(String username, Long gameId) {
+        Cart cart = findOrCreateCartByUsername(username);
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("Game not found"));
+
+        // Lấy giá gốc
+        BigDecimal basePrice = game.getGameBasicInfos() != null ?
+                game.getGameBasicInfos().getPrice() : BigDecimal.ZERO;
+
+        // 🎯 LOGIC TÍNH DISCOUNT AMOUNT 🎯
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (game.getPromotion() != null) {
+            // Sử dụng phương thức tính toán từ entity Promotion
+            discountAmount = game.getPromotion().calculateDiscount(basePrice);
+        }
+
+        // --------------------------------------------------------------------
+        // KIỂM TRA: Game này đã tồn tại trong giỏ chưa? (Thường giỏ hàng game không cho thêm trùng)
+        // Nếu bạn muốn đảm bảo không thêm trùng:
+        // cartItemRepository.findByCartAndGame(cart, game).ifPresent(item -> {
+        //      throw new RuntimeException("Game đã có trong giỏ hàng.");
+        // });
+        // Nếu code hiện tại của bạn là cho phép thêm trùng: (vì không có check exists)
+
+        CartItem newItem = new CartItem();
+        newItem.setCart(cart);
+        newItem.setGame(game);
+        newItem.setPrice(basePrice);
+
+        // 🎯 Gán số tiền giảm giá đã tính toán 🎯
+        newItem.setDiscount(discountAmount);
+
+        cartItemRepository.save(newItem);
+    }
 
 
     // ========================================================================
@@ -130,18 +165,18 @@ public class CartService {
     // ========================================================================
     // 4. THÊM GAME VÀO GIỎ (phiên bản từ đoạn 2 – giữ lại vì Controller đang dùng)
     // ========================================================================
-    @Transactional
-    public void addToCart(String username, Long gameId) {
-        Cart cart = findOrCreateCartByUsername(username);
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new RuntimeException("Game not found"));
-        CartItem newItem = new CartItem();
-        newItem.setCart(cart);
-        newItem.setGame(game);
-        newItem.setPrice(game.getGameBasicInfos() != null ? game.getGameBasicInfos().getPrice() : BigDecimal.ZERO);
-        newItem.setDiscount(BigDecimal.ZERO);
-        cartItemRepository.save(newItem);
-    }
+//    @Transactional
+//    public void addToCart(String username, Long gameId) {
+//        Cart cart = findOrCreateCartByUsername(username);
+//        Game game = gameRepository.findById(gameId)
+//                .orElseThrow(() -> new RuntimeException("Game not found"));
+//        CartItem newItem = new CartItem();
+//        newItem.setCart(cart);
+//        newItem.setGame(game);
+//        newItem.setPrice(game.getGameBasicInfos() != null ? game.getGameBasicInfos().getPrice() : BigDecimal.ZERO);
+//        newItem.setDiscount(BigDecimal.ZERO);
+//        cartItemRepository.save(newItem);
+//    }
 
 
 

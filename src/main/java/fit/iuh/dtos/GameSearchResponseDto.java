@@ -30,6 +30,7 @@ public class GameSearchResponseDto {
     private Long downloads; // Số lượt tải
     private Double revenue; // Doanh thu thực tế
     private String reviewedAt;
+    private BigDecimal discount;
     // =======================================================================
     // PHƯƠNG THỨC TƯƠNG THÍCH NGƯỢC (BACKWARD COMPATIBILITY)
     // Giúp GameDto.java cũ gọi setThumbnail/setCategoryName không bị lỗi

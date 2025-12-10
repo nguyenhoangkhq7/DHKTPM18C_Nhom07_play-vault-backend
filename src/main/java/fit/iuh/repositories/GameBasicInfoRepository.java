@@ -33,6 +33,9 @@ public interface GameBasicInfoRepository extends JpaRepository<GameBasicInfo, Lo
 """)
     List<GameInfoAI> findInfosByName(@Param("name") String name);
 
+    @Query("Select gb from Customer c join c.cart join CartItem ci join Game g join GameBasicInfo gb where c.id = :customerId")
+    List<GameBasicInfo> findAllGameCartByCustomerId(@Param("customerId") Long customerId);
+
 
     @Query("""
     SELECT new fit.iuh.dtos.GameInfoAI(
