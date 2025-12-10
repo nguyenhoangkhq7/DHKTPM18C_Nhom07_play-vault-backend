@@ -24,11 +24,9 @@ public class AdminInvoiceController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false, defaultValue = "ALL") String status)
-            {
+    {
         Pageable pageable = PageRequest.of(page, size);
         Page<InvoiceTableDto> result = invoiceService.getInvoicesForAdmin(keyword, status,pageable);
         return ResponseEntity.ok(result);
     }
-
-
 }

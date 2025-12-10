@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -28,12 +29,10 @@ public class Invoice {
    @Column(name = "status", nullable = false, length = 50)
    private InvoiceStatus status;
 
-   @OneToOne(fetch = FetchType.LAZY, optional = false)
-   @JoinColumn(name = "order_id", nullable = false)
-   private Order order;
-
    @ManyToOne(fetch = FetchType.LAZY, optional = false)
    @JoinColumn(name = "customer_id", nullable = false)
    private Customer customer;
 
+   @OneToMany(mappedBy = "invoice", fetch = FetchType.LAZY)
+   private List<Payment> payments;
 }
