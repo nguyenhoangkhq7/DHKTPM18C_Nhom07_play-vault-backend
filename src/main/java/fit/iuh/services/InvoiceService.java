@@ -21,15 +21,6 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceMapper invoiceMapper;
 
-    @Transactional(readOnly = true)
-    public List<InvoiceHistoryDto> getMyInvoices(String username) {
-        // 1. Lấy dữ liệu từ DB (đã fetch join các bảng liên quan)
-        List<Invoice> invoices = invoiceRepository.findByCustomer_Account_UsernameOrderByIssueDateDesc(username);
-
-        // 2. Map sang DTO
-        return invoiceMapper.toHistoryDtoList(invoices);
-    }
-
     public Page<InvoiceTableDto> getInvoicesForAdmin(String keyword, String statusStr, Pageable pageable) {
         InvoiceStatus status = null;
 

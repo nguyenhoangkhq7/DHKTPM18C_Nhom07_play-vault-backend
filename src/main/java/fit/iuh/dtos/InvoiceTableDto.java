@@ -10,7 +10,7 @@ public class InvoiceTableDto {
     private Long id;
     private String invoiceCode;      // INV-00001
     private String customerName;     // Quan trọng với Admin
-    private String orderCode;        // ORD-001
+    private String email;
     private LocalDate issueDate;
     private BigDecimal totalAmount;
     private InvoiceStatus status;

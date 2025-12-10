@@ -24,17 +24,17 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     })
     List<Invoice> findByCustomer_Account_UsernameOrderByIssueDateDesc(String username);
 
-    // Hàm lấy tất cả hóa đơn cho Admin (Có phân trang + Search)
-    @EntityGraph(attributePaths = {"customer", "order", "order.payment"})
+    @EntityGraph(attributePaths = {"customer", "customer.account", "payments"})
     @Query("SELECT i FROM Invoice i " +
-            "WHERE (:status IS NULL OR i.status = :status) " + // <-- Thêm dòng này
+            "WHERE (:status IS NULL OR i.status = :status) " +
             "AND (:keyword IS NULL OR :keyword = '' OR " +
             "LOWER(i.customer.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(i.customer.account.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + // Cho phép tìm theo Email
             "CAST(i.id AS string) LIKE :keyword) " +
             "ORDER BY i.issueDate DESC")
     Page<Invoice> findAllForAdmin(
             @Param("keyword") String keyword,
-            @Param("status") InvoiceStatus status, // <-- Thêm tham số này
+            @Param("status") InvoiceStatus status,
             Pageable pageable
     );
 }
