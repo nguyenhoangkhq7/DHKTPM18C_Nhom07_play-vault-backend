@@ -1,6 +1,7 @@
 package fit.iuh.controllers;
 
 import fit.iuh.dtos.*;
+import fit.iuh.mappers.GameMapper;
 import fit.iuh.models.Game;
 import fit.iuh.models.GameBasicInfo;
 import fit.iuh.models.enums.SubmissionStatus;
@@ -15,6 +16,7 @@ import fit.iuh.services.GameVectorService;
 import fit.iuh.services.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -44,6 +46,7 @@ public class GameController {
     private final ReviewService reviewService;
     private final GameVectorService gameVectorService; // Inject service mới
     private final GameRepository gameRepository;
+    private final GameMapper gameMapper;
 
     @GetMapping
     public ResponseEntity<List<GameDto>> getGames(
@@ -199,7 +202,7 @@ public class GameController {
         List<GameSearchResponseDto> result = aiSortedIds.stream()
                 .filter(gameMap::containsKey) // Đảm bảo ID có trong DB
                 .map(gameMap::get)            // Lấy Game từ Map
-                .map(GameSearchResponseDto::fromEntity) // Convert sang DTO
+                .map(gameMapper::toSearchResponseDto) // Convert sang DTO
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
@@ -228,47 +231,61 @@ public class GameController {
     }
 
     @GetMapping("/search-combined")
-    public ResponseEntity<List<GameSearchResponseDto>> searchCombined(
+    public ResponseEntity<Page<GameSearchResponseDto>> searchCombined(
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "0.1") double threshold,
-            @PageableDefault(size = 12) Pageable pageable) {
+            @RequestParam(defaultValue = "0.5") double threshold,
+            @PageableDefault(size = 12) Pageable pageable
+    ) {
+        List<Long> finalIds;
 
-        // 1. Kết quả từ DB (search-for)
-        Page<GameSearchResponseDto> dbResultsPage = gameService.searchGamesSimple(keyword, pageable);
-        List<GameSearchResponseDto> dbResults = dbResultsPage.getContent();
+        if (keyword == null || keyword.isBlank()) {
+            // Nếu không có keyword, trả về rỗng hoặc tất cả (tùy logic của bạn)
+            return ResponseEntity.ok(Page.empty(pageable));
+        }
 
-        // Lấy ID của các game đã có trong DB
-        List<Long> dbGameIds = dbResults.stream()
-                .map(GameSearchResponseDto::getId)
-                .toList();
+        // 1. Lấy List ID từ DB (Tìm chính xác theo tên)
+        List<Long> dbIds = gameRepository.findIdsByNameContaining(keyword);
 
-        // 2. Kết quả từ AI (search-ai)
-        List<Long> aiSortedIds = gameVectorService.searchGameIds(keyword, limit, threshold);
+        // 2. Lấy List ID từ AI (Tìm theo ngữ nghĩa - lấy rộng hơn page size để bù đắp)
+        // Lấy khoảng 50-100 kết quả AI để đảm bảo phong phú
+        int aiLimit = 60;
+        List<Long> aiIds = gameVectorService.searchGameIds(keyword, aiLimit, threshold);
 
-        // Loại bỏ các ID đã có trong dbResults
-        List<Long> aiFilteredIds = aiSortedIds.stream()
-                .filter(id -> !dbGameIds.contains(id))
-                .toList();
+        // 3. Gộp ID (Dùng LinkedHashSet để giữ thứ tự và loại bỏ trùng lặp)
+        // Logic: Ưu tiên kết quả khớp tên (DB) trước, sau đó đến kết quả AI gợi ý
+        java.util.Set<Long> combinedSet = new java.util.LinkedHashSet<>(dbIds);
+        combinedSet.addAll(aiIds);
 
-        // Lấy dữ liệu từ DB cho các game AI còn lại
-        List<Game> aiGamesFromDb = gameRepository.findAllById(aiFilteredIds);
+        // Chuyển về List để xử lý phân trang
+        List<Long> allSortedIds = new ArrayList<>(combinedSet);
 
-        Map<Long, Game> gameMap = aiGamesFromDb.stream()
+        // 4. Xử lý Phân trang thủ công (In-Memory Pagination) trên danh sách ID
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), allSortedIds.size());
+
+        // Nếu trang yêu cầu vượt quá số lượng kết quả
+        if (start >= allSortedIds.size()) {
+            return ResponseEntity.ok(new PageImpl<>(List.of(), pageable, allSortedIds.size()));
+        }
+
+        // Cắt lấy danh sách ID của trang hiện tại
+        List<Long> pageIds = allSortedIds.subList(start, end);
+
+        // 5. Fetch dữ liệu chi tiết từ DB theo danh sách ID đã cắt
+        List<Game> gamesFromDb = gameRepository.findAllById(pageIds);
+
+        // 6. Map và Sắp xếp lại theo đúng thứ tự của pageIds
+        Map<Long, Game> gameMap = gamesFromDb.stream()
                 .collect(Collectors.toMap(Game::getId, Function.identity()));
 
-        List<GameSearchResponseDto> aiResults = aiFilteredIds.stream()
+        List<GameSearchResponseDto> content = pageIds.stream()
                 .filter(gameMap::containsKey)
                 .map(gameMap::get)
-                .map(GameSearchResponseDto::fromEntity)
-                .toList();
+                .map(gameMapper::toSearchResponseDto)
+                .collect(Collectors.toList());
 
-        // 3. Gộp kết quả: ưu tiên DB search trước, AI search bổ sung
-        List<GameSearchResponseDto> combinedResults = new ArrayList<>();
-        combinedResults.addAll(dbResults);
-        combinedResults.addAll(aiResults);
-
-        return ResponseEntity.ok(combinedResults);
+        // Trả về đối tượng Page hoàn chỉnh
+        return ResponseEntity.ok(new PageImpl<>(content, pageable, allSortedIds.size()));
     }
 
 }

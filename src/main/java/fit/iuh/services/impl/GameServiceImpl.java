@@ -881,7 +881,7 @@ public GameDto createPending(GameCreateRequest req, String publisherUsername) {
         Page<Game> gamePage = gameRepository.searchByKeyword(keyword, pageable);
 
         // Convert Entity sang DTO
-        return gamePage.map(GameSearchResponseDto::fromEntity);
+        return gamePage.map(gameMapper::toSearchResponseDto);
     }
 
 }

@@ -227,4 +227,9 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
             "LEFT JOIN g.gameBasicInfos.submission s " +
             "WHERE s IS NULL OR s.status = fit.iuh.models.enums.SubmissionStatus.APPROVED")
     List<Game> findAllExcludingPendingSubmissions();
+
+    @Query("SELECT g.id FROM Game g " +
+            "JOIN g.gameBasicInfos info " +  // Nối bảng và đặt tên tắt là 'info'
+            "WHERE LOWER(info.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Long> findIdsByNameContaining(@Param("keyword") String keyword);
 }
