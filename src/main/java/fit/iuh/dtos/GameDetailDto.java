@@ -35,6 +35,7 @@ public class GameDetailDto {
     private List<ReviewDto> reviewsList = new ArrayList<>();
     private Boolean isOwned;
     private String filePath;
+    private Double discount;
 
     // --- CÁC TRƯỜNG THÊM MỚI (CHO FRONTEND CHI TIẾT) ---
     private String title;           // Map title = name
@@ -127,40 +128,50 @@ public class GameDetailDto {
         GameDetailDto dto = new GameDetailDto();
         dto.setId(game.getId());
         dto.setReleaseDate(game.getReleaseDate());
+        if (game.getPromotion() != null && game.getGameBasicInfos() != null) {
+            // 1. Lấy giá gốc của Game (từ GameBasicInfo)
+            BigDecimal basicPrice = game.getGameBasicInfos().getPrice();
 
+            // 2. Tính số tiền giảm
+            BigDecimal discountAmount = game.getPromotion().calculateDiscount(basicPrice);
+
+            // 3. Gán SỐ TIỀN GIẢM vào trường 'discount' (chuyển sang Double)
+            // Nếu không có giảm giá, discountAmount sẽ là BigDecimal.ZERO, và .doubleValue() là 0.0
+            dto.setDiscount(discountAmount.doubleValue());
+        } else {
+            // Nếu không có Promotion hoặc GameBasicInfo, discount = 0.0
+            dto.setDiscount(0.0);
+        }
+
+        // ----------------------------------------------------
+        // BƯỚC 1: Gọi hàm Helper để map các trường chi tiết
+        // ----------------------------------------------------
         if (game.getGameBasicInfos() != null) {
-            var info = game.getGameBasicInfos();
-            dto.setName(info.getName());
-            dto.setPrice(info.getPrice());
-            dto.setDescription(info.getDescription());
-            dto.setShortDescription(info.getShortDescription());
-            dto.setThumbnail(info.getThumbnail());
+            // Ánh xạ các trường chi tiết (title, videoUrl, platform, screenshots, minimumRequirements, v.v.)
+            mapBasicInfoToDto(dto, game.getGameBasicInfos());
 
-            if (info.getCategory() != null) dto.setCategoryName(info.getCategory().getName());
-            if (info.getPublisher() != null) dto.setPublisherName(info.getPublisher().getStudioName());
+            // Sau khi mapBasicInfoToDto, ta có thể ghi đè/thêm logic đặc biệt:
 
-            if (info.getSystemRequirement() != null) {
-                dto.setOs(String.valueOf(info.getSystemRequirement().getOs()));
-                dto.setCpu(info.getSystemRequirement().getCpu());
-                dto.setGpu(info.getSystemRequirement().getGpu());
-                dto.setRam(info.getSystemRequirement().getRam());
-                dto.setStorage(info.getSystemRequirement().getStorage());
-            }
+            // BƯỚC 2: Bổ sung logic cho DISCOUNTS (cần phải tự thêm, vì nó không có sẵn trong mapBasicInfoToDto)
+            // -> Giả định discount nằm trực tiếp trên entity Game
+            // dto.setDiscount(game.getDiscount());
 
-            // ===================================
-            // LOGIC QUAN TRỌNG: MỞ KHÓA DOWNLOAD
-            // ===================================
+            // ----------------------------------------------------
+            // BƯỚC 3: LOGIC QUAN TRỌNG: MỞ KHÓA DOWNLOAD
+            // ----------------------------------------------------
             dto.setIsOwned(isOwned);
             if (isOwned) {
                 // Sử dụng filePath (Đã xác nhận là link tải)
-                dto.setFilePath(info.getFilePath());
+                dto.setFilePath(game.getGameBasicInfos().getFilePath()); // Lấy từ GameBasicInfo
             } else {
                 dto.setFilePath(null); // Che giấu đường dẫn tải nếu chưa sở hữu
             }
-            // ===================================
         }
 
-        // Xử lý Review & Rating (Giữ nguyên)
+
+        // ----------------------------------------------------
+        // BƯỚC 4: Xử lý Review & Rating (Giữ nguyên)
+        // ----------------------------------------------------
         List<Review> reviews = game.getReviews();
         if (reviews != null && !reviews.isEmpty()) {
             dto.setReviewCount(reviews.size());
@@ -173,9 +184,13 @@ public class GameDetailDto {
             dto.setReviewCount(0);
         }
 
+        // BỔ SUNG: Bạn cần quyết định nơi lấy giá trị discount cho GameDetailDto
+        // (Nếu game.getDiscount() tồn tại)
+        // dto.setDiscount(game.getDiscount());
+
+
         return dto;
     }
-
     // =======================================================================
     // 2. MAP TỪ GAME_SUBMISSION (Chờ duyệt/Từ chối) - THÊM MỚI
     // =======================================================================

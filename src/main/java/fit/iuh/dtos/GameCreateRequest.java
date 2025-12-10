@@ -1,61 +1,41 @@
 package fit.iuh.dtos;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.*;
-import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class GameCreateRequest {
-
-    @NotBlank
-    private String name;
-
-    private String shortDescription;
-
-    // "Ghi chú phát hành" -> map vào game_basic_infos.description
+    private String title;
+    private String summary;
     private String description;
-
-    @NotNull
-    @DecimalMin(value = "0.0")
-    private BigDecimal price;
-
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate releaseDate;
-
+    private Double price;
+    private String coverUrl;
     private String trailerUrl;
+    private boolean isFree;
+    private boolean isSupportController;
+    private boolean isAge18;
+    private LocalDate releaseDate;
+    private List<String> platforms; // ví dụ: ["WINDOWS", "MACBOOK"]
+    private String filePath;        // link build trên Google Drive
+    private Long categoryId;
+    // THÊM ĐOẠN NÀY ĐỂ NHẬN YÊU CẦU CẤU HÌNH TỪ FRONTEND
+    // ------------------------------------------------------------------
+    private SystemRequirementDto systemRequirement;
 
-    @NotNull
-    private Long categoryId;                 // combobox thể loại
+    // Inner class (có thể tách riêng thành file khác nếu thích)
+    @Getter
+    @Setter
+    public static class SystemRequirementDto {
+        private String cpu;      // ví dụ: "Intel i5-8400 / AMD Ryzen 5 2600"
+        private String gpu;      // ví dụ: "NVIDIA GTX 1060 6GB / AMD RX 580"
+        private String ram;      // ví dụ: "8 GB"
+        private String storage;  // ví dụ: "20 GB"
 
-    @PositiveOrZero
-    private Integer requiredAge;
-
-    @NotNull
-    private Boolean isSupportController;
-
-    // Gửi ID platform (vd [1] = PC) thay vì "WINDOWS"
-    @NotNull
-    @Size(min = 1)
-    private List<Long> platformIds;
-
-    private String filePath;   // ví dụ: "/files/shadow_runner_ex.zip" hoặc URL Drive
-
-    private String thumbnail;
-
-    @NotNull
-    private SystemRequirementDTO systemRequirement;
-
-    // Link có sẵn từ client (Drive link thường), sẽ convert sang lh3
-    private List<String> gallery;
-
-    // File upload nhiều ảnh
-    private List<MultipartFile> galleryFiles;
+        // (Tương lai) nếu muốn hỗ trợ nhiều OS
+        // private String os; // "WINDOWS", "MACOS", "LINUX"
+    }
 }

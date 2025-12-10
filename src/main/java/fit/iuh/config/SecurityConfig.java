@@ -70,6 +70,7 @@ public class SecurityConfig {
                       .requestMatchers(HttpMethod.GET, "/api/system-config/user").authenticated()
                       .requestMatchers(HttpMethod.DELETE, "/api/system-config/delete").authenticated()
                       .requestMatchers("/api/wallet/**").authenticated()
+                      .requestMatchers(HttpMethod.GET,"/api/payment/**").permitAll()
                       .anyRequest().authenticated()
               )
               .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

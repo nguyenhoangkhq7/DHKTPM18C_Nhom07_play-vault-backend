@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3307/playvaultdb?createDatabaseIfNotExist=true
     username: root
-    password: 20112004
+    password: Thanh042004
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   servlet:
@@ -22,7 +22,7 @@ spring:
         model:  bge-m3:latest       # Tên model bạn đã pull về
       chat:
         options:
-          model:  gpt-oss:120b-cloud  # Hoặc "llama3.2:3b" hoặc "qwen2.5:1.5b"
+          model:  qwen2.5:1.5b  # Hoặc "llama3.2:3b" hoặc "qwen2.5:1.5b"
           temperature: 0.5     # Để thấp (0.3 - 0.5) giúp model tập trung dùng tool chính xác hơn
           keep_alive: "60m"
           num-ctx: 2048

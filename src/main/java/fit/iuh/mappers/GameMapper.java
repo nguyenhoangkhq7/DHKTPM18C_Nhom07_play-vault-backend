@@ -110,17 +110,52 @@ public interface GameMapper {
                 .map(PreviewImage::getUrl)
                 .toList();
     }
+    // THÊM: Hàm tính finalPrice cho GameCardDto (Dùng BigDecimal)
+    @Named("calculateFinalPriceForGameCard")
+    default BigDecimal calculateFinalPriceForGameCard(Game game) {
+        if (game == null || game.getGameBasicInfos() == null || game.getGameBasicInfos().getPrice() == null) {
+            return BigDecimal.ZERO;
+        }
 
+        BigDecimal price = game.getGameBasicInfos().getPrice();
+        BigDecimal discount = BigDecimal.ZERO;
+
+        if (game.getPromotion() != null) {
+            // Lấy discount chính xác bằng BigDecimal
+            discount = game.getPromotion().calculateDiscount(price);
+        }
+
+        BigDecimal finalPrice = price.subtract(discount);
+        // Đảm bảo giá cuối cùng không bao giờ bị âm
+        return finalPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : finalPrice;
+    }
+
+    // SỬA LỖI: Đổi kiểu trả về từ Double sang BigDecimal và bỏ .doubleValue()
     @Named("calculateFinalDiscountAmount")
-    default Double calculateFinalDiscountAmount(Game game) {
+    default BigDecimal calculateFinalDiscountAmount(Game game) { // <-- Đã đổi kiểu trả về
         if (game == null || game.getPromotion() == null ||
                 game.getGameBasicInfos() == null || game.getGameBasicInfos().getPrice() == null) {
-            return 0.0;
+            return BigDecimal.ZERO;
         }
         BigDecimal basePrice = game.getGameBasicInfos().getPrice();
-        BigDecimal discountAmount = game.getPromotion().calculateDiscount(basePrice);
-        return discountAmount.doubleValue();
+        // Giả sử game.getPromotion().calculateDiscount(basePrice) trả về BigDecimal chính xác
+        return game.getPromotion().calculateDiscount(basePrice); // <-- Đã bỏ .doubleValue()
     }
+    @Mapping(source = "gameBasicInfos.name", target = "name")
+    @Mapping(source = "gameBasicInfos.thumbnail", target = "image")
+    @Mapping(source = "gameBasicInfos.price", target = "price")
+    @Mapping(source = "gameBasicInfos.publisher.studioName", target = "publisher")
+    @Mapping(source = "gameBasicInfos.category.name", target = "category")
+    @Mapping(source = "gameBasicInfos.shortDescription", target = "shortDescription")
+    @Mapping(source = "releaseDate", target = "releaseDate")
+    @Mapping(source = "releaseDate", target = "reviewedAt")
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "downloads", ignore = true)
+    @Mapping(target = "revenue", ignore = true)
+    @Mapping(source = "reviews", target = "rating", qualifiedByName = "calculateAvgRating")
+    @Mapping(source = "reviews", target = "reviewCount", qualifiedByName = "calculateReviewCount")
+    @Mapping(source = ".", target = "discount", qualifiedByName = "calculateFinalDiscountAmount")
+    GameSearchResponseDto toSearchResponseDto(Game game);
 
     List<GameDto> toGameDto(List<Game> games);
 }

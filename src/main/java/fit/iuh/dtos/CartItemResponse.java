@@ -22,6 +22,7 @@ public class CartItemResponse {
     @NotNull(message = "Original price is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Original price must be >= 0")
     private BigDecimal originalPrice;
+    private BigDecimal discount;
 
     @NotNull(message = "Final price is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Final price must be >= 0")
