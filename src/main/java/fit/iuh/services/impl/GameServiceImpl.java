@@ -149,7 +149,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public List<GameWithRatingDto> getTopGamesWithRating(int topN) {
-        List<Game> allGames = gameRepository.findAll();
+        List<Game> allGames = gameRepository.findAllExcludingPendingSubmissions();
         if(topN == 0){
             return gameMapper.toGameWithRatingDtoList(allGames)
                     .stream()

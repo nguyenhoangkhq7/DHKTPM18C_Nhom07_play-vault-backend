@@ -2,7 +2,7 @@
 USE playvaultdb;
 
 -- Tạo bảng system_infos để lưu cấu hình máy của người dùng
-CREATE TABLE IF NOT EXISTS system_infos (
+CREATE TABLE system_infos (
     -- Khóa chính
                               id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 

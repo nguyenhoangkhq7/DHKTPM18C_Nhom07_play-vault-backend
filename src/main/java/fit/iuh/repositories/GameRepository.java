@@ -29,6 +29,8 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
         "SELECT g.*, AVG(r.rating) AS avg_rating " +
                 "FROM games g " +
                 "JOIN reviews r ON g.game_basic_info_id = r.game_id " +
+                "LEFT JOIN g.gameBasicInfos.submission s " +
+                "WHERE s IS NULL OR s.status = fit.iuh.models.enums.SubmissionStatus.APPROVED)"+
                 "GROUP BY g.id " +
                 "HAVING AVG(r.rating) > 0 " +
                 "ORDER BY avg_rating DESC " +
