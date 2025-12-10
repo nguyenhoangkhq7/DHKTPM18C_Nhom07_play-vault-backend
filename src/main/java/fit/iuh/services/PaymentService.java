@@ -36,7 +36,7 @@ public class PaymentService {
         String methodUpper = method.toUpperCase().trim();
         PaymentMethod paymentMethod;
         if ("BANK".equals(methodUpper) || "MOMO".equals(methodUpper)) {
-            paymentMethod = PaymentMethod.ZALOPAY; // CỨ ĐỂ LÀ ZALOPAY – vì bạn dùng VietQR → thực chất là chuyển khoản ngân hàng!
+            paymentMethod = PaymentMethod.VNPAY; // CỨ ĐỂ LÀ ZALOPAY – vì bạn dùng VietQR → thực chất là chuyển khoản ngân hàng!
         } else {
             paymentMethod = PaymentMethod.valueOf(methodUpper); // chỉ dùng khi gửi đúng ZALOPAY hoặc PAYPAL
         }

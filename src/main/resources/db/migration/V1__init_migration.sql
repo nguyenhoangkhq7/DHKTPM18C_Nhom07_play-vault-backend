@@ -32,7 +32,7 @@ CREATE TABLE payment_infos(
                               account_number VARCHAR(100),
                               bank_name VARCHAR(255),
                               is_verified BOOLEAN DEFAULT FALSE,
-                              CONSTRAINT chk_payment_method_in_payment_info CHECK (payment_method IN ('ZALOPAY', 'MOMO', 'BANK'))
+                              CONSTRAINT chk_payment_method_in_payment_info CHECK (payment_method IN ('VNPAY', 'MOMO', 'BANK'))
 );
 
 CREATE TABLE publishers (
@@ -255,7 +255,7 @@ CREATE TABLE payments (
 
                           CONSTRAINT fk_payment_invoice
                               FOREIGN KEY (invoice_id) REFERENCES invoices(id),
-                          CONSTRAINT chk_payment_method_in_payments CHECK (payment_method IN ('PAYPAL', 'ZALOPAY')),
+                          CONSTRAINT chk_payment_method_in_payments CHECK (payment_method IN ('MOMO', 'VNPAY', 'BANK')),
                           CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED'))
 );
 

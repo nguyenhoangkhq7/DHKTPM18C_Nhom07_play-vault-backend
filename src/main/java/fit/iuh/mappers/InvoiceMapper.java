@@ -15,12 +15,6 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface InvoiceMapper {
 
-    @Mapping(source = "id", target = "invoiceCode", qualifiedByName = "formatInvoiceCode")
-    @Mapping(source = "order.id", target = "orderCode", qualifiedByName = "formatOrderCode")
-    @Mapping(source = "order.payment.paymentMethod", target = "paymentMethod")
-    @Mapping(source = "order.orderItems", target = "gameTitles", qualifiedByName = "mapGameTitles")
-    InvoiceHistoryDto toHistoryDto(Invoice invoice);
-
     List<InvoiceHistoryDto> toHistoryDtoList(List<Invoice> invoices);
 
     // Helper: Tạo mã hóa đơn INV-001
@@ -49,7 +43,5 @@ public interface InvoiceMapper {
 
     @Mapping(source = "id", target = "invoiceCode", qualifiedByName = "formatInvoiceCode")
     @Mapping(source = "customer.fullName", target = "customerName")
-    @Mapping(source = "order.id", target = "orderCode", qualifiedByName = "formatOrderCode")
-    @Mapping(source = "order.payment.paymentMethod", target = "paymentMethod")
-    InvoiceTableDto toTableDto(Invoice invoice);
+      InvoiceTableDto toTableDto(Invoice invoice);
 }

@@ -69,7 +69,7 @@ public class UserReportServiceImpl implements UserReportService {
                 payment = new Payment();
                 payment.setAmount(order.getTotal());
                 payment.setPaymentDate(LocalDate.now());
-                payment.setPaymentMethod(PaymentMethod.ZALOPAY); // Mặc định hoặc lấy từ user input
+                payment.setPaymentMethod(PaymentMethod.VNPAY); // Mặc định hoặc lấy từ user input
                 payment.setStatus(PaymentStatus.SUCCESS);
                 payment.setInvoice(null);
 

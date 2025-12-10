@@ -116,10 +116,10 @@ INSERT INTO `games` (`game_basic_info_id`, `release_date`, `promotion_id`) VALUE
 
 -- 6. Insert Order, Payment & Interactions
 INSERT INTO `payments` (`id`, `amount`, `payment_date`, `payment_method`, `status`, `invoice_id`) VALUES
-                                                                                                      (1,50000.00,'2025-12-06','ZALOPAY','SUCCESS',NULL),
-                                                                                                      (2,500000.00,'2025-12-06','ZALOPAY','SUCCESS',NULL),
-                                                                                                      (3,500000.00,'2025-12-06','ZALOPAY','SUCCESS',NULL),
-                                                                                                      (4,500000.00,'2025-12-06','ZALOPAY','SUCCESS',NULL);
+                                                                                                      (1,50000.00,'2025-12-06','VNPAY','SUCCESS',NULL),
+                                                                                                      (2,500000.00,'2025-12-06','VNPAY','SUCCESS',NULL),
+                                                                                                      (3,500000.00,'2025-12-06','VNPAY','SUCCESS',NULL),
+                                                                                                      (4,500000.00,'2025-12-06','VNPAY','SUCCESS',NULL);
 
 INSERT INTO `orders` (`id`, `created_at`, `total`, `status`, `customer_id`, `payment_id`) VALUES
                                                                                               (1,'2025-11-16',29.98,'PAID',1,NULL),
